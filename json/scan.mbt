@@ -26,7 +26,7 @@ let first_printable : V128 = @v128.i8x16_splat(b' ')
 /// deliberately separate from the write loop below: a whole-document stage-1
 /// scan needs exactly this, over blocks rather than over one string, and
 /// should reuse it rather than restate it.
-fn escape_mask(chunk : V128) -> Int {
+fn escape_mask(chunk : V128) -> Int32 {
   @v128.i8x16_bitmask(
     @v128.v128_or_(
       @v128.v128_or_(

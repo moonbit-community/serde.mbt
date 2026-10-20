@@ -39,7 +39,7 @@ enum Shape {
   /// `struct Foo { a : Int }`
   Record(Array[Field])
   /// `struct Foo(Int, Int)`
-  TupleStruct(Int)
+  TupleStruct(Int32)
   /// `enum Foo { ... }`
   Variant(Array[Case])
 }
@@ -73,7 +73,7 @@ enum Payload {
   /// `Circle(Double)`
   Newtype
   /// `Rect(Double, Double)`
-  Tuple(Int)
+  Tuple(Int32)
   /// `Tagged(name~ : String, size~ : Int)`
   Struct(Array[Field])
 }

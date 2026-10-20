@@ -131,7 +131,7 @@ fn scan_fields(
   for field in fields {
     let ident = field.name.label
     let (name, skip) = read_member_attributes(field.attrs, where_, ident)
-    out.push({ ident, name, optional: field.ty is Option(..), skip })
+    out.push({ ident, name, optional: field.ty is Option(..), skip, })
   }
   for index, field in out {
     if field.skip {
@@ -168,7 +168,7 @@ fn scan_case(
     Some(list) => list.to_array()
   }
   if args.is_empty() {
-    return { ident, name, payload: Unit }
+    return { ident, name, payload: Unit, }
   }
   let labelled = args.filter(arg => arg.label is Some(_)).length()
   if labelled == 0 {
@@ -177,7 +177,7 @@ fn scan_case(
     } else {
       Tuple(args.length())
     }
-    return { ident, name, payload }
+    return { ident, name, payload, }
   }
   guard labelled == args.length() else {
     raise DeriveError(
@@ -195,7 +195,7 @@ fn scan_case(
       skip: false,
     })
   }
-  { ident, name, payload: Struct(fields) }
+  { ident, name, payload: Struct(fields), }
 }
 
 ///|

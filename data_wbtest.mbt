@@ -183,7 +183,7 @@ test "error messages render for every variant" {
 test "reading a map value past the end reports end of input" {
   let d = ValueDeserializer::new(Map([]))
   let _ = d.deserialize_map_begin()
-  try (d.deserialize_map_value() : Int) catch {
+  try (d.deserialize_map_value() : Int32) catch {
     e => inspect(e, content="$: unexpected end of input")
   } noraise {
     _ => fail("expected an end of input error")
@@ -194,7 +194,7 @@ test "reading a map value past the end reports end of input" {
 test "reading a field value past the end reports end of input" {
   let d = ValueDeserializer::new(Map([]))
   d.deserialize_struct_begin("X", [])
-  try (d.deserialize_field_value() : Int) catch {
+  try (d.deserialize_field_value() : Int32) catch {
     e => inspect(e, content="$: unexpected end of input")
   } noraise {
     _ => fail("expected an end of input error")
@@ -207,7 +207,7 @@ test "reading a field value past the end reports end of input" {
 test "a non-string map key still yields a path segment" {
   let d = ValueDeserializer::new(Map([(Int(7L), Str(b"oops"))]))
   d.deserialize_struct_begin("X", [])
-  try (d.deserialize_field_value() : Int) catch {
+  try (d.deserialize_field_value() : Int32) catch {
     e => inspect(e, content="$.7: invalid type: expected integer, found string")
   } noraise {
     _ => fail("expected a type error")
@@ -217,7 +217,7 @@ test "a non-string map key still yields a path segment" {
 ///|
 test "a sequence with no length hint still deserializes" {
   let d = ValueDeserializer::new(Seq([Int(1L), Int(2L)]))
-  let items : Array[Int] = Deserialize::deserialize(d)
+  let items : Array[Int32] = Deserialize::deserialize(d)
   assert_eq(items, [1, 2])
 }
 

@@ -28,7 +28,7 @@ priv struct Table {
 
 ///|
 fn Table::new() -> Table {
-  { entries: [] }
+  { entries: [], }
 }
 
 ///|
@@ -120,7 +120,7 @@ fn node_to_value(node : Node) -> @data.Value {
 ///|
 /// A Unicode scalar value as UTF-8, for the `\u` and `\U` escapes — the only
 /// place this parser has to encode anything.
-fn write_utf8(out : @buffer.Buffer, code : Int) -> Unit {
+fn write_utf8(out : @buffer.Buffer, code : Int32) -> Unit {
   if code < 0x80 {
     out.write_byte(code.to_byte())
   } else if code < 0x800 {
@@ -143,15 +143,15 @@ fn write_utf8(out : @buffer.Buffer, code : Int) -> Unit {
 ///|
 priv struct Parser {
   src : Bytes
-  mut pos : Int
+  mut pos : Int32
 }
 
 ///|
-const EOF : Int = -1
+const EOF : Int32 = -1
 
 ///|
 fn parse(input : Bytes) -> @data.Value raise @data.DeError {
-  let p = Parser::{ src: input, pos: 0 }
+  let p = Parser::{ src: input, pos: 0, }
   let root = Table::new()
   let mut current = root
   let mut prefix : Array[String] = []
@@ -210,7 +210,7 @@ fn parse(input : Bytes) -> @data.Value raise @data.DeError {
 }
 
 ///|
-fn path_prefix(path : Array[String], upto : Int) -> String {
+fn path_prefix(path : Array[String], upto : Int32) -> String {
   let parts = []
   for i in 0..<(upto + 1) {
     if i < path.length() {
@@ -226,7 +226,7 @@ fn Parser::done(self : Parser) -> Bool {
 }
 
 ///|
-fn Parser::peek(self : Parser) -> Int {
+fn Parser::peek(self : Parser) -> Int32 {
   if self.done() {
     EOF
   } else {
@@ -266,7 +266,7 @@ fn Parser::spaces(self : Parser) -> Unit {
 }
 
 ///|
-fn Parser::expect(self : Parser, byte : Int) -> Unit raise @data.DeError {
+fn Parser::expect(self : Parser, byte : Int32) -> Unit raise @data.DeError {
   self.spaces()
   guard self.peek() == byte else {
     raise @data.DeCustom(
@@ -278,11 +278,11 @@ fn Parser::expect(self : Parser, byte : Int) -> Unit raise @data.DeError {
 }
 
 ///|
-fn describe(byte : Int) -> String {
+fn describe(byte : Int32) -> String {
   if byte == EOF {
     "end of input"
   } else {
-    match Int::to_char(byte) {
+    match Int32::to_char(byte) {
       Some(c) => c.to_string()
       None => "byte \{byte}"
     }
@@ -290,7 +290,7 @@ fn describe(byte : Int) -> String {
 }
 
 ///|
-fn is_bare(byte : Int) -> Bool {
+fn is_bare(byte : Int32) -> Bool {
   (byte >= 0x41 && byte <= 0x5A) ||
   (byte >= 0x61 && byte <= 0x7A) ||
   (byte >= 0x30 && byte <= 0x39) ||
@@ -411,7 +411,10 @@ fn Parser::quoted(self : Parser) -> BytesView raise @data.DeError {
 
 ///|
 /// The scalar value behind a `\u` or `\U` escape.
-fn Parser::hex_escape(self : Parser, digits : Int) -> Int raise @data.DeError {
+fn Parser::hex_escape(
+  self : Parser,
+  digits : Int32,
+) -> Int32 raise @data.DeError {
   let mut acc = 0
   for _ in 0..<digits {
     let c = self.peek()
@@ -427,7 +430,7 @@ fn Parser::hex_escape(self : Parser, digits : Int) -> Int raise @data.DeError {
     acc = acc * 16 + d
     self.bump()
   }
-  guard Int::to_char(acc) is Some(_) else {
+  guard Int32::to_char(acc) is Some(_) else {
     raise @data.DeCustom(
       path=Root,
       message="TOML: `\\u` escape is not a scalar value",

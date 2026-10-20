@@ -29,12 +29,12 @@ pub impl Serialize for UInt16 with fn serialize(self, s) {
 }
 
 ///|
-pub impl Serialize for Int with fn serialize(self, s) {
+pub impl Serialize for Int32 with fn serialize(self, s) {
   s.serialize_int(self)
 }
 
 ///|
-pub impl Serialize for UInt with fn serialize(self, s) {
+pub impl Serialize for UInt32 with fn serialize(self, s) {
   s.serialize_uint(self)
 }
 
@@ -191,12 +191,12 @@ pub impl Deserialize for UInt16 with fn deserialize(d) {
 }
 
 ///|
-pub impl Deserialize for Int with fn deserialize(d) {
+pub impl Deserialize for Int32 with fn deserialize(d) {
   d.deserialize_int()
 }
 
 ///|
-pub impl Deserialize for UInt with fn deserialize(d) {
+pub impl Deserialize for UInt32 with fn deserialize(d) {
   d.deserialize_uint()
 }
 
@@ -250,7 +250,7 @@ pub impl[T : Deserialize] Deserialize for T? with fn deserialize(d) {
 /// every `Deserialize` benefits. Serde bounds it the same way and for the same
 /// reason (`size_hint::cautious`): reserve a little, and let `push` grow the
 /// rest at the cost of a few reallocations on genuinely large inputs.
-fn cautious_capacity(hint : Int) -> Int {
+fn cautious_capacity(hint : Int32) -> Int32 {
   if hint < 0 {
     0
   } else if hint > 4096 {

@@ -66,7 +66,7 @@ fn quote(text : String) -> String {
 }
 
 ///|
-fn hex_digit(n : Int) -> Char {
+fn hex_digit(n : Int32) -> Char {
   if n < 10 {
     ('0'.to_int() + n).unsafe_to_char()
   } else {
@@ -128,7 +128,7 @@ fn record_field_names_name(target : Target) -> String {
 }
 
 ///|
-fn variant_field_names_name(target : Target, index : Int) -> String {
+fn variant_field_names_name(target : Target, index : Int32) -> String {
   "__data_variant_fields_\{target.name}_\{index}"
 }
 
@@ -143,7 +143,7 @@ fn record_field_identifier_name(target : Target) -> String {
 }
 
 ///|
-fn variant_field_identifier_name(target : Target, index : Int) -> String {
+fn variant_field_identifier_name(target : Target, index : Int32) -> String {
   "DataVariantField\{target.name}\{index}"
 }
 
@@ -280,7 +280,7 @@ fn write_all_field_metadata(out : StringBuilder, target : Target) -> Unit {
 }
 
 ///|
-fn variant_info(target : Target, index : Int, case_ : Case) -> String {
+fn variant_info(target : Target, index : Int32, case_ : Case) -> String {
   "@data.VariantInfo::{ enum_name: \{quote(target.name)}, index: \{index}, name: \{quote(case_.name)} }"
 }
 

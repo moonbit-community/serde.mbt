@@ -20,8 +20,8 @@
 /// `from_string` must likewise have matched that string. Byte-oriented formats
 /// rely on this invariant to reuse `canonical` without decoding the input.
 pub(open) trait FieldIdentifier {
-  fn from_index(Int) -> Self
-  fn from_bytes(BytesView, index_hint : Int) -> Self
+  fn from_index(Int32) -> Self
+  fn from_bytes(BytesView, index_hint : Int32) -> Self
   fn from_string(String) -> Self
   fn name(Self) -> String?
 }

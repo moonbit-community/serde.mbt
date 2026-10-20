@@ -25,7 +25,7 @@ struct TomlSerializer {
 
 ///|
 pub fn TomlSerializer::new() -> TomlSerializer {
-  { inner: @data.ValueSerializer::new() }
+  { inner: @data.ValueSerializer::new(), }
 }
 
 ///|

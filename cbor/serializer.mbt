@@ -3,22 +3,22 @@
 
 ///|
 /// Major types, named rather than spelled as bare numbers at every call site.
-const UNSIGNED : Int = 0
+const UNSIGNED : Int32 = 0
 
 ///|
-const NEGATIVE : Int = 1
+const NEGATIVE : Int32 = 1
 
 ///|
-const BYTES : Int = 2
+const BYTES : Int32 = 2
 
 ///|
-const TEXT : Int = 3
+const TEXT : Int32 = 3
 
 ///|
-const ARRAY : Int = 4
+const ARRAY : Int32 = 4
 
 ///|
-const MAP : Int = 5
+const MAP : Int32 = 5
 
 ///|
 const BREAK : Byte = b'\xff'
@@ -39,7 +39,7 @@ struct CborSerializer {
 
 ///|
 pub fn CborSerializer::new() -> CborSerializer {
-  { out: Buffer(size_hint=256), breaks: [] }
+  { out: Buffer(size_hint=256), breaks: [], }
 }
 
 ///|
@@ -58,7 +58,11 @@ pub fn CborSerializer::finish(
 ///|
 /// `count` bytes of `arg`, most significant first. CBOR is big-endian
 /// throughout, unlike most binary formats.
-fn CborSerializer::be(self : CborSerializer, arg : UInt64, count : Int) -> Unit {
+fn CborSerializer::be(
+  self : CborSerializer,
+  arg : UInt64,
+  count : Int32,
+) -> Unit {
   for i = count - 1; i >= 0; i = i - 1 {
     self.out.write_byte((arg >> (i * 8)).to_uint().to_byte())
   }
@@ -71,7 +75,7 @@ fn CborSerializer::be(self : CborSerializer, arg : UInt64, count : Int) -> Unit 
 /// that either hold the argument outright or say how many bytes follow.
 fn CborSerializer::head(
   self : CborSerializer,
-  major : Int,
+  major : Int32,
   arg : UInt64,
 ) -> Unit {
   let tag = major << 5
@@ -109,7 +113,7 @@ fn CborSerializer::int(self : CborSerializer, v : Int64) -> Unit {
 ///|
 fn CborSerializer::blob(
   self : CborSerializer,
-  major : Int,
+  major : Int32,
   payload : BytesView,
 ) -> Unit {
   self.head(major, payload.length().to_int64().reinterpret_as_uint64())
@@ -121,8 +125,8 @@ fn CborSerializer::blob(
 /// is not, and remembers which so `_end` knows whether to write a break.
 fn CborSerializer::open(
   self : CborSerializer,
-  major : Int,
-  hint : Int?,
+  major : Int32,
+  hint : Int32?,
 ) -> Unit {
   match hint {
     Some(n) => {

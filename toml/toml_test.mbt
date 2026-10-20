@@ -3,7 +3,7 @@
 ///|
 pub(all) struct Server {
   host : String
-  port : Int
+  port : Int32
   tags : Array[String]
   timeout : Double?
 } derive(Eq, Debug)
@@ -22,7 +22,7 @@ pub impl @data.Serialize for Server with fn serialize(self, s) {
 pub impl @data.Deserialize for Server with fn deserialize(d) {
   d.deserialize_struct_begin("Server", ["host", "port", "tags", "timeout"])
   let mut host : String? = None
-  let mut port : Int? = None
+  let mut port : Int32? = None
   let mut tags : Array[String]? = None
   let mut timeout : Double? = None
   while d.deserialize_field_name() is Some(name) {
@@ -81,7 +81,7 @@ pub impl @data.Deserialize for Config with fn deserialize(d) {
 test "a nested struct becomes a sub-table" {
   let c = Config::{
     name: "prod",
-    server: { host: "localhost", port: 8080, tags: ["a", "b"], timeout: None },
+    server: { host: "localhost", port: 8080, tags: ["a", "b"], timeout: None, },
   }
   inspect(
     @toml.to_string(c),
@@ -131,7 +131,7 @@ test "a None field disappears instead of becoming null" {
     tags: [],
     timeout: Some(1.5),
   }
-  let without = Server::{ host: "h", port: 1, tags: [], timeout: None }
+  let without = Server::{ host: "h", port: 1, tags: [], timeout: None, }
   inspect(
     @toml.to_string(with_timeout),
     content=(
@@ -157,7 +157,7 @@ test "a None field disappears instead of becoming null" {
 /// Floats always carry a `.` or an exponent, or TOML would read them back as
 /// integers.
 test "whole floats keep a decimal point" {
-  let s = Server::{ host: "h", port: 1, tags: [], timeout: Some(2.0) }
+  let s = Server::{ host: "h", port: 1, tags: [], timeout: Some(2.0), }
   assert_true(@toml.to_string(s).contains("timeout = 2.0"))
 }
 
@@ -193,10 +193,10 @@ test "a nested config round-trips" {
 
 ///|
 test "keys that are not bare are quoted and read back" {
-  let m : Map[String, Int] = { "with space": 1, "dot.ted": 2, "plain": 3 }
+  let m : Map[String, Int32] = { "with space": 1, "dot.ted": 2, "plain": 3 }
   let text = @toml.to_string(m)
   assert_true(text.contains("\"with space\" = 1"))
-  assert_eq((@toml.from_string(text) : Map[String, Int]), m)
+  assert_eq((@toml.from_string(text) : Map[String, Int32]), m)
 }
 
 // ---- parsing what this package does not write ----
@@ -224,7 +224,7 @@ test "comments, whitespace and literal strings are accepted" {
 
 ///|
 test "underscores and the integer forms TOML allows" {
-  let m : Map[String, Int] = @toml.from_string("a = 1_000\nb = +7\nc = -7\n")
+  let m : Map[String, Int32] = @toml.from_string("a = 1_000\nb = +7\nc = -7\n")
   assert_eq(m, { "a": 1000, "b": 7, "c": -7 })
 }
 
@@ -248,8 +248,8 @@ test "an inline table parses like a sub-table" {
 test "arrays of tables round-trip" {
   let servers : Map[String, Array[Server]] = {
     "node": [
-      { host: "a", port: 1, tags: [], timeout: None },
-      { host: "b", port: 2, tags: [], timeout: None },
+      { host: "a", port: 1, tags: [], timeout: None, },
+      { host: "b", port: 2, tags: [], timeout: None, },
     ],
   }
   let text = @toml.to_string(servers)
@@ -292,7 +292,7 @@ test "byte strings are refused rather than given an invented spelling" {
 
 ///|
 test "a non-string table key is refused" {
-  let m : Map[Int, Int] = { 1: 2 }
+  let m : Map[Int32, Int32] = { 1: 2 }
   try @toml.to_string(m) catch {
     e =>
       inspect(
@@ -328,7 +328,7 @@ test "datetimes are refused rather than coerced" {
 
 ///|
 test "a duplicate key is an error rather than a silent overwrite" {
-  try (@toml.from_string("a = 1\na = 2\n") : Map[String, Int]) catch {
+  try (@toml.from_string("a = 1\na = 2\n") : Map[String, Int32]) catch {
     e =>
       inspect(
         e,
@@ -348,7 +348,7 @@ test "a duplicate key is an error rather than a silent overwrite" {
 /// only through the two free functions. This is the same value written both
 /// ways.
 test "the serializer type produces what to_string does" {
-  let doc : Map[String, Int] = { "a": 1 }
+  let doc : Map[String, Int32] = { "a": 1 }
   let s = @toml.TomlSerializer::new()
   @data.Serialize::serialize(doc, s)
   assert_eq(s.finish(), @toml.to_bytes(doc))
@@ -358,9 +358,9 @@ test "the serializer type produces what to_string does" {
 test "the deserializer type reads what from_string does" {
   let text = b"a = 1\nb = 2\n"
   let d = @toml.TomlDeserializer::new(text)
-  let direct : Map[String, Int] = @data.Deserialize::deserialize(d)
+  let direct : Map[String, Int32] = @data.Deserialize::deserialize(d)
   d.finish()
-  assert_eq(direct, (@toml.from_bytes(text) : Map[String, Int]))
+  assert_eq(direct, (@toml.from_bytes(text) : Map[String, Int32]))
 }
 
 ///|
@@ -421,12 +421,12 @@ test "multi-byte keys and values round-trip through bytes" {
 
 ///|
 test "to_string and from_string are conveniences over the bytes" {
-  let m : Map[String, Int] = { "a": 1 }
+  let m : Map[String, Int32] = { "a": 1 }
   assert_eq(@toml.to_string(m), @utf8.decode_lossy(@toml.to_bytes(m)))
   let text = "a = 1\n"
   assert_eq(
-    (@toml.from_string(text) : Map[String, Int]),
-    (@toml.from_bytes(@utf8.encode(text)) : Map[String, Int]),
+    (@toml.from_string(text) : Map[String, Int32]),
+    (@toml.from_bytes(@utf8.encode(text)) : Map[String, Int32]),
   )
 }
 

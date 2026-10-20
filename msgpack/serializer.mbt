@@ -14,7 +14,7 @@ struct MsgpackSerializer {
 
 ///|
 pub fn MsgpackSerializer::new() -> MsgpackSerializer {
-  { out: Buffer(size_hint=256) }
+  { out: Buffer(size_hint=256), }
 }
 
 ///|
@@ -23,7 +23,7 @@ pub fn MsgpackSerializer::finish(self : MsgpackSerializer) -> Bytes {
 }
 
 ///|
-fn MsgpackSerializer::put(self : MsgpackSerializer, marker : Int) -> Unit {
+fn MsgpackSerializer::put(self : MsgpackSerializer, marker : Int32) -> Unit {
   self.out.write_byte(marker.to_byte())
 }
 
@@ -33,7 +33,7 @@ fn MsgpackSerializer::put(self : MsgpackSerializer, marker : Int) -> Unit {
 fn MsgpackSerializer::be(
   self : MsgpackSerializer,
   arg : UInt64,
-  count : Int,
+  count : Int32,
 ) -> Unit {
   for i = count - 1; i >= 0; i = i - 1 {
     self.out.write_byte((arg >> (i * 8)).to_uint().to_byte())
@@ -93,11 +93,11 @@ fn MsgpackSerializer::int(self : MsgpackSerializer, v : Int64) -> Unit {
 fn MsgpackSerializer::blob(
   self : MsgpackSerializer,
   payload : BytesView,
-  fix : Int,
-  fix_limit : Int,
-  m8 : Int,
-  m16 : Int,
-  m32 : Int,
+  fix : Int32,
+  fix_limit : Int32,
+  m8 : Int32,
+  m16 : Int32,
+  m32 : Int32,
 ) -> Unit {
   let n = payload.length()
   if fix >= 0 && n < fix_limit {
@@ -131,10 +131,10 @@ fn MsgpackSerializer::text(
 /// fires in practice.
 fn MsgpackSerializer::open(
   self : MsgpackSerializer,
-  hint : Int?,
-  fix : Int,
-  m16 : Int,
-  m32 : Int,
+  hint : Int32?,
+  fix : Int32,
+  m16 : Int32,
+  m32 : Int32,
   kind : String,
 ) -> Unit raise @data.SerError {
   match hint {

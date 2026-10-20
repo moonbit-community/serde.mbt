@@ -206,12 +206,12 @@ pub impl @data.Serialize for Shape with fn serialize(self, serializer) {
       })
     Circle(v0) =>
       serializer.serialize_newtype_variant(
-        @data.VariantInfo::{ enum_name: "Shape", index: 1, name: "Circle" },
+        @data.VariantInfo::{ enum_name: "Shape", index: 1, name: "Circle", },
         v0,
       )
     Rect(v0, v1) => {
       serializer.serialize_tuple_variant_begin(
-        @data.VariantInfo::{ enum_name: "Shape", index: 2, name: "Rect" },
+        @data.VariantInfo::{ enum_name: "Shape", index: 2, name: "Rect", },
         2,
       )
       serializer.serialize_tuple_variant_element(v0)
@@ -220,7 +220,7 @@ pub impl @data.Serialize for Shape with fn serialize(self, serializer) {
     }
     Tagged(name=v0, size=v1) => {
       serializer.serialize_struct_variant_begin(
-        @data.VariantInfo::{ enum_name: "Shape", index: 3, name: "Tagged" },
+        @data.VariantInfo::{ enum_name: "Shape", index: 3, name: "Tagged", },
         2,
       )
       serializer.serialize_struct_variant_field("name", v0)
@@ -229,7 +229,7 @@ pub impl @data.Serialize for Shape with fn serialize(self, serializer) {
     }
     Oval(v0, v1) => {
       serializer.serialize_tuple_variant_begin(
-        @data.VariantInfo::{ enum_name: "Shape", index: 4, name: "Ellipse" },
+        @data.VariantInfo::{ enum_name: "Shape", index: 4, name: "Ellipse", },
         2,
       )
       serializer.serialize_tuple_variant_element(v0)
@@ -531,7 +531,7 @@ pub extend Marker with @data.Serialize::{serialize}
 ///|
 pub impl @data.Deserialize for Marker with fn deserialize(deserializer) {
   deserializer.deserialize_unit_struct("Marker")
-  Marker::{  }
+  Marker::{ }
 }
 
 ///|

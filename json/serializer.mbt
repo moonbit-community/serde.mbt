@@ -7,7 +7,7 @@
 /// compound protocol was designed for: it tracks its own depth.
 priv struct Frame {
   is_object : Bool
-  mut len : Int
+  mut len : Int32
 }
 
 ///|
@@ -26,7 +26,7 @@ struct JsonSerializer {
 
 ///|
 pub fn JsonSerializer::new() -> JsonSerializer {
-  { out: Buffer(size_hint=256), stack: [], in_key: false }
+  { out: Buffer(size_hint=256), stack: [], in_key: false, }
 }
 
 ///|
@@ -89,7 +89,7 @@ fn JsonSerializer::open(
 ) -> Unit {
   self.pre_value()
   self.out.write_byte(ch)
-  self.stack.push({ is_object, len: 0 })
+  self.stack.push({ is_object, len: 0, })
 }
 
 ///|

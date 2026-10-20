@@ -16,7 +16,7 @@ pub fn[T : Serialize] to_value(T) -> Value raise SerError
 pub(all) suberror DeError {
   InvalidType(path~ : Path, expected~ : String, found~ : String)
   InvalidValue(path~ : Path, expected~ : String, found~ : String)
-  InvalidLength(path~ : Path, expected~ : Int, found~ : Int)
+  InvalidLength(path~ : Path, expected~ : Int32, found~ : Int32)
   MissingField(path~ : Path, field~ : String)
   UnknownField(path~ : Path, field~ : String, expected~ : ArrayView[String])
   UnknownVariant(path~ : Path, variant~ : String, expected~ : ArrayView[String])
@@ -36,9 +36,9 @@ pub impl Show for SerError
 pub(all) enum Path {
   Root
   Key(Path, String)
-  Index(Path, Int)
+  Index(Path, Int32)
 } derive(Eq, @debug.Debug)
-pub fn Path::index(Self, Int) -> Self
+pub fn Path::index(Self, Int32) -> Self
 pub fn Path::key(Self, String) -> Self
 pub impl Show for Path
 
@@ -70,31 +70,31 @@ pub fn ValueDeserializer::deserialize_byte(Self) -> Byte raise DeError
 pub fn ValueDeserializer::deserialize_bytes(Self) -> Bytes raise DeError
 pub fn ValueDeserializer::deserialize_char(Self) -> Char raise DeError
 pub fn ValueDeserializer::deserialize_double(Self) -> Double raise DeError
-pub fn ValueDeserializer::deserialize_enum_begin(Self, String, ArrayView[String]) -> Int raise DeError
+pub fn ValueDeserializer::deserialize_enum_begin(Self, String, ArrayView[String]) -> Int32 raise DeError
 pub fn ValueDeserializer::deserialize_enum_end(Self) -> Unit raise DeError
 pub fn[F : FieldIdentifier] ValueDeserializer::deserialize_field(Self) -> F? raise DeError
 pub fn ValueDeserializer::deserialize_field_name(Self) -> String? raise DeError
 pub fn[T : Deserialize] ValueDeserializer::deserialize_field_value(Self) -> T raise DeError
 pub fn ValueDeserializer::deserialize_float(Self) -> Float raise DeError
-pub fn ValueDeserializer::deserialize_int(Self) -> Int raise DeError
+pub fn ValueDeserializer::deserialize_int(Self) -> Int32 raise DeError
 pub fn ValueDeserializer::deserialize_int16(Self) -> Int16 raise DeError
 pub fn ValueDeserializer::deserialize_int64(Self) -> Int64 raise DeError
-pub fn ValueDeserializer::deserialize_map_begin(Self) -> Int? raise DeError
+pub fn ValueDeserializer::deserialize_map_begin(Self) -> Int32? raise DeError
 pub fn[K : Deserialize] ValueDeserializer::deserialize_map_next_key(Self) -> K? raise DeError
 pub fn[V : Deserialize] ValueDeserializer::deserialize_map_value(Self) -> V raise DeError
 pub fn[T : Deserialize] ValueDeserializer::deserialize_newtype_struct(Self, String) -> T raise DeError
 pub fn[T : Deserialize] ValueDeserializer::deserialize_newtype_variant(Self) -> T raise DeError
 pub fn[T : Deserialize] ValueDeserializer::deserialize_option(Self) -> T? raise DeError
-pub fn ValueDeserializer::deserialize_seq_begin(Self) -> Int? raise DeError
+pub fn ValueDeserializer::deserialize_seq_begin(Self) -> Int32? raise DeError
 pub fn[T : Deserialize] ValueDeserializer::deserialize_seq_next(Self) -> T? raise DeError
 pub fn ValueDeserializer::deserialize_str_bytes(Self) -> BytesView raise DeError
 pub fn ValueDeserializer::deserialize_string(Self) -> String raise DeError
 pub fn ValueDeserializer::deserialize_struct_begin(Self, String, ArrayView[String]) -> Unit raise DeError
-pub fn ValueDeserializer::deserialize_tuple_begin(Self, Int) -> Unit raise DeError
+pub fn ValueDeserializer::deserialize_tuple_begin(Self, Int32) -> Unit raise DeError
 pub fn ValueDeserializer::deserialize_tuple_end(Self) -> Unit raise DeError
 pub fn[T : Deserialize] ValueDeserializer::deserialize_tuple_next(Self) -> T raise DeError
-pub fn ValueDeserializer::deserialize_tuple_struct_begin(Self, String, Int) -> Unit raise DeError
-pub fn ValueDeserializer::deserialize_uint(Self) -> UInt raise DeError
+pub fn ValueDeserializer::deserialize_tuple_struct_begin(Self, String, Int32) -> Unit raise DeError
+pub fn ValueDeserializer::deserialize_uint(Self) -> UInt32 raise DeError
 pub fn ValueDeserializer::deserialize_uint16(Self) -> UInt16 raise DeError
 pub fn ValueDeserializer::deserialize_uint64(Self) -> UInt64 raise DeError
 pub fn ValueDeserializer::deserialize_unit(Self) -> Unit raise DeError
@@ -118,37 +118,37 @@ pub fn ValueSerializer::serialize_char(Self, Char) -> Unit raise SerError
 pub fn ValueSerializer::serialize_double(Self, Double) -> Unit raise SerError
 pub fn[T : Serialize] ValueSerializer::serialize_field(Self, String, T) -> Unit raise SerError
 pub fn ValueSerializer::serialize_float(Self, Float) -> Unit raise SerError
-pub fn ValueSerializer::serialize_int(Self, Int) -> Unit raise SerError
+pub fn ValueSerializer::serialize_int(Self, Int32) -> Unit raise SerError
 pub fn ValueSerializer::serialize_int16(Self, Int16) -> Unit raise SerError
 pub fn ValueSerializer::serialize_int64(Self, Int64) -> Unit raise SerError
-pub fn ValueSerializer::serialize_map_begin(Self, Int?) -> Unit raise SerError
+pub fn ValueSerializer::serialize_map_begin(Self, Int32?) -> Unit raise SerError
 pub fn ValueSerializer::serialize_map_end(Self) -> Unit raise SerError
 pub fn[K : Serialize] ValueSerializer::serialize_map_key(Self, K) -> Unit raise SerError
 pub fn[V : Serialize] ValueSerializer::serialize_map_value(Self, V) -> Unit raise SerError
 pub fn[T : Serialize] ValueSerializer::serialize_newtype_struct(Self, String, T) -> Unit raise SerError
 pub fn[T : Serialize] ValueSerializer::serialize_newtype_variant(Self, VariantInfo, T) -> Unit raise SerError
 pub fn ValueSerializer::serialize_none(Self) -> Unit raise SerError
-pub fn ValueSerializer::serialize_seq_begin(Self, Int?) -> Unit raise SerError
+pub fn ValueSerializer::serialize_seq_begin(Self, Int32?) -> Unit raise SerError
 pub fn[T : Serialize] ValueSerializer::serialize_seq_element(Self, T) -> Unit raise SerError
 pub fn ValueSerializer::serialize_seq_end(Self) -> Unit raise SerError
 pub fn[T : Serialize] ValueSerializer::serialize_some(Self, T) -> Unit raise SerError
 pub fn ValueSerializer::serialize_str_bytes(Self, BytesView) -> Unit raise SerError
 pub fn ValueSerializer::serialize_string(Self, String) -> Unit raise SerError
-pub fn ValueSerializer::serialize_struct_begin(Self, String, Int) -> Unit raise SerError
+pub fn ValueSerializer::serialize_struct_begin(Self, String, Int32) -> Unit raise SerError
 pub fn ValueSerializer::serialize_struct_end(Self) -> Unit raise SerError
-pub fn ValueSerializer::serialize_struct_variant_begin(Self, VariantInfo, Int) -> Unit raise SerError
+pub fn ValueSerializer::serialize_struct_variant_begin(Self, VariantInfo, Int32) -> Unit raise SerError
 pub fn ValueSerializer::serialize_struct_variant_end(Self) -> Unit raise SerError
 pub fn[T : Serialize] ValueSerializer::serialize_struct_variant_field(Self, String, T) -> Unit raise SerError
-pub fn ValueSerializer::serialize_tuple_begin(Self, Int) -> Unit raise SerError
+pub fn ValueSerializer::serialize_tuple_begin(Self, Int32) -> Unit raise SerError
 pub fn[T : Serialize] ValueSerializer::serialize_tuple_element(Self, T) -> Unit raise SerError
 pub fn ValueSerializer::serialize_tuple_end(Self) -> Unit raise SerError
-pub fn ValueSerializer::serialize_tuple_struct_begin(Self, String, Int) -> Unit raise SerError
+pub fn ValueSerializer::serialize_tuple_struct_begin(Self, String, Int32) -> Unit raise SerError
 pub fn ValueSerializer::serialize_tuple_struct_end(Self) -> Unit raise SerError
 pub fn[T : Serialize] ValueSerializer::serialize_tuple_struct_field(Self, T) -> Unit raise SerError
-pub fn ValueSerializer::serialize_tuple_variant_begin(Self, VariantInfo, Int) -> Unit raise SerError
+pub fn ValueSerializer::serialize_tuple_variant_begin(Self, VariantInfo, Int32) -> Unit raise SerError
 pub fn[T : Serialize] ValueSerializer::serialize_tuple_variant_element(Self, T) -> Unit raise SerError
 pub fn ValueSerializer::serialize_tuple_variant_end(Self) -> Unit raise SerError
-pub fn ValueSerializer::serialize_uint(Self, UInt) -> Unit raise SerError
+pub fn ValueSerializer::serialize_uint(Self, UInt32) -> Unit raise SerError
 pub fn ValueSerializer::serialize_uint16(Self, UInt16) -> Unit raise SerError
 pub fn ValueSerializer::serialize_uint64(Self, UInt64) -> Unit raise SerError
 pub fn ValueSerializer::serialize_unit(Self) -> Unit raise SerError
@@ -158,7 +158,7 @@ pub impl Serializer for ValueSerializer
 
 pub(all) struct VariantInfo {
   enum_name : String
-  index : Int
+  index : Int32
   name : String
 }
 
@@ -172,10 +172,10 @@ pub impl Deserialize for Unit
 pub impl Deserialize for Bool
 pub impl Deserialize for Byte
 pub impl Deserialize for Char
-pub impl Deserialize for Int
+pub impl Deserialize for Int32
 pub impl Deserialize for Int16
 pub impl Deserialize for Int64
-pub impl Deserialize for UInt
+pub impl Deserialize for UInt32
 pub impl Deserialize for UInt16
 pub impl Deserialize for UInt64
 pub impl Deserialize for Float
@@ -196,8 +196,8 @@ pub(open) trait Deserializer {
   fn deserialize_byte(Self) -> Byte raise DeError
   fn deserialize_int16(Self) -> Int16 raise DeError
   fn deserialize_uint16(Self) -> UInt16 raise DeError
-  fn deserialize_int(Self) -> Int raise DeError
-  fn deserialize_uint(Self) -> UInt raise DeError
+  fn deserialize_int(Self) -> Int32 raise DeError
+  fn deserialize_uint(Self) -> UInt32 raise DeError
   fn deserialize_int64(Self) -> Int64 raise DeError
   fn deserialize_uint64(Self) -> UInt64 raise DeError
   fn deserialize_float(Self) -> Float raise DeError
@@ -209,13 +209,13 @@ pub(open) trait Deserializer {
   fn[T : Deserialize] deserialize_option(Self) -> T? raise DeError
   fn deserialize_unit_struct(Self, String) -> Unit raise DeError = _
   fn[T : Deserialize] deserialize_newtype_struct(Self, String) -> T raise DeError = _
-  fn deserialize_seq_begin(Self) -> Int? raise DeError
+  fn deserialize_seq_begin(Self) -> Int32? raise DeError
   fn[T : Deserialize] deserialize_seq_next(Self) -> T? raise DeError
-  fn deserialize_tuple_begin(Self, Int) -> Unit raise DeError
+  fn deserialize_tuple_begin(Self, Int32) -> Unit raise DeError
   fn[T : Deserialize] deserialize_tuple_next(Self) -> T raise DeError
   fn deserialize_tuple_end(Self) -> Unit raise DeError
-  fn deserialize_tuple_struct_begin(Self, String, Int) -> Unit raise DeError = _
-  fn deserialize_map_begin(Self) -> Int? raise DeError
+  fn deserialize_tuple_struct_begin(Self, String, Int32) -> Unit raise DeError = _
+  fn deserialize_map_begin(Self) -> Int32? raise DeError
   fn[K : Deserialize] deserialize_map_next_key(Self) -> K? raise DeError
   fn[V : Deserialize] deserialize_map_value(Self) -> V raise DeError
   fn deserialize_struct_begin(Self, String, ArrayView[String]) -> Unit raise DeError
@@ -223,7 +223,7 @@ pub(open) trait Deserializer {
   fn deserialize_field_name(Self) -> String? raise DeError
   fn[T : Deserialize] deserialize_field_value(Self) -> T raise DeError
   fn skip_value(Self) -> Unit raise DeError
-  fn deserialize_enum_begin(Self, String, ArrayView[String]) -> Int raise DeError
+  fn deserialize_enum_begin(Self, String, ArrayView[String]) -> Int32 raise DeError
   fn deserialize_unit_variant(Self) -> Unit raise DeError
   fn[T : Deserialize] deserialize_newtype_variant(Self) -> T raise DeError
   fn deserialize_enum_end(Self) -> Unit raise DeError = _
@@ -232,8 +232,8 @@ pub(open) trait Deserializer {
 }
 
 pub(open) trait FieldIdentifier {
-  fn from_index(Int) -> Self
-  fn from_bytes(BytesView, Int) -> Self
+  fn from_index(Int32) -> Self
+  fn from_bytes(BytesView, Int32) -> Self
   fn from_string(String) -> Self
   fn name(Self) -> String?
 }
@@ -245,10 +245,10 @@ pub impl Serialize for Unit
 pub impl Serialize for Bool
 pub impl Serialize for Byte
 pub impl Serialize for Char
-pub impl Serialize for Int
+pub impl Serialize for Int32
 pub impl Serialize for Int16
 pub impl Serialize for Int64
-pub impl Serialize for UInt
+pub impl Serialize for UInt32
 pub impl Serialize for UInt16
 pub impl Serialize for UInt64
 pub impl Serialize for Float
@@ -268,8 +268,8 @@ pub(open) trait Serializer {
   fn serialize_byte(Self, Byte) -> Unit raise SerError
   fn serialize_int16(Self, Int16) -> Unit raise SerError
   fn serialize_uint16(Self, UInt16) -> Unit raise SerError
-  fn serialize_int(Self, Int) -> Unit raise SerError
-  fn serialize_uint(Self, UInt) -> Unit raise SerError
+  fn serialize_int(Self, Int32) -> Unit raise SerError
+  fn serialize_uint(Self, UInt32) -> Unit raise SerError
   fn serialize_int64(Self, Int64) -> Unit raise SerError
   fn serialize_uint64(Self, UInt64) -> Unit raise SerError
   fn serialize_float(Self, Float) -> Unit raise SerError
@@ -284,26 +284,26 @@ pub(open) trait Serializer {
   fn[T : Serialize] serialize_newtype_struct(Self, String, T) -> Unit raise SerError = _
   fn serialize_unit_variant(Self, VariantInfo) -> Unit raise SerError
   fn[T : Serialize] serialize_newtype_variant(Self, VariantInfo, T) -> Unit raise SerError
-  fn serialize_seq_begin(Self, Int?) -> Unit raise SerError
+  fn serialize_seq_begin(Self, Int32?) -> Unit raise SerError
   fn[T : Serialize] serialize_seq_element(Self, T) -> Unit raise SerError
   fn serialize_seq_end(Self) -> Unit raise SerError
-  fn serialize_tuple_begin(Self, Int) -> Unit raise SerError = _
+  fn serialize_tuple_begin(Self, Int32) -> Unit raise SerError = _
   fn[T : Serialize] serialize_tuple_element(Self, T) -> Unit raise SerError = _
   fn serialize_tuple_end(Self) -> Unit raise SerError = _
-  fn serialize_tuple_struct_begin(Self, String, Int) -> Unit raise SerError = _
+  fn serialize_tuple_struct_begin(Self, String, Int32) -> Unit raise SerError = _
   fn[T : Serialize] serialize_tuple_struct_field(Self, T) -> Unit raise SerError = _
   fn serialize_tuple_struct_end(Self) -> Unit raise SerError = _
-  fn serialize_map_begin(Self, Int?) -> Unit raise SerError
+  fn serialize_map_begin(Self, Int32?) -> Unit raise SerError
   fn[K : Serialize] serialize_map_key(Self, K) -> Unit raise SerError
   fn[V : Serialize] serialize_map_value(Self, V) -> Unit raise SerError
   fn serialize_map_end(Self) -> Unit raise SerError
-  fn serialize_struct_begin(Self, String, Int) -> Unit raise SerError
+  fn serialize_struct_begin(Self, String, Int32) -> Unit raise SerError
   fn[T : Serialize] serialize_field(Self, String, T) -> Unit raise SerError
   fn serialize_struct_end(Self) -> Unit raise SerError
-  fn serialize_tuple_variant_begin(Self, VariantInfo, Int) -> Unit raise SerError
+  fn serialize_tuple_variant_begin(Self, VariantInfo, Int32) -> Unit raise SerError
   fn[T : Serialize] serialize_tuple_variant_element(Self, T) -> Unit raise SerError = _
   fn serialize_tuple_variant_end(Self) -> Unit raise SerError
-  fn serialize_struct_variant_begin(Self, VariantInfo, Int) -> Unit raise SerError
+  fn serialize_struct_variant_begin(Self, VariantInfo, Int32) -> Unit raise SerError
   fn[T : Serialize] serialize_struct_variant_field(Self, String, T) -> Unit raise SerError = _
   fn serialize_struct_variant_end(Self) -> Unit raise SerError
   fn is_human_readable(Self) -> Bool = _

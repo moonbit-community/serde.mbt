@@ -28,7 +28,7 @@ struct TomlDeserializer {
 pub fn TomlDeserializer::new(
   input : Bytes,
 ) -> TomlDeserializer raise @data.DeError {
-  { inner: @data.ValueDeserializer::new(parse(input)) }
+  { inner: @data.ValueDeserializer::new(parse(input)), }
 }
 
 ///|

@@ -26,7 +26,7 @@ fn Seed::next(self : Seed) -> UInt64 {
 }
 
 ///|
-fn Seed::below(self : Seed, bound : Int) -> Int {
+fn Seed::below(self : Seed, bound : Int32) -> Int32 {
   (self.next() % bound.to_uint64()).to_int()
 }
 
@@ -34,7 +34,7 @@ fn Seed::below(self : Seed, bound : Int) -> Int {
 const LETTERS : String = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 ///|
-fn Seed::word(self : Seed, len : Int) -> String {
+fn Seed::word(self : Seed, len : Int32) -> String {
   let out = StringBuilder::new()
   for _ in 0..<len {
     out.write_char(LETTERS.unsafe_get(self.below(52)).to_char().unwrap())
@@ -46,8 +46,8 @@ fn Seed::word(self : Seed, len : Int) -> String {
 /// Coordinate pairs with 17-significant-digit doubles: the shape of the
 /// `json-serde` benchmark's canada.json, and the hard case for float parsing.
 /// Roughly 90% numeric characters.
-fn corpus_numbers(pairs : Int) -> Bytes {
-  let seed = Seed::{ state: 0x9E3779B97F4A7C15UL }
+fn corpus_numbers(pairs : Int32) -> Bytes {
+  let seed = Seed::{ state: 0x9E3779B97F4A7C15UL, }
   let out = StringBuilder::new()
   out.write_string("{\"type\":\"numbers\",\"coordinates\":[")
   for i in 0..<pairs {
@@ -65,8 +65,8 @@ fn corpus_numbers(pairs : Int) -> Bytes {
 ///|
 /// Many small objects with short ASCII keys: the shape where identifier
 /// handling dominates and string values barely register.
-fn corpus_keys(rows : Int) -> Bytes {
-  let seed = Seed::{ state: 0x123456789ABCDEFUL }
+fn corpus_keys(rows : Int32) -> Bytes {
+  let seed = Seed::{ state: 0x123456789ABCDEFUL, }
   let out = StringBuilder::new()
   out.write_string("{\"type\":\"keys\",\"rows\":[")
   for i in 0..<rows {
@@ -85,8 +85,8 @@ fn corpus_keys(rows : Int) -> Bytes {
 /// Long string values: the shape that decides whether a vectorised scan pays,
 /// since the measured crossover for SIMD is around sixteen bytes and object
 /// keys sit well below it.
-fn corpus_text(rows : Int, len : Int) -> Bytes {
-  let seed = Seed::{ state: 0xFEEDFACECAFEBEEFUL }
+fn corpus_text(rows : Int32, len : Int32) -> Bytes {
+  let seed = Seed::{ state: 0xFEEDFACECAFEBEEFUL, }
   let out = StringBuilder::new()
   out.write_string("{\"type\":\"text\",\"rows\":[")
   for i in 0..<rows {
@@ -104,8 +104,8 @@ fn corpus_text(rows : Int, len : Int) -> Bytes {
 ///|
 /// Strings needing frequent escapes: the path that can take no fast route, so
 /// it catches a change that speeds up the common case by slowing this one.
-fn corpus_escapes(rows : Int) -> Bytes {
-  let seed = Seed::{ state: 0x0BADC0DEDEADBEEFUL }
+fn corpus_escapes(rows : Int32) -> Bytes {
+  let seed = Seed::{ state: 0x0BADC0DEDEADBEEFUL, }
   let out = StringBuilder::new()
   out.write_string("{\"type\":\"escapes\",\"rows\":[")
   for i in 0..<rows {

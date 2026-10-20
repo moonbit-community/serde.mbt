@@ -30,11 +30,11 @@ fn eisel_umul128(a : UInt64, b : UInt64) -> EiselProduct {
   let y = a_hi * b_lo + (x >> 32)
   let z = a_lo * b_hi + (y & 0xffffffffUL)
   let hi = a_hi * b_hi + (y >> 32) + (z >> 32)
-  { lo: a * b, hi }
+  { lo: a * b, hi, }
 }
 
 ///|
-fn eisel_mul_log2_10(exponent : Int) -> Int {
+fn eisel_mul_log2_10(exponent : Int32) -> Int32 {
   // floor(exponent * log2(10)) for -500 <= exponent <= 500.
   (exponent * 108853) >> 15
 }

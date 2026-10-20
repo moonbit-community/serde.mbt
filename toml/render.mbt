@@ -153,7 +153,7 @@ fn is_bare_key(key : BytesView) -> Bool {
 }
 
 ///|
-fn hex_digit(v : Int) -> Byte {
+fn hex_digit(v : Int32) -> Byte {
   if v < 10 {
     (0x30 + v).to_byte()
   } else {

@@ -7,7 +7,7 @@
 pub(all) enum Path {
   Root
   Key(Path, String)
-  Index(Path, Int)
+  Index(Path, Int32)
 } derive(Eq, Debug)
 
 ///|
@@ -18,7 +18,7 @@ pub fn Path::key(self : Path, name : String) -> Path {
 
 ///|
 /// Extends the path with a sequence index.
-pub fn Path::index(self : Path, i : Int) -> Path {
+pub fn Path::index(self : Path, i : Int32) -> Path {
   Index(self, i)
 }
 
@@ -76,7 +76,7 @@ pub(all) suberror DeError {
   /// that does not fit the target width.
   InvalidValue(path~ : Path, expected~ : String, found~ : String)
   /// A sequence or tuple had the wrong number of elements.
-  InvalidLength(path~ : Path, expected~ : Int, found~ : Int)
+  InvalidLength(path~ : Path, expected~ : Int32, found~ : Int32)
   /// A struct field was absent and had no default.
   MissingField(path~ : Path, field~ : String)
   /// A struct field was present that the target type does not know about.

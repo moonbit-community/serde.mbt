@@ -52,7 +52,7 @@ struct BinSerializer {
 
 ///|
 fn BinSerializer::new() -> BinSerializer {
-  { out: Buffer(size_hint=256) }
+  { out: Buffer(size_hint=256), }
 }
 
 ///|
@@ -61,13 +61,13 @@ fn BinSerializer::finish(self : BinSerializer) -> Bytes {
 }
 
 ///|
-fn BinSerializer::u16(self : BinSerializer, v : Int) -> Unit {
+fn BinSerializer::u16(self : BinSerializer, v : Int32) -> Unit {
   self.out.write_byte((v & 0xFF).to_byte())
   self.out.write_byte(((v >> 8) & 0xFF).to_byte())
 }
 
 ///|
-fn BinSerializer::u32(self : BinSerializer, v : UInt) -> Unit {
+fn BinSerializer::u32(self : BinSerializer, v : UInt32) -> Unit {
   self.out.write_byte((v & 0xFF).to_byte())
   self.out.write_byte(((v >> 8) & 0xFF).to_byte())
   self.out.write_byte(((v >> 16) & 0xFF).to_byte())
@@ -97,7 +97,7 @@ fn BinSerializer::blob(self : BinSerializer, payload : BytesView) -> Unit {
 /// so this never fires in practice; serde has the identical hole.
 fn BinSerializer::count(
   self : BinSerializer,
-  hint : Int?,
+  hint : Int32?,
 ) -> Unit raise @data.SerError {
   match hint {
     Some(n) => self.u32(n.reinterpret_as_uint())
@@ -362,7 +362,7 @@ impl @data.Serializer for BinSerializer with fn is_human_readable(_self) {
 /// the type's private semantic field enum.
 priv struct FieldCursor {
   names : ArrayView[String]
-  mut next : Int
+  mut next : Int32
 }
 
 ///|
@@ -373,14 +373,14 @@ priv struct FieldCursor {
 /// have to answer "is there more?" from a count rather than from a lookahead.
 struct BinDeserializer {
   input : Bytes
-  mut pos : Int
-  counts : Array[Int]
+  mut pos : Int32
+  counts : Array[Int32]
   fields : Array[FieldCursor]
 }
 
 ///|
 fn BinDeserializer::new(input : Bytes) -> BinDeserializer {
-  { input, pos: 0, counts: [], fields: [] }
+  { input, pos: 0, counts: [], fields: [], }
 }
 
 ///|
@@ -401,14 +401,14 @@ fn BinDeserializer::byte(self : BinDeserializer) -> Byte raise @data.DeError {
 }
 
 ///|
-fn BinDeserializer::u16(self : BinDeserializer) -> Int raise @data.DeError {
+fn BinDeserializer::u16(self : BinDeserializer) -> Int32 raise @data.DeError {
   let a = self.byte().to_int()
   let b = self.byte().to_int()
   a | (b << 8)
 }
 
 ///|
-fn BinDeserializer::u32(self : BinDeserializer) -> UInt raise @data.DeError {
+fn BinDeserializer::u32(self : BinDeserializer) -> UInt32 raise @data.DeError {
   let a = self.byte().to_uint()
   let b = self.byte().to_uint()
   let c = self.byte().to_uint()
@@ -429,7 +429,7 @@ fn BinDeserializer::u64(self : BinDeserializer) -> UInt64 raise @data.DeError {
 /// A format that can do this should: it turns a corrupt length into an error at
 /// the point of reading rather than an allocation. `cautious_capacity` in
 /// `impls.mbt` is the backstop for formats that cannot.
-fn BinDeserializer::count(self : BinDeserializer) -> Int raise @data.DeError {
+fn BinDeserializer::count(self : BinDeserializer) -> Int32 raise @data.DeError {
   let n = self.u32().reinterpret_as_int()
   let left = self.input.length() - self.pos
   if n < 0 || n > left {
@@ -533,7 +533,7 @@ impl @data.Deserializer for BinDeserializer with fn deserialize_double(self) {
 ///|
 impl @data.Deserializer for BinDeserializer with fn deserialize_char(self) {
   let code = self.u32().reinterpret_as_int()
-  match Int::to_char(code) {
+  match Int32::to_char(code) {
     Some(c) => c
     None =>
       raise @data.InvalidValue(
@@ -662,13 +662,13 @@ impl @data.Deserializer for BinDeserializer with fn deserialize_struct_begin(
   _name,
   fields,
 ) {
-  self.fields.push({ names: fields, next: 0 })
+  self.fields.push({ names: fields, next: 0, })
 }
 
 ///|
 fn BinDeserializer::next_field_index(
   self : BinDeserializer,
-) -> Int? raise @data.DeError {
+) -> Int32? raise @data.DeError {
   let top = self.fields.length() - 1
   guard top >= 0 else {
     raise @data.DeCustom(path=Root, message="bin: field outside a struct")
@@ -801,7 +801,7 @@ fn[T : @data.Deserialize] bin_from_bytes(
 /// The claim the whole file rests on: a struct survives a round trip through a
 /// format that never wrote its field names.
 test "a struct round-trips with no field names on the wire" {
-  let p = Point::{ x: 7, y: -3, label: Some("origin") }
+  let p = Point::{ x: 7, y: -3, label: Some("origin"), }
   let bytes = bin_to_bytes(p)
   assert_eq(bin_from_bytes(bytes), p)
   // `x` and `y` are four bytes each, `label` is a present-tag plus a length
@@ -812,7 +812,7 @@ test "a struct round-trips with no field names on the wire" {
 
 ///|
 test "a struct with no label is shorter by exactly the absent payload" {
-  let p = Point::{ x: 1, y: 2, label: None }
+  let p = Point::{ x: 1, y: 2, label: None, }
   assert_eq(bin_to_bytes(p).length(), 4 + 4 + 1)
   assert_eq(bin_from_bytes(bin_to_bytes(p)), p)
 }
@@ -882,7 +882,7 @@ test "the format declares itself unreadable by people" {
 /// check, but a format that can, should.
 test "a length prefix larger than the input is refused" {
   let hostile : Bytes = b"\xff\xff\xff\x7f\x01\x02"
-  try (bin_from_bytes(hostile) : Array[Int]) catch {
+  try (bin_from_bytes(hostile) : Array[Int32]) catch {
     e =>
       inspect(
         e,
@@ -898,7 +898,7 @@ test "a length prefix larger than the input is refused" {
 ///|
 test "trailing input is an error, as it is for JSON" {
   let bytes = b"\x2a\x00\x00\x00\x99"
-  try (bin_from_bytes(bytes) : Int) catch {
+  try (bin_from_bytes(bytes) : Int32) catch {
     e =>
       inspect(
         e,

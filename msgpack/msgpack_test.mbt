@@ -18,7 +18,7 @@ fn hex(bytes : Bytes) -> String {
 
 ///|
 /// The first `n` bytes, in hex. Used where only the marker matters.
-fn first(bytes : Bytes, n : Int) -> String {
+fn first(bytes : Bytes, n : Int32) -> String {
   hex(Bytes::from_iter(bytes.iter().take(n)))
 }
 
@@ -26,7 +26,7 @@ fn first(bytes : Bytes, n : Int) -> String {
 fn unhex(text : String) -> Bytes {
   let chars = text.to_array()
   let out = Array::new(capacity=chars.length() / 2)
-  fn nibble(c : Char) -> Int {
+  fn nibble(c : Char) -> Int32 {
     let v = c.to_int()
     if v >= 0x30 && v <= 0x39 {
       v - 0x30
@@ -113,17 +113,17 @@ test "bytes are a bin, not an array of numbers" {
 
 ///|
 test "arrays and maps use the fix forms where they fit" {
-  inspect(hex(@msgpack.to_bytes(([] : Array[Int]))), content="90")
+  inspect(hex(@msgpack.to_bytes(([] : Array[Int32]))), content="90")
   inspect(hex(@msgpack.to_bytes([1, 2, 3])), content="93010203")
-  let m : Map[Int, String] = { 1: "a" }
+  let m : Map[Int32, String] = { 1: "a" }
   inspect(hex(@msgpack.to_bytes(m)), content="8101a161")
 }
 
 ///|
 /// The other thing JSON cannot do.
 test "map keys need not be strings" {
-  let m : Map[Int, String] = { 1: "a", 2: "b" }
-  assert_eq((@msgpack.from_bytes(@msgpack.to_bytes(m)) : Map[Int, String]), m)
+  let m : Map[Int32, String] = { 1: "a", 2: "b" }
+  assert_eq((@msgpack.from_bytes(@msgpack.to_bytes(m)) : Map[Int32, String]), m)
 }
 
 // ---- decoding ----
@@ -131,21 +131,21 @@ test "map keys need not be strings" {
 ///|
 test "the wider forms decode to the values they denote" {
   // The same 1 written five different ways, as five encoders might.
-  assert_eq((@msgpack.from_bytes(unhex("01")) : Int), 1)
-  assert_eq((@msgpack.from_bytes(unhex("cc01")) : Int), 1)
-  assert_eq((@msgpack.from_bytes(unhex("cd0001")) : Int), 1)
-  assert_eq((@msgpack.from_bytes(unhex("ce00000001")) : Int), 1)
-  assert_eq((@msgpack.from_bytes(unhex("d001")) : Int), 1)
-  assert_eq((@msgpack.from_bytes(unhex("d10001")) : Int), 1)
+  assert_eq((@msgpack.from_bytes(unhex("01")) : Int32), 1)
+  assert_eq((@msgpack.from_bytes(unhex("cc01")) : Int32), 1)
+  assert_eq((@msgpack.from_bytes(unhex("cd0001")) : Int32), 1)
+  assert_eq((@msgpack.from_bytes(unhex("ce00000001")) : Int32), 1)
+  assert_eq((@msgpack.from_bytes(unhex("d001")) : Int32), 1)
+  assert_eq((@msgpack.from_bytes(unhex("d10001")) : Int32), 1)
 }
 
 ///|
 test "signed forms sign-extend correctly" {
-  assert_eq((@msgpack.from_bytes(unhex("d0ff")) : Int), -1)
-  assert_eq((@msgpack.from_bytes(unhex("d1ffff")) : Int), -1)
-  assert_eq((@msgpack.from_bytes(unhex("d2ffffffff")) : Int), -1)
+  assert_eq((@msgpack.from_bytes(unhex("d0ff")) : Int32), -1)
+  assert_eq((@msgpack.from_bytes(unhex("d1ffff")) : Int32), -1)
+  assert_eq((@msgpack.from_bytes(unhex("d2ffffffff")) : Int32), -1)
   assert_eq((@msgpack.from_bytes(unhex("d3ffffffffffffffff")) : Int64), -1L)
-  assert_eq((@msgpack.from_bytes(unhex("d180ff")) : Int), -32513)
+  assert_eq((@msgpack.from_bytes(unhex("d180ff")) : Int32), -32513)
 }
 
 ///|
@@ -209,7 +209,7 @@ test "a length longer than the input is refused rather than allocated" {
 
 ///|
 test "trailing input is refused" {
-  try (@msgpack.from_bytes(unhex("0101")) : Int) catch {
+  try (@msgpack.from_bytes(unhex("0101")) : Int32) catch {
     e =>
       inspect(
         e,
@@ -226,8 +226,8 @@ test "trailing input is refused" {
 
 ///|
 pub(all) struct Point {
-  x : Int
-  y : Int
+  x : Int32
+  y : Int32
   label : String?
 } derive(Eq, Debug)
 
@@ -246,8 +246,8 @@ pub impl @data.Serialize for Point with fn serialize(self, s) {
 ///|
 pub impl @data.Deserialize for Point with fn deserialize(d) {
   d.deserialize_struct_begin("Point", point_fields)
-  let mut x : Int? = None
-  let mut y : Int? = None
+  let mut x : Int32? = None
+  let mut y : Int32? = None
   let mut label : String? = None
   while d.deserialize_field_name() is Some(field) {
     match field {
@@ -269,25 +269,25 @@ pub(all) enum Shape {
   Empty
   Circle(Double)
   Rect(Double, Double)
-  Tagged(name~ : String, size~ : Int)
+  Tagged(name~ : String, size~ : Int32)
 } derive(Eq, Debug)
 
 ///|
 pub impl @data.Serialize for Shape with fn serialize(self, s) {
   let enum_name = "Shape"
   match self {
-    Empty => s.serialize_unit_variant({ enum_name, index: 0, name: "Empty" })
+    Empty => s.serialize_unit_variant({ enum_name, index: 0, name: "Empty", })
     Circle(r) =>
-      s.serialize_newtype_variant({ enum_name, index: 1, name: "Circle" }, r)
+      s.serialize_newtype_variant({ enum_name, index: 1, name: "Circle", }, r)
     Rect(w, h) => {
-      s.serialize_tuple_variant_begin({ enum_name, index: 2, name: "Rect" }, 2)
+      s.serialize_tuple_variant_begin({ enum_name, index: 2, name: "Rect", }, 2)
       s.serialize_tuple_variant_element(w)
       s.serialize_tuple_variant_element(h)
       s.serialize_tuple_variant_end()
     }
     Tagged(name~, size~) => {
       s.serialize_struct_variant_begin(
-        { enum_name, index: 3, name: "Tagged" },
+        { enum_name, index: 3, name: "Tagged", },
         2,
       )
       s.serialize_struct_variant_field("name", name)
@@ -316,7 +316,7 @@ pub impl @data.Deserialize for Shape with fn deserialize(d) {
     3 => {
       d.deserialize_struct_begin("Tagged", ["name", "size"])
       let mut name : String? = None
-      let mut size : Int? = None
+      let mut size : Int32? = None
       while d.deserialize_field_name() is Some(f) {
         match f {
           "name" => name = Some(d.deserialize_field_value())
@@ -342,10 +342,10 @@ pub impl @data.Deserialize for Shape with fn deserialize(d) {
 
 ///|
 test "structs are maps with string keys" {
-  let p = Point::{ x: 1, y: 2, label: None }
+  let p = Point::{ x: 1, y: 2, label: None, }
   inspect(hex(@msgpack.to_bytes(p)), content="83a17801a17902a56c6162656cc0")
   assert_eq((@msgpack.from_bytes(@msgpack.to_bytes(p)) : Point), p)
-  let q = Point::{ x: -1, y: 300, label: Some("hi") }
+  let q = Point::{ x: -1, y: 300, label: Some("hi"), }
   assert_eq((@msgpack.from_bytes(@msgpack.to_bytes(q)) : Point), q)
 }
 

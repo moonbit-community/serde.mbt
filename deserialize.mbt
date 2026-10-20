@@ -34,8 +34,8 @@ pub(open) trait Deserializer {
   fn deserialize_byte(Self) -> Byte raise DeError
   fn deserialize_int16(Self) -> Int16 raise DeError
   fn deserialize_uint16(Self) -> UInt16 raise DeError
-  fn deserialize_int(Self) -> Int raise DeError
-  fn deserialize_uint(Self) -> UInt raise DeError
+  fn deserialize_int(Self) -> Int32 raise DeError
+  fn deserialize_uint(Self) -> UInt32 raise DeError
   fn deserialize_int64(Self) -> Int64 raise DeError
   fn deserialize_uint64(Self) -> UInt64 raise DeError
   fn deserialize_float(Self) -> Float raise DeError
@@ -59,7 +59,7 @@ pub(open) trait Deserializer {
   fn[T : Deserialize] deserialize_newtype_struct(Self, String) -> T raise DeError = _
 
   // ---- sequences: `None` from `next` terminates ----
-  fn deserialize_seq_begin(Self) -> Int? raise DeError
+  fn deserialize_seq_begin(Self) -> Int32? raise DeError
   fn[T : Deserialize] deserialize_seq_next(Self) -> T? raise DeError
 
   // ---- tuples: length known, so reads are unconditional ----
@@ -74,13 +74,13 @@ pub(open) trait Deserializer {
   // opposite of what a default is for. Writing is not symmetric here: a
   // serializer that spells tuples as sequences is spelling them correctly, so
   // `serialize_tuple_*` keeps its defaults.
-  fn deserialize_tuple_begin(Self, Int) -> Unit raise DeError
+  fn deserialize_tuple_begin(Self, Int32) -> Unit raise DeError
   fn[T : Deserialize] deserialize_tuple_next(Self) -> T raise DeError
   fn deserialize_tuple_end(Self) -> Unit raise DeError
-  fn deserialize_tuple_struct_begin(Self, String, Int) -> Unit raise DeError = _
+  fn deserialize_tuple_struct_begin(Self, String, Int32) -> Unit raise DeError = _
 
   // ---- maps ----
-  fn deserialize_map_begin(Self) -> Int? raise DeError
+  fn deserialize_map_begin(Self) -> Int32? raise DeError
   fn[K : Deserialize] deserialize_map_next_key(Self) -> K? raise DeError
   fn[V : Deserialize] deserialize_map_value(Self) -> V raise DeError
 
@@ -126,7 +126,7 @@ pub(open) trait Deserializer {
   /// lifted to a static: in release builds every call is handed the same
   /// array, where an `Array` would be rebuilt on each, since a mutable one can
   /// never be shared.
-  fn deserialize_enum_begin(Self, String, ArrayView[String]) -> Int raise DeError
+  fn deserialize_enum_begin(Self, String, ArrayView[String]) -> Int32 raise DeError
   fn deserialize_unit_variant(Self) -> Unit raise DeError
   fn[T : Deserialize] deserialize_newtype_variant(Self) -> T raise DeError
   /// Leaves an enum, consuming whatever wrapper the tagging scheme used.

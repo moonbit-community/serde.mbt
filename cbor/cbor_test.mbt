@@ -21,7 +21,7 @@ fn hex(bytes : Bytes) -> String {
 fn unhex(text : String) -> Bytes {
   let chars = text.to_array()
   let out = Array::new(capacity=chars.length() / 2)
-  fn nibble(c : Char) -> Int {
+  fn nibble(c : Char) -> Int32 {
     let v = c.to_int()
     if v >= 0x30 && v <= 0x39 {
       v - 0x30
@@ -107,7 +107,7 @@ test "bytes stay bytes rather than becoming an array of numbers" {
 
 ///|
 test "arrays and maps encode as the RFC's examples" {
-  inspect(hex(@cbor.to_bytes(([] : Array[Int]))), content="80")
+  inspect(hex(@cbor.to_bytes(([] : Array[Int32]))), content="80")
   inspect(hex(@cbor.to_bytes([1, 2, 3])), content="83010203")
   inspect(
     hex(
@@ -123,8 +123,8 @@ test "arrays and maps encode as the RFC's examples" {
 ///|
 /// The other thing JSON cannot do: a map key that is not a string.
 test "map keys need not be strings" {
-  let m : Map[Int, String] = { 1: "a", 2: "b" }
-  let round : Map[Int, String] = @cbor.from_bytes(@cbor.to_bytes(m))
+  let m : Map[Int32, String] = { 1: "a", 2: "b" }
+  let round : Map[Int32, String] = @cbor.from_bytes(@cbor.to_bytes(m))
   assert_eq(round, m)
   inspect(hex(@cbor.to_bytes(m)), content="a2016161026162")
 }
@@ -133,12 +133,12 @@ test "map keys need not be strings" {
 
 ///|
 test "the RFC's encodings decode to the values they denote" {
-  assert_eq((@cbor.from_bytes(unhex("00")) : Int), 0)
-  assert_eq((@cbor.from_bytes(unhex("1903e8")) : Int), 1000)
-  assert_eq((@cbor.from_bytes(unhex("3903e7")) : Int), -1000)
+  assert_eq((@cbor.from_bytes(unhex("00")) : Int32), 0)
+  assert_eq((@cbor.from_bytes(unhex("1903e8")) : Int32), 1000)
+  assert_eq((@cbor.from_bytes(unhex("3903e7")) : Int32), -1000)
   assert_eq((@cbor.from_bytes(unhex("f5")) : Bool), true)
   assert_eq((@cbor.from_bytes(unhex("6449455446")) : String), "IETF")
-  assert_eq((@cbor.from_bytes(unhex("83010203")) : Array[Int]), [1, 2, 3])
+  assert_eq((@cbor.from_bytes(unhex("83010203")) : Array[Int32]), [1, 2, 3])
   assert_eq((@cbor.from_bytes(unhex("fb3ff8000000000000")) : Double), 1.5)
 }
 
@@ -172,7 +172,7 @@ test "indefinite-length containers decode" {
     (@cbor.from_bytes(unhex("9f018202039f0405ffff")) : @data.Value),
     Seq([UInt(1), Seq([UInt(2), UInt(3)]), Seq([UInt(4), UInt(5)])]),
   )
-  assert_eq((@cbor.from_bytes(unhex("9f010203ff")) : Array[Int]), [1, 2, 3])
+  assert_eq((@cbor.from_bytes(unhex("9f010203ff")) : Array[Int32]), [1, 2, 3])
   assert_eq(
     (
       @cbor.from_bytes(unhex("bf61610161628202 03ff".replace(old=" ", new=""))) :
@@ -200,7 +200,7 @@ test "indefinite-length strings decode as one string" {
 /// has no case for a tag, and refusing them would reject ordinary documents.
 test "semantic tags are stepped over" {
   // Tag 1 (epoch time) wrapping 1363896240.
-  assert_eq((@cbor.from_bytes(unhex("c11a514b67b0")) : Int), 1363896240)
+  assert_eq((@cbor.from_bytes(unhex("c11a514b67b0")) : Int32), 1363896240)
   // Tag 0 (date string) wrapping text.
   assert_eq(
     (
@@ -214,8 +214,8 @@ test "semantic tags are stepped over" {
 
 ///|
 pub(all) struct Point {
-  x : Int
-  y : Int
+  x : Int32
+  y : Int32
   label : String?
 } derive(Eq, Debug)
 
@@ -234,8 +234,8 @@ pub impl @data.Serialize for Point with fn serialize(self, s) {
 ///|
 pub impl @data.Deserialize for Point with fn deserialize(d) {
   d.deserialize_struct_begin("Point", point_fields)
-  let mut x : Int? = None
-  let mut y : Int? = None
+  let mut x : Int32? = None
+  let mut y : Int32? = None
   let mut label : String? = None
   while d.deserialize_field_name() is Some(field) {
     match field {
@@ -257,25 +257,25 @@ pub(all) enum Shape {
   Empty
   Circle(Double)
   Rect(Double, Double)
-  Tagged(name~ : String, size~ : Int)
+  Tagged(name~ : String, size~ : Int32)
 } derive(Eq, Debug)
 
 ///|
 pub impl @data.Serialize for Shape with fn serialize(self, s) {
   let enum_name = "Shape"
   match self {
-    Empty => s.serialize_unit_variant({ enum_name, index: 0, name: "Empty" })
+    Empty => s.serialize_unit_variant({ enum_name, index: 0, name: "Empty", })
     Circle(r) =>
-      s.serialize_newtype_variant({ enum_name, index: 1, name: "Circle" }, r)
+      s.serialize_newtype_variant({ enum_name, index: 1, name: "Circle", }, r)
     Rect(w, h) => {
-      s.serialize_tuple_variant_begin({ enum_name, index: 2, name: "Rect" }, 2)
+      s.serialize_tuple_variant_begin({ enum_name, index: 2, name: "Rect", }, 2)
       s.serialize_tuple_variant_element(w)
       s.serialize_tuple_variant_element(h)
       s.serialize_tuple_variant_end()
     }
     Tagged(name~, size~) => {
       s.serialize_struct_variant_begin(
-        { enum_name, index: 3, name: "Tagged" },
+        { enum_name, index: 3, name: "Tagged", },
         2,
       )
       s.serialize_struct_variant_field("name", name)
@@ -304,7 +304,7 @@ pub impl @data.Deserialize for Shape with fn deserialize(d) {
     3 => {
       d.deserialize_struct_begin("Tagged", ["name", "size"])
       let mut name : String? = None
-      let mut size : Int? = None
+      let mut size : Int32? = None
       while d.deserialize_field_name() is Some(f) {
         match f {
           "name" => name = Some(d.deserialize_field_value())
@@ -330,10 +330,10 @@ pub impl @data.Deserialize for Shape with fn deserialize(d) {
 
 ///|
 test "structs are maps with text keys" {
-  let p = Point::{ x: 1, y: 2, label: None }
+  let p = Point::{ x: 1, y: 2, label: None, }
   inspect(hex(@cbor.to_bytes(p)), content="a3617801617902656c6162656cf6")
   assert_eq((@cbor.from_bytes(@cbor.to_bytes(p)) : Point), p)
-  let q = Point::{ x: -1, y: 300, label: Some("hi") }
+  let q = Point::{ x: -1, y: 300, label: Some("hi"), }
   assert_eq((@cbor.from_bytes(@cbor.to_bytes(q)) : Point), q)
 }
 
@@ -387,7 +387,7 @@ test "an unknown variant names the ones that exist" {
 ///|
 test "trailing input is refused" {
   let bytes = unhex("0101")
-  try (@cbor.from_bytes(bytes) : Int) catch {
+  try (@cbor.from_bytes(bytes) : Int32) catch {
     e =>
       inspect(
         e,

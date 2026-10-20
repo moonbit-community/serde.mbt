@@ -9,8 +9,8 @@
 /// One open array, map or struct.
 priv struct Scope {
   base : @data.Path
-  mut remaining : Int
-  mut count : Int
+  mut remaining : Int32
+  mut count : Int32
   /// The immutable field names the caller declared, empty for arrays and
   /// maps. Known keys reuse these canonical strings for paths.
   expected : ArrayView[String]
@@ -28,7 +28,7 @@ priv struct EnumScope {
 /// Reads MessagePack from bytes.
 struct MsgpackDeserializer {
   input : Bytes
-  mut pos : Int
+  mut pos : Int32
   mut path : @data.Path
   scopes : Array[Scope]
   enums : Array[EnumScope]
@@ -36,7 +36,7 @@ struct MsgpackDeserializer {
 
 ///|
 pub fn MsgpackDeserializer::new(input : Bytes) -> MsgpackDeserializer {
-  { input, pos: 0, path: @data.Root, scopes: [], enums: [] }
+  { input, pos: 0, path: @data.Root, scopes: [], enums: [], }
 }
 
 ///|
@@ -54,7 +54,7 @@ pub fn MsgpackDeserializer::finish(
 ///|
 fn MsgpackDeserializer::marker(
   self : MsgpackDeserializer,
-) -> Int raise @data.DeError {
+) -> Int32 raise @data.DeError {
   if self.pos >= self.input.length() {
     raise @data.Eof(path=self.path)
   }
@@ -66,7 +66,7 @@ fn MsgpackDeserializer::marker(
 ///|
 fn MsgpackDeserializer::peek(
   self : MsgpackDeserializer,
-) -> Int raise @data.DeError {
+) -> Int32 raise @data.DeError {
   if self.pos >= self.input.length() {
     raise @data.Eof(path=self.path)
   }
@@ -76,7 +76,7 @@ fn MsgpackDeserializer::peek(
 ///|
 fn MsgpackDeserializer::be(
   self : MsgpackDeserializer,
-  count : Int,
+  count : Int32,
 ) -> UInt64 raise @data.DeError {
   let mut acc = 0UL
   for _ in 0..<count {
@@ -90,7 +90,7 @@ fn MsgpackDeserializer::be(
 fn MsgpackDeserializer::bounded(
   self : MsgpackDeserializer,
   n : UInt64,
-) -> Int raise @data.DeError {
+) -> Int32 raise @data.DeError {
   let left = (self.input.length() - self.pos).to_int64().reinterpret_as_uint64()
   guard n <= left else {
     raise @data.DeCustom(
@@ -102,14 +102,17 @@ fn MsgpackDeserializer::bounded(
 }
 
 ///|
-fn MsgpackDeserializer::take(self : MsgpackDeserializer, n : Int) -> BytesView {
+fn MsgpackDeserializer::take(
+  self : MsgpackDeserializer,
+  n : Int32,
+) -> BytesView {
   let view = self.input[self.pos:self.pos + n]
   self.pos = self.pos + n
   view
 }
 
 ///|
-fn kind_name(marker : Int) -> String {
+fn kind_name(marker : Int32) -> String {
   if marker < 0x80 || marker >= 0xe0 {
     "integer"
   } else if marker < 0x90 {
@@ -137,7 +140,7 @@ fn kind_name(marker : Int) -> String {
 fn[T] MsgpackDeserializer::mismatch(
   self : MsgpackDeserializer,
   expected : String,
-  marker : Int,
+  marker : Int32,
 ) -> T raise @data.DeError {
   raise @data.InvalidType(path=self.path, expected~, found=kind_name(marker))
 }
@@ -180,7 +183,7 @@ fn MsgpackDeserializer::as_int64(
 
 ///|
 /// The low `bits` of `raw`, read as a two's-complement signed value.
-fn sign_extend(raw : UInt64, bits : Int) -> Int64 {
+fn sign_extend(raw : UInt64, bits : Int32) -> Int64 {
   let shift = 64 - bits
   (raw << shift).reinterpret_as_int64() >> shift
 }
@@ -246,7 +249,7 @@ fn MsgpackDeserializer::as_double(
 /// The length of a string header, whichever of the four forms it took.
 fn MsgpackDeserializer::text_len(
   self : MsgpackDeserializer,
-) -> Int raise @data.DeError {
+) -> Int32 raise @data.DeError {
   let m = self.marker()
   if m >= 0xa0 && m < 0xc0 {
     m & 0x1F
@@ -309,12 +312,12 @@ fn MsgpackDeserializer::bin(
 /// The element count of an array or map header.
 fn MsgpackDeserializer::open(
   self : MsgpackDeserializer,
-  fix : Int,
-  m16 : Int,
-  m32 : Int,
+  fix : Int32,
+  m16 : Int32,
+  m32 : Int32,
   what : String,
   expected : ArrayView[String],
-) -> Int raise @data.DeError {
+) -> Int32 raise @data.DeError {
   let m = self.marker()
   let n = if m >= fix && m < fix + 16 {
     m & 0x0F
@@ -325,7 +328,7 @@ fn MsgpackDeserializer::open(
   } else {
     self.mismatch(what, m)
   }
-  self.scopes.push({ base: self.path, remaining: n, count: 0, expected })
+  self.scopes.push({ base: self.path, remaining: n, count: 0, expected, })
   n
 }
 

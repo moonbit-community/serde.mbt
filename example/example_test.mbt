@@ -7,7 +7,7 @@
 
 ///|
 test "a generated record round-trips through both formats" {
-  let p = @example.Point::{ x: 1, y: 2, label: Some("origin") }
+  let p = @example.Point::{ x: 1, y: 2, label: Some("origin"), }
   inspect(
     @data.to_value(p),
     content="{\"x\": 1, \"y\": 2, \"label\": \"origin\"}",
@@ -19,7 +19,7 @@ test "a generated record round-trips through both formats" {
 
 ///|
 test "an absent optional field reads back as None" {
-  let bare = @example.Point::{ x: 0, y: 0, label: None }
+  let bare = @example.Point::{ x: 0, y: 0, label: None, }
   inspect(@json.to_string(bare), content="{\"x\":0,\"y\":0,\"label\":null}")
   assert_eq((@json.from_string("{\"x\":0,\"y\":0}") : @example.Point), bare)
   assert_eq(
@@ -39,7 +39,7 @@ test "a missing required field is still reported by name" {
 
 ///|
 test "rename changes the wire name and skip drops the field" {
-  let c = @example.Config::{ max_retries: 3, cache_generation: 99 }
+  let c = @example.Config::{ max_retries: 3, cache_generation: 99, }
   inspect(@json.to_string(c), content="{\"max-retries\":3}")
   // `cache_generation` is not written, so it comes back as its default.
   assert_eq((@json.from_string(@json.to_string(c)) : @example.Config), @example.Config::{
@@ -89,21 +89,21 @@ test "a renamed variant is only known by its wire name" {
 
 ///|
 test "generic types derive with a bound per parameter" {
-  let pair : @example.Pair[Int, String] = { first: 1, second: "two" }
+  let pair : @example.Pair[Int32, String] = { first: 1, second: "two", }
   inspect(@json.to_string(pair), content="{\"first\":1,\"second\":\"two\"}")
   assert_eq(
-    (@json.from_string(@json.to_string(pair)) : @example.Pair[Int, String]),
+    (@json.from_string(@json.to_string(pair)) : @example.Pair[Int32, String]),
     pair,
   )
   // Nesting proves the bounds really are what makes it compose.
-  let nested : @example.Pair[@example.Point, Array[Int]] = {
-    first: { x: 1, y: 2, label: None },
+  let nested : @example.Pair[@example.Point, Array[Int32]] = {
+    first: { x: 1, y: 2, label: None, },
     second: [3, 4],
   }
   assert_eq(
     (
       @json.from_string(@json.to_string(nested)) :
-      @example.Pair[@example.Point, Array[Int]]),
+      @example.Pair[@example.Point, Array[Int32]]),
     nested,
   )
 }
@@ -130,7 +130,7 @@ test "a newtype struct is written as the value it wraps" {
 
 ///|
 test "a fieldless struct is written as unit" {
-  let m = @example.Marker::{  }
+  let m = @example.Marker::{ }
   inspect(@json.to_string(m), content="null")
   inspect(@data.to_value(m), content="null")
   assert_eq((@json.from_string(@json.to_string(m)) : @example.Marker), m)
@@ -160,13 +160,13 @@ test "generated impls skip unknown fields" {
     (
       @json.from_string("{\"x\":1,\"y\":2,\"extra\":[{\"deep\":true}]}") :
       @example.Point),
-    @example.Point::{ x: 1, y: 2, label: None },
+    @example.Point::{ x: 1, y: 2, label: None, },
   )
   assert_eq(
     (
       @json.from_string("{\"max-retries\":3,\"stale\":\"ignored\"}") :
       @example.Config),
-    @example.Config::{ max_retries: 3, cache_generation: 0 },
+    @example.Config::{ max_retries: 3, cache_generation: 0, },
   )
   assert_eq(
     (

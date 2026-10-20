@@ -8,7 +8,7 @@ pub(all) struct VariantInfo {
   /// Name of the enum type, e.g. `"Shape"`.
   enum_name : String
   /// Zero-based declaration order of the variant.
-  index : Int
+  index : Int32
   /// Name of the variant itself, e.g. `"Circle"`.
   name : String
 }
@@ -48,8 +48,8 @@ pub(open) trait Serializer {
   fn serialize_byte(Self, Byte) -> Unit raise SerError
   fn serialize_int16(Self, Int16) -> Unit raise SerError
   fn serialize_uint16(Self, UInt16) -> Unit raise SerError
-  fn serialize_int(Self, Int) -> Unit raise SerError
-  fn serialize_uint(Self, UInt) -> Unit raise SerError
+  fn serialize_int(Self, Int32) -> Unit raise SerError
+  fn serialize_uint(Self, UInt32) -> Unit raise SerError
   fn serialize_int64(Self, Int64) -> Unit raise SerError
   fn serialize_uint64(Self, UInt64) -> Unit raise SerError
   fn serialize_float(Self, Float) -> Unit raise SerError
@@ -79,36 +79,36 @@ pub(open) trait Serializer {
   fn[T : Serialize] serialize_newtype_variant(Self, VariantInfo, T) -> Unit raise SerError
 
   // ---- sequences: length is a hint, absent when not known up front ----
-  fn serialize_seq_begin(Self, Int?) -> Unit raise SerError
+  fn serialize_seq_begin(Self, Int32?) -> Unit raise SerError
   fn[T : Serialize] serialize_seq_element(Self, T) -> Unit raise SerError
   fn serialize_seq_end(Self) -> Unit raise SerError
 
   // ---- tuples: fixed, heterogeneous, length always known ----
-  fn serialize_tuple_begin(Self, Int) -> Unit raise SerError = _
+  fn serialize_tuple_begin(Self, Int32) -> Unit raise SerError = _
   fn[T : Serialize] serialize_tuple_element(Self, T) -> Unit raise SerError = _
   fn serialize_tuple_end(Self) -> Unit raise SerError = _
 
   // ---- tuple structs, e.g. `struct Rgb(Int, Int, Int)` ----
-  fn serialize_tuple_struct_begin(Self, String, Int) -> Unit raise SerError = _
+  fn serialize_tuple_struct_begin(Self, String, Int32) -> Unit raise SerError = _
   fn[T : Serialize] serialize_tuple_struct_field(Self, T) -> Unit raise SerError = _
   fn serialize_tuple_struct_end(Self) -> Unit raise SerError = _
 
   // ---- maps: keys need not be strings ----
-  fn serialize_map_begin(Self, Int?) -> Unit raise SerError
+  fn serialize_map_begin(Self, Int32?) -> Unit raise SerError
   fn[K : Serialize] serialize_map_key(Self, K) -> Unit raise SerError
   fn[V : Serialize] serialize_map_value(Self, V) -> Unit raise SerError
   fn serialize_map_end(Self) -> Unit raise SerError
 
   // ---- structs: like a map, but keys are known statically ----
-  fn serialize_struct_begin(Self, String, Int) -> Unit raise SerError
+  fn serialize_struct_begin(Self, String, Int32) -> Unit raise SerError
   fn[T : Serialize] serialize_field(Self, String, T) -> Unit raise SerError
   fn serialize_struct_end(Self) -> Unit raise SerError
 
   // ---- enum variants carrying payloads ----
-  fn serialize_tuple_variant_begin(Self, VariantInfo, Int) -> Unit raise SerError
+  fn serialize_tuple_variant_begin(Self, VariantInfo, Int32) -> Unit raise SerError
   fn[T : Serialize] serialize_tuple_variant_element(Self, T) -> Unit raise SerError = _
   fn serialize_tuple_variant_end(Self) -> Unit raise SerError
-  fn serialize_struct_variant_begin(Self, VariantInfo, Int) -> Unit raise SerError
+  fn serialize_struct_variant_begin(Self, VariantInfo, Int32) -> Unit raise SerError
   fn[T : Serialize] serialize_struct_variant_field(Self, String, T) -> Unit raise SerError = _
   fn serialize_struct_variant_end(Self) -> Unit raise SerError
 

@@ -7,8 +7,8 @@
 
 ///|
 pub(all) struct Point {
-  x : Int
-  y : Int
+  x : Int32
+  y : Int32
   label : String?
 } derive(Eq, Debug)
 
@@ -24,8 +24,8 @@ pub impl @data.Serialize for Point with fn serialize(self, s) {
 ///|
 pub impl @data.Deserialize for Point with fn deserialize(d) {
   d.deserialize_struct_begin("Point", ["x", "y", "label"])
-  let mut x : Int? = None
-  let mut y : Int? = None
+  let mut x : Int32? = None
+  let mut y : Int32? = None
   let mut label : String? = None
   while d.deserialize_field_name() is Some(name) {
     match name {
@@ -113,12 +113,12 @@ pub(all) enum Shape {
   Empty
   Circle(Double)
   Rect(Double, Double)
-  Tagged(name~ : String, size~ : Int)
+  Tagged(name~ : String, size~ : Int32)
 } derive(Eq, Debug)
 
 ///|
-fn shape_variant(index : Int, name : String) -> @data.VariantInfo {
-  { enum_name: "Shape", index, name }
+fn shape_variant(index : Int32, name : String) -> @data.VariantInfo {
+  { enum_name: "Shape", index, name, }
 }
 
 ///|
@@ -160,7 +160,7 @@ pub impl @data.Deserialize for Shape with fn deserialize(d) {
     3 => {
       d.deserialize_struct_begin("Tagged", ["name", "size"])
       let mut name : String? = None
-      let mut size : Int? = None
+      let mut size : Int32? = None
       while d.deserialize_field_name() is Some(f) {
         match f {
           "name" => name = Some(d.deserialize_field_value())
@@ -190,7 +190,7 @@ test "primitives write as JSON" {
   inspect(@json.to_string(true), content="true")
   inspect(@json.to_string(false), content="false")
   inspect(@json.to_string(-42), content="-42")
-  inspect(@json.to_string((42 : UInt)), content="42")
+  inspect(@json.to_string((42 : UInt32)), content="42")
   inspect(@json.to_string(-9000000000L), content="-9000000000")
   inspect(@json.to_string(b'\x2a'), content="42")
   inspect(@json.to_string(1.25), content="1.25")
@@ -201,8 +201,8 @@ test "primitives write as JSON" {
 ///|
 test "primitives round-trip" {
   assert_eq((@json.from_string(@json.to_string(true)) : Bool), true)
-  assert_eq((@json.from_string(@json.to_string(-42)) : Int), -42)
-  assert_eq((@json.from_string(@json.to_string((7 : UInt))) : UInt), 7)
+  assert_eq((@json.from_string(@json.to_string(-42)) : Int32), -42)
+  assert_eq((@json.from_string(@json.to_string((7 : UInt32))) : UInt32), 7)
   assert_eq(
     (@json.from_string(@json.to_string(-9000000000L)) : Int64),
     -9000000000L,
@@ -223,30 +223,30 @@ test "primitives round-trip" {
 
 ///|
 test "sequences nest and round-trip" {
-  let nested : Array[Array[Int]] = [[1, 2], [3], []]
+  let nested : Array[Array[Int32]] = [[1, 2], [3], []]
   inspect(@json.to_string(nested), content="[[1,2],[3],[]]")
   assert_eq(
-    (@json.from_string(@json.to_string(nested)) : Array[Array[Int]]),
+    (@json.from_string(@json.to_string(nested)) : Array[Array[Int32]]),
     nested,
   )
-  inspect(@json.to_string(([] : Array[Int])), content="[]")
-  assert_eq((@json.from_string("[]") : Array[Int]), [])
+  inspect(@json.to_string(([] : Array[Int32])), content="[]")
+  assert_eq((@json.from_string("[]") : Array[Int32]), [])
 }
 
 ///|
 test "options become null" {
-  inspect(@json.to_string((None : Int?)), content="null")
-  inspect(@json.to_string((Some(3) : Int?)), content="3")
-  assert_eq((@json.from_string("null") : Int?), None)
-  assert_eq((@json.from_string("3") : Int?), Some(3))
+  inspect(@json.to_string((None : Int32?)), content="null")
+  inspect(@json.to_string((Some(3) : Int32?)), content="3")
+  assert_eq((@json.from_string("null") : Int32?), None)
+  assert_eq((@json.from_string("3") : Int32?), Some(3))
 }
 
 ///|
 test "tuples become arrays" {
   inspect(@json.to_string((1, "two")), content="[1,\"two\"]")
-  assert_eq((@json.from_string("[1,\"two\"]") : (Int, String)), (1, "two"))
+  assert_eq((@json.from_string("[1,\"two\"]") : (Int32, String)), (1, "two"))
   assert_eq(
-    (@json.from_string(@json.to_string((1, 2.5, false))) : (Int, Double, Bool)),
+    (@json.from_string(@json.to_string((1, 2.5, false))) : (Int32, Double, Bool)),
     (1, 2.5, false),
   )
 }
@@ -260,23 +260,23 @@ test "bytes become an array of numbers" {
 
 ///|
 test "maps become objects, with numeric keys spelled as strings" {
-  let m : Map[String, Int] = { "a": 1, "b": 2 }
+  let m : Map[String, Int32] = { "a": 1, "b": 2 }
   inspect(@json.to_string(m), content="{\"a\":1,\"b\":2}")
-  assert_eq((@json.from_string(@json.to_string(m)) : Map[String, Int]), m)
-  let keyed : Map[Int, String] = { 7: "seven" }
+  assert_eq((@json.from_string(@json.to_string(m)) : Map[String, Int32]), m)
+  let keyed : Map[Int32, String] = { 7: "seven" }
   inspect(@json.to_string(keyed), content="{\"7\":\"seven\"}")
   assert_eq(
-    (@json.from_string(@json.to_string(keyed)) : Map[Int, String]),
+    (@json.from_string(@json.to_string(keyed)) : Map[Int32, String]),
     keyed,
   )
 }
 
 ///|
 test "structs become objects" {
-  let p = Point::{ x: 1, y: 2, label: Some("origin") }
+  let p = Point::{ x: 1, y: 2, label: Some("origin"), }
   inspect(@json.to_string(p), content="{\"x\":1,\"y\":2,\"label\":\"origin\"}")
   assert_eq((@json.from_string(@json.to_string(p)) : Point), p)
-  let bare = Point::{ x: 0, y: 0, label: None }
+  let bare = Point::{ x: 0, y: 0, label: None, }
   inspect(@json.to_string(bare), content="{\"x\":0,\"y\":0,\"label\":null}")
   assert_eq((@json.from_string(@json.to_string(bare)) : Point), bare)
 }
@@ -292,7 +292,7 @@ test "structs tolerate missing optional and unknown fields" {
     (
       @json.from_string("{\"x\":1,\"extra\":[1,{\"deep\":true}],\"y\":2}") :
       Point),
-    Point::{ x: 1, y: 2, label: None },
+    Point::{ x: 1, y: 2, label: None, },
   )
 }
 
@@ -351,7 +351,7 @@ test "whitespace between tokens is ignored" {
     y: 2,
     label: None,
   })
-  assert_eq((@json.from_string(" [ 1 , 2 ] ") : Array[Int]), [1, 2])
+  assert_eq((@json.from_string(" [ 1 , 2 ] ") : Array[Int32]), [1, 2])
 }
 
 ///|
@@ -387,7 +387,7 @@ test "large integers widen to unsigned, and overflow is refused" {
 /// The thesis of the whole design: one pair of hand-written implementations,
 /// two formats, no format-specific code in the type.
 test "the same implementation drives both formats" {
-  let p = Point::{ x: 5, y: 6, label: None }
+  let p = Point::{ x: 5, y: 6, label: None, }
   inspect(@data.to_value(p), content="{\"x\": 5, \"y\": 6, \"label\": null}")
   inspect(@json.to_string(p), content="{\"x\":5,\"y\":6,\"label\":null}")
   assert_eq((@data.from_value(@data.to_value(p)) : Point), p)
@@ -396,7 +396,7 @@ test "the same implementation drives both formats" {
 
 ///|
 test "errors report the path into the document" {
-  try (@json.from_string("[1,\"nope\"]") : Array[Int]) catch {
+  try (@json.from_string("[1,\"nope\"]") : Array[Int32]) catch {
     e =>
       inspect(e, content="$[1]: invalid type: expected a number, found string")
   } noraise {
@@ -414,7 +414,7 @@ test "errors report the path into the document" {
   try
     (
       @json.from_string("{\"a\":{\"b\":[0,false]}}") :
-      Map[String, Map[String, Array[Int]]])
+      Map[String, Map[String, Array[Int32]]])
   catch {
     e =>
       inspect(
@@ -433,7 +433,7 @@ test "malformed input is rejected" {
   } noraise {
     _ => fail("expected a trailing input error")
   }
-  try (@json.from_string("[1,2") : Array[Int]) catch {
+  try (@json.from_string("[1,2") : Array[Int32]) catch {
     e =>
       inspect(
         e,
@@ -444,7 +444,7 @@ test "malformed input is rejected" {
   } noraise {
     _ => fail("expected an end of input error")
   }
-  try (@json.from_string("[1 2]") : Array[Int]) catch {
+  try (@json.from_string("[1 2]") : Array[Int32]) catch {
     e =>
       inspect(
         e,
@@ -507,7 +507,7 @@ test "what JSON cannot represent is refused rather than mangled" {
   } noraise {
     _ => fail("expected an unsupported type error")
   }
-  let bad_keys : Map[Bool, Int] = { true: 1 }
+  let bad_keys : Map[Bool, Int32] = { true: 1 }
   try @json.to_string(bad_keys) catch {
     e => inspect(e, content="JSON cannot serialize a boolean as an object key")
   } noraise {
@@ -558,7 +558,7 @@ test "integers out of range for the target width are rejected" {
   } noraise {
     _ => fail("expected a range error")
   }
-  try (@json.from_string("-1") : UInt) catch {
+  try (@json.from_string("-1") : UInt32) catch {
     e => inspect(e, content="$: invalid value: expected a uint, found -1")
   } noraise {
     _ => fail("expected a range error")
@@ -684,7 +684,7 @@ test "the remaining primitives report their expected type on mismatch" {
 
 ///|
 test "a tuple with too few elements reports end of input" {
-  try (@json.from_string("[1]") : (Int, Int)) catch {
+  try (@json.from_string("[1]") : (Int32, Int32)) catch {
     e =>
       inspect(
         e,
@@ -734,8 +734,8 @@ test "a non-null value is not a unit" {
 test "the transport is UTF-8 bytes" {
   assert_eq(@json.to_bytes(42), b"42")
   assert_eq(@json.to_bytes("hi"), b"\x22hi\x22")
-  assert_eq((@json.from_bytes(b"42") : Int), 42)
-  assert_eq((@json.from_bytes(b"[1,2]") : Array[Int]), [1, 2])
+  assert_eq((@json.from_bytes(b"42") : Int32), 42)
+  assert_eq((@json.from_bytes(b"[1,2]") : Array[Int32]), [1, 2])
 }
 
 ///|
@@ -764,7 +764,7 @@ test "invalid UTF-8 in the input is rejected" {
 
 ///|
 test "a document round-trips through bytes without a String anywhere" {
-  let p = Point::{ x: 1, y: 2, label: Some("é") }
+  let p = Point::{ x: 1, y: 2, label: Some("é"), }
   let bytes = @json.to_bytes(p)
   assert_eq(bytes, b"{\x22x\x22:1,\x22y\x22:2,\x22label\x22:\x22\xc3\xa9\x22}")
   assert_eq((@json.from_bytes(bytes) : Point), p)
@@ -898,7 +898,7 @@ test "identifiers resolve however they are spelled" {
   // Unknown fields are still skipped, and non-ASCII keys do not crash.
   assert_eq(
     (@json.from_string("{\"x\":1,\"héllo\":0,\"\":0,\"y\":2}") : Point),
-    Point::{ x: 1, y: 2, label: None },
+    Point::{ x: 1, y: 2, label: None, },
   )
 }
 

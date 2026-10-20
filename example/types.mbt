@@ -7,8 +7,8 @@
 ///|
 #data.derive(Serialize, Deserialize)
 pub(all) struct Point {
-  x : Int
-  y : Int
+  x : Int32
+  y : Int32
   /// An `Option` field: absent and explicitly null both read back as `None`.
   label : String?
 } derive(Eq, Debug)
@@ -18,10 +18,10 @@ pub(all) struct Point {
 pub(all) struct Config {
   /// The wire name need not be a legal MoonBit identifier.
   #data.rename("max-retries")
-  max_retries : Int
+  max_retries : Int32
   /// Never written, and filled from `Default` on the way back in.
   #data.skip
-  cache_generation : Int
+  cache_generation : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -30,7 +30,7 @@ pub(all) enum Shape {
   Empty
   Circle(Double)
   Rect(Double, Double)
-  Tagged(name~ : String, size~ : Int)
+  Tagged(name~ : String, size~ : Int32)
   #data.rename("Ellipse")
   Oval(Double, Double)
 } derive(Eq, Debug)
@@ -44,7 +44,7 @@ pub(all) struct Pair[A, B] {
 
 ///|
 #data.derive(Serialize, Deserialize)
-pub(all) struct Rgb(Int, Int, Int) derive(Eq, Debug)
+pub(all) struct Rgb(Int32, Int32, Int32) derive(Eq, Debug)
 
 ///|
 /// One positional field is a wrapper, not a tuple of one: it is written as the

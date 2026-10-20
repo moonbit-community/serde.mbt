@@ -11,7 +11,7 @@ and M formats cost N + M implementations instead of N × M.
 #data.derive(Serialize, Deserialize)
 pub(all) struct User {
   name : String
-  age : Int
+  age : Int32
 }
 
 // Works with every format, without the type mentioning any of them.
@@ -94,7 +94,7 @@ Written by hand they look like this:
 ///|
 pub(all) struct User {
   name : String
-  age : Int
+  age : Int32
   /// An `Option` field: absent and explicitly null both read back as `None`.
   nickname : String?
 } derive(Eq, Debug)
@@ -146,7 +146,7 @@ That one pair of implementations now drives every format:
 ```mbt check
 ///|
 test "one implementation, every format" {
-  let user = User::{ name: "ada", age: 36, nickname: None }
+  let user = User::{ name: "ada", age: 36, nickname: None, }
 
   // JSON, as UTF-8 bytes.
   inspect(
@@ -174,7 +174,7 @@ bare string, and anything else is a one-entry object.
 pub(all) enum Role {
   Guest
   Member(String)
-  Admin(level~ : Int, since~ : String)
+  Admin(level~ : Int32, since~ : String)
 } derive(Eq, Debug)
 
 ///|
@@ -182,15 +182,15 @@ pub impl @data.Serialize for Role with fn serialize(self, s) {
   let name = "Role"
   match self {
     Guest =>
-      s.serialize_unit_variant({ enum_name: name, index: 0, name: "Guest" })
+      s.serialize_unit_variant({ enum_name: name, index: 0, name: "Guest", })
     Member(team) =>
       s.serialize_newtype_variant(
-        { enum_name: name, index: 1, name: "Member" },
+        { enum_name: name, index: 1, name: "Member", },
         team,
       )
     Admin(level~, since~) => {
       s.serialize_struct_variant_begin(
-        { enum_name: name, index: 2, name: "Admin" },
+        { enum_name: name, index: 2, name: "Admin", },
         2,
       )
       s.serialize_struct_variant_field("level", level)
@@ -222,9 +222,9 @@ ignores attributes it does not recognise:
 #data.derive(Serialize, Deserialize)
 pub(all) struct Config {
   #data.rename("max-retries")
-  max_retries : Int
+  max_retries : Int32
   #data.skip
-  cache_generation : Int
+  cache_generation : Int32
 }
 ```
 
@@ -323,7 +323,7 @@ over `to_bytes` / `from_bytes`, the same split `serde_json` makes between
 ///|
 test "the transport is bytes" {
   assert_eq(@json.to_bytes("é"), b"\x22\xc3\xa9\x22")
-  assert_eq((@json.from_bytes(b"[1,2]") : Array[Int]), [1, 2])
+  assert_eq((@json.from_bytes(b"[1,2]") : Array[Int32]), [1, 2])
 }
 ```
 
@@ -347,8 +347,11 @@ test "what CBOR carries that JSON cannot" {
   // A byte string stays bytes, rather than becoming an array of numbers.
   assert_eq(@cbor.to_bytes(b"\x01\x02"), b"\x42\x01\x02")
   // A map key need not be a string.
-  let keyed : Map[Int, String] = { 1: "a" }
-  assert_eq((@cbor.from_bytes(@cbor.to_bytes(keyed)) : Map[Int, String]), keyed)
+  let keyed : Map[Int32, String] = { 1: "a" }
+  assert_eq(
+    (@cbor.from_bytes(@cbor.to_bytes(keyed)) : Map[Int32, String]),
+    keyed,
+  )
   // Unsigned and negative integers are distinct major types, so a double is
   // never mistaken for an integer that happened to be whole.
   assert_eq(@cbor.to_bytes(1.5), b"\xfb\x3f\xf8\x00\x00\x00\x00\x00\x00")

@@ -6,8 +6,8 @@
 
 ///|
 pub(all) struct Point {
-  x : Int
-  y : Int
+  x : Int32
+  y : Int32
   label : String?
 } derive(Eq, Debug)
 
@@ -24,8 +24,8 @@ pub impl @data.Serialize for Point with fn serialize(self, s) {
 pub impl @data.Deserialize for Point with fn deserialize(d) {
   let fields : ReadOnlyArray[String] = ["x", "y", "label"]
   d.deserialize_struct_begin("Point", fields)
-  let mut x : Int? = None
-  let mut y : Int? = None
+  let mut x : Int32? = None
+  let mut y : Int32? = None
   // An absent `label` and an explicit null are both `None`, matching serde's
   // treatment of `Option` fields.
   let mut label : String? = None
@@ -50,12 +50,12 @@ pub(all) enum Shape {
   Empty
   Circle(Double)
   Rect(Double, Double)
-  Tagged(name~ : String, size~ : Int)
+  Tagged(name~ : String, size~ : Int32)
 } derive(Eq, Debug)
 
 ///|
-fn shape_variant(index : Int, name : String) -> @data.VariantInfo {
-  { enum_name: "Shape", index, name }
+fn shape_variant(index : Int32, name : String) -> @data.VariantInfo {
+  { enum_name: "Shape", index, name, }
 }
 
 ///|
@@ -97,7 +97,7 @@ pub impl @data.Deserialize for Shape with fn deserialize(d) {
     3 => {
       d.deserialize_struct_begin("Tagged", ["name", "size"])
       let mut name : String? = None
-      let mut size : Int? = None
+      let mut size : Int32? = None
       while d.deserialize_field_name() is Some(f) {
         match f {
           "name" => name = Some(d.deserialize_field_value())
@@ -128,7 +128,7 @@ test "primitives round-trip through the data model" {
   assert_eq(@data.from_value(@data.to_value((-7 : Int16))), (-7 : Int16))
   assert_eq(@data.from_value(@data.to_value((7 : UInt16))), (7 : UInt16))
   assert_eq(@data.from_value(@data.to_value(-42)), -42)
-  assert_eq(@data.from_value(@data.to_value((42 : UInt))), (42 : UInt))
+  assert_eq(@data.from_value(@data.to_value((42 : UInt32))), (42 : UInt32))
   assert_eq(@data.from_value(@data.to_value(-9000000000L)), -9000000000L)
   assert_eq(
     @data.from_value(@data.to_value((9000000000 : UInt64))),
@@ -146,7 +146,7 @@ test "primitives round-trip through the data model" {
 test "primitives land on the expected data model shapes" {
   inspect(@data.to_value(true), content="true")
   inspect(@data.to_value(-42), content="-42")
-  inspect(@data.to_value((42 : UInt)), content="42")
+  inspect(@data.to_value((42 : UInt32)), content="42")
   inspect(@data.to_value(1.25), content="1.25")
   inspect(@data.to_value("hi"), content="\"hi\"")
   inspect(@data.to_value('x'), content="\"x\"")
@@ -156,16 +156,16 @@ test "primitives land on the expected data model shapes" {
 
 ///|
 test "sequences nest" {
-  let nested : Array[Array[Int]] = [[1, 2], [3], []]
+  let nested : Array[Array[Int32]] = [[1, 2], [3], []]
   inspect(@data.to_value(nested), content="[[1, 2], [3], []]")
-  let back : Array[Array[Int]] = @data.from_value(@data.to_value(nested))
+  let back : Array[Array[Int32]] = @data.from_value(@data.to_value(nested))
   assert_eq(back, nested)
 }
 
 ///|
 test "options distinguish present from absent" {
-  let some : Int? = Some(3)
-  let none : Int? = None
+  let some : Int32? = Some(3)
+  let none : Int32? = None
   inspect(@data.to_value(some), content="3")
   inspect(@data.to_value(none), content="null")
   assert_eq(@data.from_value(@data.to_value(some)), some)
@@ -176,9 +176,9 @@ test "options distinguish present from absent" {
 test "maps keep insertion order and allow non-string keys" {
   let m = { "a": 1, "b": 2 }
   inspect(@data.to_value(m), content="{\"a\": 1, \"b\": 2}")
-  let back : Map[String, Int] = @data.from_value(@data.to_value(m))
+  let back : Map[String, Int32] = @data.from_value(@data.to_value(m))
   assert_eq(back, m)
-  let keyed : Map[Int, String] = { 1: "one" }
+  let keyed : Map[Int32, String] = { 1: "one" }
   inspect(@data.to_value(keyed), content="{1: \"one\"}")
 }
 
@@ -193,13 +193,13 @@ test "tuples are fixed-length sequences" {
 
 ///|
 test "structs round-trip" {
-  let p = Point::{ x: 1, y: 2, label: Some("origin") }
+  let p = Point::{ x: 1, y: 2, label: Some("origin"), }
   inspect(
     @data.to_value(p),
     content="{\"x\": 1, \"y\": 2, \"label\": \"origin\"}",
   )
   assert_eq(@data.from_value(@data.to_value(p)), p)
-  let bare = Point::{ x: 0, y: 0, label: None }
+  let bare = Point::{ x: 0, y: 0, label: None, }
   inspect(@data.to_value(bare), content="{\"x\": 0, \"y\": 0, \"label\": null}")
   assert_eq(@data.from_value(@data.to_value(bare)), bare)
 }
@@ -207,13 +207,13 @@ test "structs round-trip" {
 ///|
 test "structs tolerate a missing option field and an unknown field" {
   let partial : @data.Value = Map([(Str(b"x"), Int(1L)), (Str(b"y"), Int(2L))])
-  assert_eq(@data.from_value(partial), Point::{ x: 1, y: 2, label: None })
+  assert_eq(@data.from_value(partial), Point::{ x: 1, y: 2, label: None, })
   let extra : @data.Value = Map([
     (Str(b"x"), Int(1L)),
     (Str(b"nope"), Str(b"ignored")),
     (Str(b"y"), Int(2L)),
   ])
-  assert_eq(@data.from_value(extra), Point::{ x: 1, y: 2, label: None })
+  assert_eq(@data.from_value(extra), Point::{ x: 1, y: 2, label: None, })
 }
 
 ///|
@@ -239,7 +239,7 @@ test "Value is itself part of the data model" {
 ///|
 test "type mismatch reports the path where it happened" {
   let bad : @data.Value = Seq([Int(1L), Str(b"nope")])
-  try (@data.from_value(bad) : Array[Int]) catch {
+  try (@data.from_value(bad) : Array[Int32]) catch {
     e =>
       inspect(e, content="$[1]: invalid type: expected integer, found string")
   } noraise {
@@ -291,7 +291,7 @@ test "integers that do not fit the target width are rejected" {
   } noraise {
     _ => fail("expected a range error")
   }
-  try (@data.from_value(Int(-1L)) : UInt) catch {
+  try (@data.from_value(Int(-1L)) : UInt32) catch {
     e => inspect(e, content="$: invalid value: expected a uint, found -1")
   } noraise {
     _ => fail("expected a range error")
@@ -311,7 +311,7 @@ pub impl @data.Serialize for Marker with fn serialize(_self, s) {
 ///|
 pub impl @data.Deserialize for Marker with fn deserialize(d) {
   d.deserialize_unit_struct("Marker")
-  Marker::{  }
+  Marker::{ }
 }
 
 ///|
@@ -329,17 +329,17 @@ pub impl @data.Deserialize for Meters with fn deserialize(d) {
 
 ///|
 test "unit and newtype structs are transparent" {
-  inspect(@data.to_value(Marker::{  }), content="null")
-  assert_eq(@data.from_value(@data.to_value(Marker::{  })), Marker::{  })
+  inspect(@data.to_value(Marker::{ }), content="null")
+  assert_eq(@data.from_value(@data.to_value(Marker::{ })), Marker::{ })
   inspect(@data.to_value(Meters(2.5)), content="2.5")
   assert_eq(@data.from_value(@data.to_value(Meters(2.5))), Meters(2.5))
 }
 
 ///|
 test "FixedArray round-trips as a sequence" {
-  let fa : FixedArray[Int] = [1, 2, 3]
+  let fa : FixedArray[Int32] = [1, 2, 3]
   inspect(@data.to_value(fa), content="[1, 2, 3]")
-  let back : FixedArray[Int] = @data.from_value(@data.to_value(fa))
+  let back : FixedArray[Int32] = @data.from_value(@data.to_value(fa))
   assert_eq(back, fa)
 }
 
@@ -384,7 +384,7 @@ test "wrong primitive shapes are reported with the expected type" {
 
 ///|
 test "a tuple that runs out of elements reports end of input" {
-  try (@data.from_value(Seq([Int(1L)])) : (Int, Int)) catch {
+  try (@data.from_value(Seq([Int(1L)])) : (Int32, Int32)) catch {
     e => inspect(e, content="$: unexpected end of input")
   } noraise {
     _ => fail("expected an end of input error")
@@ -425,7 +425,7 @@ test "a struct with a non-string key is rejected" {
 ///|
 /// A tuple struct, exercising the defaults that route tuple structs through
 /// the tuple protocol and on to sequences.
-pub(all) struct Rgb(Int, Int, Int) derive(Eq, Debug)
+pub(all) struct Rgb(Int32, Int32, Int32) derive(Eq, Debug)
 
 ///|
 pub impl @data.Serialize for Rgb with fn serialize(self, s) {
@@ -439,9 +439,9 @@ pub impl @data.Serialize for Rgb with fn serialize(self, s) {
 ///|
 pub impl @data.Deserialize for Rgb with fn deserialize(d) {
   d.deserialize_tuple_struct_begin("Rgb", 3)
-  let r : Int = d.deserialize_tuple_next()
-  let g : Int = d.deserialize_tuple_next()
-  let b : Int = d.deserialize_tuple_next()
+  let r : Int32 = d.deserialize_tuple_next()
+  let g : Int32 = d.deserialize_tuple_next()
+  let b : Int32 = d.deserialize_tuple_next()
   d.deserialize_tuple_end()
   Rgb(r, g, b)
 }
@@ -479,12 +479,12 @@ test "integers widen into floats but not across the signed boundary" {
 
 ///|
 test "containers reject values of the wrong shape" {
-  try (@data.from_value(Int(1L)) : Array[Int]) catch {
+  try (@data.from_value(Int(1L)) : Array[Int32]) catch {
     e => inspect(e, content="$: invalid type: expected sequence, found integer")
   } noraise {
     _ => fail("expected a type error")
   }
-  try (@data.from_value(Int(1L)) : Map[String, Int]) catch {
+  try (@data.from_value(Int(1L)) : Map[String, Int32]) catch {
     e => inspect(e, content="$: invalid type: expected map, found integer")
   } noraise {
     _ => fail("expected a type error")

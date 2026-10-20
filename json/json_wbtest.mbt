@@ -121,9 +121,9 @@ test "an object key is read through the key type's own Deserialize" {
   // type parses the digits and a string key type takes them verbatim.
   let d = JsonDeserializer::new(b"{\"12\":true}")
   let _ = d.deserialize_map_begin()
-  assert_eq((d.deserialize_map_next_key() : Int?), Some(12))
+  assert_eq((d.deserialize_map_next_key() : Int32?), Some(12))
   assert_eq((d.deserialize_map_value() : Bool), true)
-  assert_eq((d.deserialize_map_next_key() : Int?), None)
+  assert_eq((d.deserialize_map_next_key() : Int32?), None)
 }
 
 ///|
@@ -136,7 +136,7 @@ test "deserialize_any on a key sub-deserializer yields the raw token" {
 ///|
 test "reading a container item without a begin raises" {
   let d = JsonDeserializer::new(b"[1]")
-  try (d.deserialize_seq_next() : Int?) catch {
+  try (d.deserialize_seq_next() : Int32?) catch {
     e => inspect(e, content="$: JSON: container read without a begin")
   } noraise {
     _ => fail("expected a protocol error")

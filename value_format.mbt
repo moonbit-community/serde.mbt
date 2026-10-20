@@ -22,7 +22,7 @@ struct ValueSerializer {
 
 ///|
 pub fn ValueSerializer::new() -> ValueSerializer {
-  { out: None, items: None, entries: None, pending_key: None, variant: None }
+  { out: None, items: None, entries: None, pending_key: None, variant: None, }
 }
 
 ///|
@@ -54,7 +54,7 @@ fn ValueSerializer::emit(self : ValueSerializer, value : Value) -> Unit {
 }
 
 ///|
-fn ValueSerializer::open_seq(self : ValueSerializer, hint : Int?) -> Unit {
+fn ValueSerializer::open_seq(self : ValueSerializer, hint : Int32?) -> Unit {
   self.items = Some(
     match hint {
       Some(n) => Array::new(capacity=n)
@@ -333,15 +333,15 @@ pub impl Serializer for ValueSerializer with fn serialize_struct_variant_end(
 struct ValueDeserializer {
   mut value : Value
   mut path : Path
-  mut cursor : Int
+  mut cursor : Int32
 }
 
 ///|
 pub fn ValueDeserializer::new(
   value : Value,
-  path? : Path = Root,
+  path~ : Path = Root,
 ) -> ValueDeserializer {
-  { value, path, cursor: 0 }
+  { value, path, cursor: 0, }
 }
 
 ///|
@@ -351,7 +351,7 @@ fn ValueDeserializer::child(
   path : Path,
 ) -> ValueDeserializer {
   ignore(self)
-  { value, path, cursor: 0 }
+  { value, path, cursor: 0, }
 }
 
 ///|
@@ -430,7 +430,7 @@ fn variant_index(
   variants : ArrayView[String],
   name : String,
   path : Path,
-) -> Int raise DeError {
+) -> Int32 raise DeError {
   for i, candidate in variants {
     if candidate == name {
       return i

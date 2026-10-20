@@ -11,16 +11,16 @@ priv struct Scope {
   base : @data.Path
   /// Items still to read, or `INDEFINITE` for a container that ends at a break
   /// byte rather than at a count.
-  mut remaining : Int
+  mut remaining : Int32
   /// How many have been read, for the path of the next one.
-  mut count : Int
+  mut count : Int32
   /// The immutable field names the caller declared, empty for arrays and
   /// maps. Known keys reuse these canonical strings for paths.
   expected : ArrayView[String]
 }
 
 ///|
-const INDEFINITE : Int = -1
+const INDEFINITE : Int32 = -1
 
 ///|
 let no_fields : ReadOnlyArray[String] = []
@@ -35,7 +35,7 @@ priv struct EnumScope {
 /// Reads CBOR from bytes.
 struct CborDeserializer {
   input : Bytes
-  mut pos : Int
+  mut pos : Int32
   mut path : @data.Path
   scopes : Array[Scope]
   enums : Array[EnumScope]
@@ -43,7 +43,7 @@ struct CborDeserializer {
 
 ///|
 pub fn CborDeserializer::new(input : Bytes) -> CborDeserializer {
-  { input, pos: 0, path: @data.Root, scopes: [], enums: [] }
+  { input, pos: 0, path: @data.Root, scopes: [], enums: [], }
 }
 
 ///|
@@ -81,7 +81,7 @@ fn CborDeserializer::peek_byte(
 ///|
 fn CborDeserializer::be(
   self : CborDeserializer,
-  count : Int,
+  count : Int32,
 ) -> UInt64 raise @data.DeError {
   let mut acc = 0UL
   for _ in 0..<count {
@@ -94,7 +94,7 @@ fn CborDeserializer::be(
 /// A decoded head: the major type, its argument, and whether the argument was
 /// the indefinite marker rather than a length.
 priv struct Head {
-  major : Int
+  major : Int32
   arg : UInt64
   indefinite : Bool
 }
@@ -105,11 +105,11 @@ fn CborDeserializer::head(self : CborDeserializer) -> Head raise @data.DeError {
   let major = initial >> 5
   let info = initial & 0x1F
   match info {
-    31 => { major, arg: 0, indefinite: true }
-    24 => { major, arg: self.be(1), indefinite: false }
-    25 => { major, arg: self.be(2), indefinite: false }
-    26 => { major, arg: self.be(4), indefinite: false }
-    27 => { major, arg: self.be(8), indefinite: false }
+    31 => { major, arg: 0, indefinite: true, }
+    24 => { major, arg: self.be(1), indefinite: false, }
+    25 => { major, arg: self.be(2), indefinite: false, }
+    26 => { major, arg: self.be(4), indefinite: false, }
+    27 => { major, arg: self.be(8), indefinite: false, }
     _ =>
       if info < 24 {
         {
@@ -145,7 +145,7 @@ fn CborDeserializer::untagged_head(
 ///|
 fn CborDeserializer::expect_head(
   self : CborDeserializer,
-  major : Int,
+  major : Int32,
   what : String,
 ) -> Head raise @data.DeError {
   let h = self.untagged_head()
@@ -160,7 +160,7 @@ fn CborDeserializer::expect_head(
 }
 
 ///|
-fn major_name(major : Int) -> String {
+fn major_name(major : Int32) -> String {
   match major {
     0 | 1 => "integer"
     2 => "bytes"
@@ -253,7 +253,7 @@ fn CborDeserializer::as_uint64(
 
 ///|
 /// Half precision, which the encoder never writes and plenty of others do.
-fn half_to_double(bits : Int) -> Double {
+fn half_to_double(bits : Int32) -> Double {
   let sign = ((bits >> 15) & 1).to_int64().reinterpret_as_uint64() << 63
   let exponent = (bits >> 10) & 0x1F
   let mantissa = bits & 0x3FF
@@ -331,7 +331,7 @@ fn CborDeserializer::as_double(
 /// exactly as the spec intends.
 fn CborDeserializer::blob(
   self : CborDeserializer,
-  major : Int,
+  major : Int32,
   what : String,
 ) -> BytesView raise @data.DeError {
   let h = self.expect_head(major, what)
@@ -398,17 +398,17 @@ fn CborDeserializer::text(
 ///|
 fn CborDeserializer::open(
   self : CborDeserializer,
-  major : Int,
+  major : Int32,
   what : String,
   expected : ArrayView[String],
-) -> Int? raise @data.DeError {
+) -> Int32? raise @data.DeError {
   let h = self.expect_head(major, what)
   let remaining = if h.indefinite {
     INDEFINITE
   } else {
     h.arg.to_uint().reinterpret_as_int()
   }
-  self.scopes.push({ base: self.path, remaining, count: 0, expected })
+  self.scopes.push({ base: self.path, remaining, count: 0, expected, })
   if h.indefinite {
     None
   } else {

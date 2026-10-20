@@ -29,7 +29,7 @@
 /// Maps an arbitrary `Int` into `0..<modulus` without discarding cases.
 ///
 /// `abs` will not do: `Int::min_value().abs()` is still negative.
-fn wrap(value : Int, modulus : Int) -> Int {
+fn wrap(value : Int32, modulus : Int32) -> Int32 {
   let r = value % modulus
   if r < 0 {
     r + modulus
@@ -103,7 +103,7 @@ impl @shrink.Shrink for Point
 
 ///|
 impl @quickcheck.Arbitrary for Shape with fn arbitrary(size, rs) {
-  let tag : Int = @quickcheck.Arbitrary::arbitrary(size, rs)
+  let tag : Int32 = @quickcheck.Arbitrary::arbitrary(size, rs)
   match wrap(tag, 4) {
     0 => Empty
     1 => Circle(finite(@quickcheck.Arbitrary::arbitrary(size, rs)))
@@ -130,8 +130,8 @@ test "P1: primitives round-trip through Value" {
   @quickcheck.check((x : Unit) => @data.from_value(@data.to_value(x)) == x)
   @quickcheck.check((x : Bool) => @data.from_value(@data.to_value(x)) == x)
   @quickcheck.check((x : Byte) => @data.from_value(@data.to_value(x)) == x)
-  @quickcheck.check((x : Int) => @data.from_value(@data.to_value(x)) == x)
-  @quickcheck.check((x : UInt) => @data.from_value(@data.to_value(x)) == x)
+  @quickcheck.check((x : Int32) => @data.from_value(@data.to_value(x)) == x)
+  @quickcheck.check((x : UInt32) => @data.from_value(@data.to_value(x)) == x)
   @quickcheck.check((x : Int64) => @data.from_value(@data.to_value(x)) == x)
   @quickcheck.check((x : UInt64) => @data.from_value(@data.to_value(x)) == x)
   @quickcheck.check((x : Char) => @data.from_value(@data.to_value(x)) == x)
@@ -149,18 +149,20 @@ test "P1: doubles round-trip through Value across the whole bit space" {
 
 ///|
 test "P1: containers round-trip through Value" {
-  @quickcheck.check((x : Int?) => @data.from_value(@data.to_value(x)) == x)
-  @quickcheck.check((x : Array[Int]) => @data.from_value(@data.to_value(x)) == x)
+  @quickcheck.check((x : Int32?) => @data.from_value(@data.to_value(x)) == x)
+  @quickcheck.check((x : Array[Int32]) => {
+    @data.from_value(@data.to_value(x)) == x
+  })
   @quickcheck.check((x : Array[String]) => {
     @data.from_value(@data.to_value(x)) == x
   })
-  @quickcheck.check((x : Array[Array[Int]]) => {
+  @quickcheck.check((x : Array[Array[Int32]]) => {
     @data.from_value(@data.to_value(x)) == x
   })
-  @quickcheck.check((x : (Int, String)) => {
+  @quickcheck.check((x : (Int32, String)) => {
     @data.from_value(@data.to_value(x)) == x
   })
-  @quickcheck.check((x : (Bool, Int, String)) => {
+  @quickcheck.check((x : (Bool, Int32, String)) => {
     @data.from_value(@data.to_value(x)) == x
   })
 }
@@ -178,8 +180,8 @@ test "P2: primitives round-trip through JSON" {
   @quickcheck.check((x : Unit) => @json.from_bytes(@json.to_bytes(x)) == x)
   @quickcheck.check((x : Bool) => @json.from_bytes(@json.to_bytes(x)) == x)
   @quickcheck.check((x : Byte) => @json.from_bytes(@json.to_bytes(x)) == x)
-  @quickcheck.check((x : Int) => @json.from_bytes(@json.to_bytes(x)) == x)
-  @quickcheck.check((x : UInt) => @json.from_bytes(@json.to_bytes(x)) == x)
+  @quickcheck.check((x : Int32) => @json.from_bytes(@json.to_bytes(x)) == x)
+  @quickcheck.check((x : UInt32) => @json.from_bytes(@json.to_bytes(x)) == x)
   @quickcheck.check((x : Int64) => @json.from_bytes(@json.to_bytes(x)) == x)
   @quickcheck.check((x : UInt64) => @json.from_bytes(@json.to_bytes(x)) == x)
   @quickcheck.check((x : Char) => @json.from_bytes(@json.to_bytes(x)) == x)
@@ -199,18 +201,20 @@ test "P2: doubles round-trip through JSON across the whole bit space" {
 
 ///|
 test "P2: containers round-trip through JSON" {
-  @quickcheck.check((x : Int?) => @json.from_bytes(@json.to_bytes(x)) == x)
-  @quickcheck.check((x : Array[Int]) => @json.from_bytes(@json.to_bytes(x)) == x)
+  @quickcheck.check((x : Int32?) => @json.from_bytes(@json.to_bytes(x)) == x)
+  @quickcheck.check((x : Array[Int32]) => {
+    @json.from_bytes(@json.to_bytes(x)) == x
+  })
   @quickcheck.check((x : Array[String]) => {
     @json.from_bytes(@json.to_bytes(x)) == x
   })
-  @quickcheck.check((x : Array[Array[Int]]) => {
+  @quickcheck.check((x : Array[Array[Int32]]) => {
     @json.from_bytes(@json.to_bytes(x)) == x
   })
-  @quickcheck.check((x : (Int, String)) => {
+  @quickcheck.check((x : (Int32, String)) => {
     @json.from_bytes(@json.to_bytes(x)) == x
   })
-  @quickcheck.check((x : (Bool, Int, String)) => {
+  @quickcheck.check((x : (Bool, Int32, String)) => {
     @json.from_bytes(@json.to_bytes(x)) == x
   })
 }
@@ -254,12 +258,12 @@ fn[T : @data.Serialize + @data.Deserialize + Eq] bin_agrees(
 /// Both sides can round-trip while disagreeing about which protocol methods a
 /// value goes through; only comparing them catches that.
 test "P3: JSON and Value agree on what a value means" {
-  @quickcheck.check((x : Int) => agree(x))
+  @quickcheck.check((x : Int32) => agree(x))
   @quickcheck.check((x : String) => agree(x))
   @quickcheck.check((x : Bytes) => agree(x))
-  @quickcheck.check((x : Int?) => agree(x))
-  @quickcheck.check((x : Array[Int]) => agree(x))
-  @quickcheck.check((x : (Int, String)) => agree(x))
+  @quickcheck.check((x : Int32?) => agree(x))
+  @quickcheck.check((x : Array[Int32]) => agree(x))
+  @quickcheck.check((x : (Int32, String)) => agree(x))
   @quickcheck.check((x : Point) => agree(x))
   @quickcheck.check((x : Shape) => agree(x))
 }
@@ -274,20 +278,22 @@ test "P2: values round-trip through the binary fixture" {
   @quickcheck.check((x : Unit) => bin_from_bytes(bin_to_bytes(x)) == x)
   @quickcheck.check((x : Bool) => bin_from_bytes(bin_to_bytes(x)) == x)
   @quickcheck.check((x : Byte) => bin_from_bytes(bin_to_bytes(x)) == x)
-  @quickcheck.check((x : Int) => bin_from_bytes(bin_to_bytes(x)) == x)
-  @quickcheck.check((x : UInt) => bin_from_bytes(bin_to_bytes(x)) == x)
+  @quickcheck.check((x : Int32) => bin_from_bytes(bin_to_bytes(x)) == x)
+  @quickcheck.check((x : UInt32) => bin_from_bytes(bin_to_bytes(x)) == x)
   @quickcheck.check((x : Int64) => bin_from_bytes(bin_to_bytes(x)) == x)
   @quickcheck.check((x : UInt64) => bin_from_bytes(bin_to_bytes(x)) == x)
   @quickcheck.check((x : Char) => bin_from_bytes(bin_to_bytes(x)) == x)
   @quickcheck.check((x : String) => bin_from_bytes(bin_to_bytes(x)) == x)
   @quickcheck.check((x : Bytes) => bin_from_bytes(bin_to_bytes(x)) == x)
-  @quickcheck.check((x : Int?) => bin_from_bytes(bin_to_bytes(x)) == x)
-  @quickcheck.check((x : Array[Int]) => bin_from_bytes(bin_to_bytes(x)) == x)
+  @quickcheck.check((x : Int32?) => bin_from_bytes(bin_to_bytes(x)) == x)
+  @quickcheck.check((x : Array[Int32]) => bin_from_bytes(bin_to_bytes(x)) == x)
   @quickcheck.check((x : Array[Array[String]]) => {
     bin_from_bytes(bin_to_bytes(x)) == x
   })
-  @quickcheck.check((x : (Int, String)) => bin_from_bytes(bin_to_bytes(x)) == x)
-  @quickcheck.check((x : (Bool, Int, String)) => {
+  @quickcheck.check((x : (Int32, String)) => {
+    bin_from_bytes(bin_to_bytes(x)) == x
+  })
+  @quickcheck.check((x : (Bool, Int32, String)) => {
     bin_from_bytes(bin_to_bytes(x)) == x
   })
   @quickcheck.check((x : Point) => bin_from_bytes(bin_to_bytes(x)) == x)
@@ -316,15 +322,15 @@ test "P2: doubles round-trip through the binary fixture" {
 /// different answer to `deserialize_any` (refusal). If both still land on the
 /// same value, the data model is carrying its weight.
 test "P3: the binary fixture and JSON agree on what a value means" {
-  @quickcheck.check((x : Int) => bin_agrees(x))
+  @quickcheck.check((x : Int32) => bin_agrees(x))
   @quickcheck.check((x : Int64) => bin_agrees(x))
   @quickcheck.check((x : String) => bin_agrees(x))
   @quickcheck.check((x : Bytes) => bin_agrees(x))
   @quickcheck.check((x : Char) => bin_agrees(x))
-  @quickcheck.check((x : Int?) => bin_agrees(x))
-  @quickcheck.check((x : Array[Int]) => bin_agrees(x))
-  @quickcheck.check((x : (Int, String)) => bin_agrees(x))
-  @quickcheck.check((x : (Bool, Int, String)) => bin_agrees(x))
+  @quickcheck.check((x : Int32?) => bin_agrees(x))
+  @quickcheck.check((x : Array[Int32]) => bin_agrees(x))
+  @quickcheck.check((x : (Int32, String)) => bin_agrees(x))
+  @quickcheck.check((x : (Bool, Int32, String)) => bin_agrees(x))
   @quickcheck.check((x : Point) => bin_agrees(x))
   @quickcheck.check((x : Shape) => bin_agrees(x))
   @quickcheck.check((x : AnyDouble) => bin_agrees(x), filter=is_finite)
@@ -345,22 +351,24 @@ test "P2: values round-trip through CBOR" {
   @quickcheck.check((x : Unit) => @cbor.from_bytes(@cbor.to_bytes(x)) == x)
   @quickcheck.check((x : Bool) => @cbor.from_bytes(@cbor.to_bytes(x)) == x)
   @quickcheck.check((x : Byte) => @cbor.from_bytes(@cbor.to_bytes(x)) == x)
-  @quickcheck.check((x : Int) => @cbor.from_bytes(@cbor.to_bytes(x)) == x)
-  @quickcheck.check((x : UInt) => @cbor.from_bytes(@cbor.to_bytes(x)) == x)
+  @quickcheck.check((x : Int32) => @cbor.from_bytes(@cbor.to_bytes(x)) == x)
+  @quickcheck.check((x : UInt32) => @cbor.from_bytes(@cbor.to_bytes(x)) == x)
   @quickcheck.check((x : Int64) => @cbor.from_bytes(@cbor.to_bytes(x)) == x)
   @quickcheck.check((x : UInt64) => @cbor.from_bytes(@cbor.to_bytes(x)) == x)
   @quickcheck.check((x : Char) => @cbor.from_bytes(@cbor.to_bytes(x)) == x)
   @quickcheck.check((x : String) => @cbor.from_bytes(@cbor.to_bytes(x)) == x)
   @quickcheck.check((x : Bytes) => @cbor.from_bytes(@cbor.to_bytes(x)) == x)
-  @quickcheck.check((x : Int?) => @cbor.from_bytes(@cbor.to_bytes(x)) == x)
-  @quickcheck.check((x : Array[Int]) => @cbor.from_bytes(@cbor.to_bytes(x)) == x)
+  @quickcheck.check((x : Int32?) => @cbor.from_bytes(@cbor.to_bytes(x)) == x)
+  @quickcheck.check((x : Array[Int32]) => {
+    @cbor.from_bytes(@cbor.to_bytes(x)) == x
+  })
   @quickcheck.check((x : Array[Array[String]]) => {
     @cbor.from_bytes(@cbor.to_bytes(x)) == x
   })
-  @quickcheck.check((x : (Int, String)) => {
+  @quickcheck.check((x : (Int32, String)) => {
     @cbor.from_bytes(@cbor.to_bytes(x)) == x
   })
-  @quickcheck.check((x : (Bool, Int, String)) => {
+  @quickcheck.check((x : (Bool, Int32, String)) => {
     @cbor.from_bytes(@cbor.to_bytes(x)) == x
   })
   @quickcheck.check((x : Point) => @cbor.from_bytes(@cbor.to_bytes(x)) == x)
@@ -386,7 +394,7 @@ test "CBOR keeps bytes and integer arrays apart" {
   // No escape for the empty case: an empty byte string is `0x40` and an empty
   // array is `0x80`, so even those two cannot collide.
   @quickcheck.check((x : Bytes) => {
-    let as_array : Array[Int] = x.iter().map(b => b.to_int()).collect()
+    let as_array : Array[Int32] = x.iter().map(b => b.to_int()).collect()
     @cbor.to_bytes(x) != @cbor.to_bytes(as_array)
   })
 }
@@ -403,8 +411,12 @@ test "P2: values round-trip through MessagePack" {
   @quickcheck.check((x : Unit) => @msgpack.from_bytes(@msgpack.to_bytes(x)) == x)
   @quickcheck.check((x : Bool) => @msgpack.from_bytes(@msgpack.to_bytes(x)) == x)
   @quickcheck.check((x : Byte) => @msgpack.from_bytes(@msgpack.to_bytes(x)) == x)
-  @quickcheck.check((x : Int) => @msgpack.from_bytes(@msgpack.to_bytes(x)) == x)
-  @quickcheck.check((x : UInt) => @msgpack.from_bytes(@msgpack.to_bytes(x)) == x)
+  @quickcheck.check((x : Int32) => {
+    @msgpack.from_bytes(@msgpack.to_bytes(x)) == x
+  })
+  @quickcheck.check((x : UInt32) => {
+    @msgpack.from_bytes(@msgpack.to_bytes(x)) == x
+  })
   @quickcheck.check((x : Int64) => {
     @msgpack.from_bytes(@msgpack.to_bytes(x)) == x
   })
@@ -418,14 +430,16 @@ test "P2: values round-trip through MessagePack" {
   @quickcheck.check((x : Bytes) => {
     @msgpack.from_bytes(@msgpack.to_bytes(x)) == x
   })
-  @quickcheck.check((x : Int?) => @msgpack.from_bytes(@msgpack.to_bytes(x)) == x)
-  @quickcheck.check((x : Array[Int]) => {
+  @quickcheck.check((x : Int32?) => {
+    @msgpack.from_bytes(@msgpack.to_bytes(x)) == x
+  })
+  @quickcheck.check((x : Array[Int32]) => {
     @msgpack.from_bytes(@msgpack.to_bytes(x)) == x
   })
   @quickcheck.check((x : Array[Array[String]]) => {
     @msgpack.from_bytes(@msgpack.to_bytes(x)) == x
   })
-  @quickcheck.check((x : (Int, String)) => {
+  @quickcheck.check((x : (Int32, String)) => {
     @msgpack.from_bytes(@msgpack.to_bytes(x)) == x
   })
   @quickcheck.check((x : Point) => {
@@ -467,12 +481,14 @@ test "MessagePack integers survive the narrowing ladder" {
 /// `Map` has no `Arbitrary` in core, and TOML cannot round-trip an arbitrary
 /// *value* anyway — it has no null, no byte string and no non-table root — so
 /// the property is stated over documents rather than over values.
-struct IntDoc(Map[String, Int]) derive(Eq, Debug)
+struct IntDoc(Map[String, Int32]) derive(Eq, Debug)
 
 ///|
 impl @quickcheck.Arbitrary for IntDoc with fn arbitrary(size, rs) {
-  let pairs : Array[(String, Int)] = @quickcheck.Arbitrary::arbitrary(size, rs)
-  let out : Map[String, Int] = Map([])
+  let pairs : Array[(String, Int32)] = @quickcheck.Arbitrary::arbitrary(
+    size, rs,
+  )
+  let out : Map[String, Int32] = Map([])
   for pair in pairs {
     out[pair.0] = pair.1
   }
@@ -513,7 +529,7 @@ impl @shrink.Shrink for TextDoc
 /// is legal.
 test "P2: documents round-trip through TOML" {
   @quickcheck.check((x : IntDoc) => {
-    let round : Map[String, Int] = @toml.from_string(@toml.to_string(x.0))
+    let round : Map[String, Int32] = @toml.from_string(@toml.to_string(x.0))
     round == x.0
   })
   @quickcheck.check((x : TextDoc) => {
