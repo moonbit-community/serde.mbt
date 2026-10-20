@@ -11,7 +11,7 @@
 
 name = "Yu-zh/data"
 
-version = "0.2.0"
+version = "0.2.1"
 
 readme = "README.mbt.md"
 
@@ -26,6 +26,6 @@ preferred_target = "wasm"
 description = "A serde-shaped serialization framework: one data model, many formats"
 
 import {
-  "moonbitlang/parser@0.3.14",
-  "moonbitlang/async@0.20.5",
+  "moonbitlang/parser@0.4.5",
+  "moonbitlang/async@0.22.5",
 }
