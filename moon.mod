@@ -15,7 +15,7 @@ version = "0.2.1"
 
 readme = "README.mbt.md"
 
-repository = "https://github.com/Yu-zh/data"
+repository = "https://github.com/moonbit-community/serde.mbt"
 
 license = "Apache-2.0"
 
