@@ -1,6 +1,5 @@
 import {
   "Yu-zh/data",
   "moonbitlang/core/buffer",
-  "moonbitlang/core/float",
   "moonbitlang/core/encoding/utf8",
 }

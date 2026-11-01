@@ -263,7 +263,7 @@ fn cautious_capacity(hint : Int32) -> Int32 {
 ///|
 pub impl[T : Deserialize] Deserialize for Array[T] with fn deserialize(d) {
   let out = match d.deserialize_seq_begin() {
-    Some(n) => Array::new(capacity=cautious_capacity(n))
+    Some(n) => Array(capacity=cautious_capacity(n))
     None => []
   }
   while (d.deserialize_seq_next() : T?) is Some(x) {

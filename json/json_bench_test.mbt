@@ -35,7 +35,7 @@ const LETTERS : String = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 ///|
 fn Seed::word(self : Seed, len : Int32) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   for _ in 0..<len {
     out.write_char(LETTERS.unsafe_get(self.below(52)).to_char().unwrap())
   }
@@ -48,7 +48,7 @@ fn Seed::word(self : Seed, len : Int32) -> String {
 /// Roughly 90% numeric characters.
 fn corpus_numbers(pairs : Int32) -> Bytes {
   let seed = Seed::{ state: 0x9E3779B97F4A7C15UL, }
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   out.write_string("{\"type\":\"numbers\",\"coordinates\":[")
   for i in 0..<pairs {
     if i > 0 {
@@ -67,7 +67,7 @@ fn corpus_numbers(pairs : Int32) -> Bytes {
 /// handling dominates and string values barely register.
 fn corpus_keys(rows : Int32) -> Bytes {
   let seed = Seed::{ state: 0x123456789ABCDEFUL, }
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   out.write_string("{\"type\":\"keys\",\"rows\":[")
   for i in 0..<rows {
     if i > 0 {
@@ -87,7 +87,7 @@ fn corpus_keys(rows : Int32) -> Bytes {
 /// keys sit well below it.
 fn corpus_text(rows : Int32, len : Int32) -> Bytes {
   let seed = Seed::{ state: 0xFEEDFACECAFEBEEFUL, }
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   out.write_string("{\"type\":\"text\",\"rows\":[")
   for i in 0..<rows {
     if i > 0 {
@@ -106,13 +106,13 @@ fn corpus_text(rows : Int32, len : Int32) -> Bytes {
 /// it catches a change that speeds up the common case by slowing this one.
 fn corpus_escapes(rows : Int32) -> Bytes {
   let seed = Seed::{ state: 0x0BADC0DEDEADBEEFUL, }
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   out.write_string("{\"type\":\"escapes\",\"rows\":[")
   for i in 0..<rows {
     if i > 0 {
       out.write_string(",")
     }
-    let text = StringBuilder::new()
+    let text = StringBuilder()
     for _ in 0..<8 {
       text.write_string(seed.word(4))
       text.write_string(

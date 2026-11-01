@@ -8,7 +8,7 @@
 ///|
 fn hex(bytes : Bytes) -> String {
   let digits = "0123456789abcdef"
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   for b in bytes {
     let v = b.to_int()
     out.write_char(digits.to_array()[v >> 4])
@@ -20,7 +20,7 @@ fn hex(bytes : Bytes) -> String {
 ///|
 fn unhex(text : String) -> Bytes {
   let chars = text.to_array()
-  let out = Array::new(capacity=chars.length() / 2)
+  let out = Array(capacity=chars.length() / 2)
   fn nibble(c : Char) -> Int32 {
     let v = c.to_int()
     if v >= 0x30 && v <= 0x39 {

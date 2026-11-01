@@ -51,7 +51,7 @@ fn Target::reads_self(self : Target) -> Bool {
 
 ///|
 fn quote(text : String) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   out.write_char('"')
   for c in text {
     match c {
@@ -78,7 +78,7 @@ fn hex_digit(n : Int32) -> Char {
 /// Renders a UTF-8 byte literal without relying on the generated source file's
 /// text encoding. Printable ASCII stays readable; everything else uses `\xNN`.
 fn byte_quote(text : String) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   out.write_string("b\"")
   for byte in @utf8.encode(text) {
     let n = byte.to_int()
@@ -101,7 +101,7 @@ fn byte_quote(text : String) -> String {
 
 ///|
 fn byte_pattern(text : String) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   out.write_char('[')
   for index, byte in @utf8.encode(text) {
     if index > 0 {
@@ -573,7 +573,7 @@ fn emit(targets : Array[Target]) -> String? {
   if wanted.is_empty() {
     return None
   }
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   out.write_string(HEADER)
   out.write_string("\n")
   for target in wanted {

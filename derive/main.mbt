@@ -109,7 +109,7 @@ async fn collect(root : String, out : Array[String]) -> Unit {
 /// whitespace and commas — the only things they disagree about — leaves a
 /// fingerprint that changes when the code does and not before.
 fn fingerprint(source : String) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   for c in source {
     let noise = c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == ','
     if !noise {

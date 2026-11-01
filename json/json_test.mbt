@@ -641,7 +641,7 @@ test "an integer too large for any integer type widens to a float" {
 
 ///|
 test "an integer too large even for a float is refused" {
-  let huge = StringBuilder::new()
+  let huge = StringBuilder()
   huge.write_char('1')
   for _ in 0..<400 {
     huge.write_char('0')

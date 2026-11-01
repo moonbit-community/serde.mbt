@@ -57,7 +57,7 @@ fn ValueSerializer::emit(self : ValueSerializer, value : Value) -> Unit {
 fn ValueSerializer::open_seq(self : ValueSerializer, hint : Int32?) -> Unit {
   self.items = Some(
     match hint {
-      Some(n) => Array::new(capacity=n)
+      Some(n) => Array(capacity=n)
       None => []
     },
   )

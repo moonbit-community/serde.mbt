@@ -557,7 +557,7 @@ fn scalar(text : String, at : @data.Path) -> @data.Value raise @data.DeError {
 
 ///|
 fn strip_underscores(text : String) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   for c in text {
     if c != '_' {
       out.write_char(c)

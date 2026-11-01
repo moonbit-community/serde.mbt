@@ -26,6 +26,6 @@ preferred_target = "wasm"
 description = "A serde-shaped serialization framework: one data model, many formats"
 
 import {
-  "moonbitlang/parser@0.4.5",
+  "moonbitlang/parser@0.4.7",
   "moonbitlang/async@0.22.5",
 }

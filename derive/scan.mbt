@@ -252,7 +252,7 @@ fn scan(
     guard marked else { continue }
     let site = "\{where_}: type `\{decl.tycon}`"
     let shape = match decl.components {
-      Record(fields~) =>
+      Record(fields~, ..) =>
         if fields.is_empty() {
           UnitStruct
         } else {
