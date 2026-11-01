@@ -1,6 +1,6 @@
 // The generator's command line.
 //
-//   moonx Yu-zh/data/derive [path ...]
+//   moonx moonbit-community/serde.mbt/derive [path ...]
 //
 // Each path is a file or a directory to walk. For every source file holding at
 // least one `#data.derive(...)` type, a sibling `*_derive*.mbt` is written; if
@@ -20,7 +20,7 @@ const USAGE : String =
   #|Generate Serialize / Deserialize implementations for types marked
   #|`#data.derive(...)`.
   #|
-  #|    moonx Yu-zh/data/derive [path ...]
+  #|    moonx moonbit-community/serde.mbt/derive [path ...]
   #|
   #|Paths may be files or directories; directories are walked recursively.
   #|Defaults to the current directory.

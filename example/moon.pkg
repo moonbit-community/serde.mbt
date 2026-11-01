@@ -1,8 +1,8 @@
 import {
-  "Yu-zh/data",
+  "moonbit-community/serde.mbt" @serde,
   "moonbitlang/core/debug",
 }
 
 import {
-  "Yu-zh/data/json",
+  "moonbit-community/serde.mbt/json",
 } for "test"

@@ -1,4 +1,4 @@
-// MessagePack, as a format for the `Yu-zh/data` data model.
+// MessagePack, as a format for the `moonbit-community/serde.mbt` data model.
 //
 // The third format, and the closest sibling to CBOR: self-describing, binary,
 // big-endian, with a byte string and non-string map keys as first-class
@@ -25,7 +25,7 @@
 
 ///|
 /// Serializes any value to MessagePack.
-pub fn[T : @data.Serialize] to_bytes(value : T) -> Bytes raise @data.SerError {
+pub fn[T : @serde.Serialize] to_bytes(value : T) -> Bytes raise @serde.SerError {
   let serializer = MsgpackSerializer::new()
   value.serialize(serializer)
   serializer.finish()
@@ -36,11 +36,11 @@ pub fn[T : @data.Serialize] to_bytes(value : T) -> Bytes raise @data.SerError {
 ///
 /// Raises if the input has trailing content after the value, matching
 /// `@json.from_bytes` and `@cbor.from_bytes`.
-pub fn[T : @data.Deserialize] from_bytes(
+pub fn[T : @serde.Deserialize] from_bytes(
   input : Bytes,
-) -> T raise @data.DeError {
+) -> T raise @serde.DeError {
   let deserializer = MsgpackDeserializer::new(input)
-  let value = @data.Deserialize::deserialize(deserializer)
+  let value = @serde.Deserialize::deserialize(deserializer)
   deserializer.finish()
   value
 }

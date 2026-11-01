@@ -9,7 +9,7 @@
 //   "moonbitlang/x@0.4.6",
 // }
 
-name = "Yu-zh/data"
+name = "moonbit-community/serde.mbt"
 
 version = "0.2.1"
 

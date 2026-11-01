@@ -1,114 +1,114 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "Yu-zh/data/toml"
+package "moonbit-community/serde.mbt/toml"
 
 import {
-  "Yu-zh/data",
+  "moonbit-community/serde.mbt",
 }
 
 // Values
-pub fn[T : @data.Deserialize] from_bytes(Bytes) -> T raise @data.DeError
+pub fn[T : @serde.mbt.Deserialize] from_bytes(Bytes) -> T raise @serde.mbt.DeError
 
-pub fn[T : @data.Deserialize] from_string(String) -> T raise @data.DeError
+pub fn[T : @serde.mbt.Deserialize] from_string(String) -> T raise @serde.mbt.DeError
 
-pub fn[T : @data.Serialize] to_bytes(T) -> Bytes raise @data.SerError
+pub fn[T : @serde.mbt.Serialize] to_bytes(T) -> Bytes raise @serde.mbt.SerError
 
-pub fn[T : @data.Serialize] to_string(T) -> String raise @data.SerError
+pub fn[T : @serde.mbt.Serialize] to_string(T) -> String raise @serde.mbt.SerError
 
 // Errors
 
 // Types and methods
 type TomlDeserializer
-pub fn TomlDeserializer::deserialize_any(Self) -> @data.Value raise @data.DeError
-pub fn TomlDeserializer::deserialize_bool(Self) -> Bool raise @data.DeError
-pub fn TomlDeserializer::deserialize_byte(Self) -> Byte raise @data.DeError
-pub fn TomlDeserializer::deserialize_bytes(Self) -> Bytes raise @data.DeError
-pub fn TomlDeserializer::deserialize_char(Self) -> Char raise @data.DeError
-pub fn TomlDeserializer::deserialize_double(Self) -> Double raise @data.DeError
-pub fn TomlDeserializer::deserialize_enum_begin(Self, String, ArrayView[String]) -> Int32 raise @data.DeError
-pub fn TomlDeserializer::deserialize_enum_end(Self) -> Unit raise @data.DeError
-pub fn[F : @data.FieldIdentifier] TomlDeserializer::deserialize_field(Self) -> F? raise @data.DeError
-pub fn TomlDeserializer::deserialize_field_name(Self) -> String? raise @data.DeError
-pub fn[T : @data.Deserialize] TomlDeserializer::deserialize_field_value(Self) -> T raise @data.DeError
-pub fn TomlDeserializer::deserialize_float(Self) -> Float raise @data.DeError
-pub fn TomlDeserializer::deserialize_int(Self) -> Int32 raise @data.DeError
-pub fn TomlDeserializer::deserialize_int16(Self) -> Int16 raise @data.DeError
-pub fn TomlDeserializer::deserialize_int64(Self) -> Int64 raise @data.DeError
-pub fn TomlDeserializer::deserialize_map_begin(Self) -> Int32? raise @data.DeError
-pub fn[K : @data.Deserialize] TomlDeserializer::deserialize_map_next_key(Self) -> K? raise @data.DeError
-pub fn[V : @data.Deserialize] TomlDeserializer::deserialize_map_value(Self) -> V raise @data.DeError
-pub fn[T : @data.Deserialize] TomlDeserializer::deserialize_newtype_struct(Self, String) -> T raise @data.DeError
-pub fn[T : @data.Deserialize] TomlDeserializer::deserialize_newtype_variant(Self) -> T raise @data.DeError
-pub fn[T : @data.Deserialize] TomlDeserializer::deserialize_option(Self) -> T? raise @data.DeError
-pub fn TomlDeserializer::deserialize_seq_begin(Self) -> Int32? raise @data.DeError
-pub fn[T : @data.Deserialize] TomlDeserializer::deserialize_seq_next(Self) -> T? raise @data.DeError
-pub fn TomlDeserializer::deserialize_str_bytes(Self) -> BytesView raise @data.DeError
-pub fn TomlDeserializer::deserialize_string(Self) -> String raise @data.DeError
-pub fn TomlDeserializer::deserialize_struct_begin(Self, String, ArrayView[String]) -> Unit raise @data.DeError
-pub fn TomlDeserializer::deserialize_tuple_begin(Self, Int32) -> Unit raise @data.DeError
-pub fn TomlDeserializer::deserialize_tuple_end(Self) -> Unit raise @data.DeError
-pub fn[T : @data.Deserialize] TomlDeserializer::deserialize_tuple_next(Self) -> T raise @data.DeError
-pub fn TomlDeserializer::deserialize_tuple_struct_begin(Self, String, Int32) -> Unit raise @data.DeError
-pub fn TomlDeserializer::deserialize_uint(Self) -> UInt32 raise @data.DeError
-pub fn TomlDeserializer::deserialize_uint16(Self) -> UInt16 raise @data.DeError
-pub fn TomlDeserializer::deserialize_uint64(Self) -> UInt64 raise @data.DeError
-pub fn TomlDeserializer::deserialize_unit(Self) -> Unit raise @data.DeError
-pub fn TomlDeserializer::deserialize_unit_struct(Self, String) -> Unit raise @data.DeError
-pub fn TomlDeserializer::deserialize_unit_variant(Self) -> Unit raise @data.DeError
+pub fn TomlDeserializer::deserialize_any(Self) -> @serde.mbt.Value raise @serde.mbt.DeError
+pub fn TomlDeserializer::deserialize_bool(Self) -> Bool raise @serde.mbt.DeError
+pub fn TomlDeserializer::deserialize_byte(Self) -> Byte raise @serde.mbt.DeError
+pub fn TomlDeserializer::deserialize_bytes(Self) -> Bytes raise @serde.mbt.DeError
+pub fn TomlDeserializer::deserialize_char(Self) -> Char raise @serde.mbt.DeError
+pub fn TomlDeserializer::deserialize_double(Self) -> Double raise @serde.mbt.DeError
+pub fn TomlDeserializer::deserialize_enum_begin(Self, String, ArrayView[String]) -> Int32 raise @serde.mbt.DeError
+pub fn TomlDeserializer::deserialize_enum_end(Self) -> Unit raise @serde.mbt.DeError
+pub fn[F : @serde.mbt.FieldIdentifier] TomlDeserializer::deserialize_field(Self) -> F? raise @serde.mbt.DeError
+pub fn TomlDeserializer::deserialize_field_name(Self) -> String? raise @serde.mbt.DeError
+pub fn[T : @serde.mbt.Deserialize] TomlDeserializer::deserialize_field_value(Self) -> T raise @serde.mbt.DeError
+pub fn TomlDeserializer::deserialize_float(Self) -> Float raise @serde.mbt.DeError
+pub fn TomlDeserializer::deserialize_int(Self) -> Int32 raise @serde.mbt.DeError
+pub fn TomlDeserializer::deserialize_int16(Self) -> Int16 raise @serde.mbt.DeError
+pub fn TomlDeserializer::deserialize_int64(Self) -> Int64 raise @serde.mbt.DeError
+pub fn TomlDeserializer::deserialize_map_begin(Self) -> Int32? raise @serde.mbt.DeError
+pub fn[K : @serde.mbt.Deserialize] TomlDeserializer::deserialize_map_next_key(Self) -> K? raise @serde.mbt.DeError
+pub fn[V : @serde.mbt.Deserialize] TomlDeserializer::deserialize_map_value(Self) -> V raise @serde.mbt.DeError
+pub fn[T : @serde.mbt.Deserialize] TomlDeserializer::deserialize_newtype_struct(Self, String) -> T raise @serde.mbt.DeError
+pub fn[T : @serde.mbt.Deserialize] TomlDeserializer::deserialize_newtype_variant(Self) -> T raise @serde.mbt.DeError
+pub fn[T : @serde.mbt.Deserialize] TomlDeserializer::deserialize_option(Self) -> T? raise @serde.mbt.DeError
+pub fn TomlDeserializer::deserialize_seq_begin(Self) -> Int32? raise @serde.mbt.DeError
+pub fn[T : @serde.mbt.Deserialize] TomlDeserializer::deserialize_seq_next(Self) -> T? raise @serde.mbt.DeError
+pub fn TomlDeserializer::deserialize_str_bytes(Self) -> BytesView raise @serde.mbt.DeError
+pub fn TomlDeserializer::deserialize_string(Self) -> String raise @serde.mbt.DeError
+pub fn TomlDeserializer::deserialize_struct_begin(Self, String, ArrayView[String]) -> Unit raise @serde.mbt.DeError
+pub fn TomlDeserializer::deserialize_tuple_begin(Self, Int32) -> Unit raise @serde.mbt.DeError
+pub fn TomlDeserializer::deserialize_tuple_end(Self) -> Unit raise @serde.mbt.DeError
+pub fn[T : @serde.mbt.Deserialize] TomlDeserializer::deserialize_tuple_next(Self) -> T raise @serde.mbt.DeError
+pub fn TomlDeserializer::deserialize_tuple_struct_begin(Self, String, Int32) -> Unit raise @serde.mbt.DeError
+pub fn TomlDeserializer::deserialize_uint(Self) -> UInt32 raise @serde.mbt.DeError
+pub fn TomlDeserializer::deserialize_uint16(Self) -> UInt16 raise @serde.mbt.DeError
+pub fn TomlDeserializer::deserialize_uint64(Self) -> UInt64 raise @serde.mbt.DeError
+pub fn TomlDeserializer::deserialize_unit(Self) -> Unit raise @serde.mbt.DeError
+pub fn TomlDeserializer::deserialize_unit_struct(Self, String) -> Unit raise @serde.mbt.DeError
+pub fn TomlDeserializer::deserialize_unit_variant(Self) -> Unit raise @serde.mbt.DeError
 pub fn TomlDeserializer::finish(Self) -> Unit
 pub fn TomlDeserializer::is_human_readable(Self) -> Bool
-pub fn TomlDeserializer::new(Bytes) -> Self raise @data.DeError
-pub fn TomlDeserializer::path(Self) -> @data.Path
-pub fn TomlDeserializer::skip_value(Self) -> Unit raise @data.DeError
-pub impl @data.Deserializer for TomlDeserializer
+pub fn TomlDeserializer::new(Bytes) -> Self raise @serde.mbt.DeError
+pub fn TomlDeserializer::path(Self) -> @serde.mbt.Path
+pub fn TomlDeserializer::skip_value(Self) -> Unit raise @serde.mbt.DeError
+pub impl @serde.mbt.Deserializer for TomlDeserializer
 
 type TomlSerializer
-pub fn TomlSerializer::finish(Self) -> Bytes raise @data.SerError
+pub fn TomlSerializer::finish(Self) -> Bytes raise @serde.mbt.SerError
 pub fn TomlSerializer::is_human_readable(Self) -> Bool
 pub fn TomlSerializer::new() -> Self
-pub fn TomlSerializer::serialize_bool(Self, Bool) -> Unit raise @data.SerError
-pub fn TomlSerializer::serialize_byte(Self, Byte) -> Unit raise @data.SerError
-pub fn TomlSerializer::serialize_bytes(Self, Bytes) -> Unit raise @data.SerError
-pub fn TomlSerializer::serialize_char(Self, Char) -> Unit raise @data.SerError
-pub fn TomlSerializer::serialize_double(Self, Double) -> Unit raise @data.SerError
-pub fn[T : @data.Serialize] TomlSerializer::serialize_field(Self, String, T) -> Unit raise @data.SerError
-pub fn TomlSerializer::serialize_float(Self, Float) -> Unit raise @data.SerError
-pub fn TomlSerializer::serialize_int(Self, Int32) -> Unit raise @data.SerError
-pub fn TomlSerializer::serialize_int16(Self, Int16) -> Unit raise @data.SerError
-pub fn TomlSerializer::serialize_int64(Self, Int64) -> Unit raise @data.SerError
-pub fn TomlSerializer::serialize_map_begin(Self, Int32?) -> Unit raise @data.SerError
-pub fn TomlSerializer::serialize_map_end(Self) -> Unit raise @data.SerError
-pub fn[K : @data.Serialize] TomlSerializer::serialize_map_key(Self, K) -> Unit raise @data.SerError
-pub fn[V : @data.Serialize] TomlSerializer::serialize_map_value(Self, V) -> Unit raise @data.SerError
-pub fn[T : @data.Serialize] TomlSerializer::serialize_newtype_struct(Self, String, T) -> Unit raise @data.SerError
-pub fn[T : @data.Serialize] TomlSerializer::serialize_newtype_variant(Self, @data.VariantInfo, T) -> Unit raise @data.SerError
-pub fn TomlSerializer::serialize_none(Self) -> Unit raise @data.SerError
-pub fn TomlSerializer::serialize_seq_begin(Self, Int32?) -> Unit raise @data.SerError
-pub fn[T : @data.Serialize] TomlSerializer::serialize_seq_element(Self, T) -> Unit raise @data.SerError
-pub fn TomlSerializer::serialize_seq_end(Self) -> Unit raise @data.SerError
-pub fn[T : @data.Serialize] TomlSerializer::serialize_some(Self, T) -> Unit raise @data.SerError
-pub fn TomlSerializer::serialize_str_bytes(Self, BytesView) -> Unit raise @data.SerError
-pub fn TomlSerializer::serialize_string(Self, String) -> Unit raise @data.SerError
-pub fn TomlSerializer::serialize_struct_begin(Self, String, Int32) -> Unit raise @data.SerError
-pub fn TomlSerializer::serialize_struct_end(Self) -> Unit raise @data.SerError
-pub fn TomlSerializer::serialize_struct_variant_begin(Self, @data.VariantInfo, Int32) -> Unit raise @data.SerError
-pub fn TomlSerializer::serialize_struct_variant_end(Self) -> Unit raise @data.SerError
-pub fn[T : @data.Serialize] TomlSerializer::serialize_struct_variant_field(Self, String, T) -> Unit raise @data.SerError
-pub fn TomlSerializer::serialize_tuple_begin(Self, Int32) -> Unit raise @data.SerError
-pub fn[T : @data.Serialize] TomlSerializer::serialize_tuple_element(Self, T) -> Unit raise @data.SerError
-pub fn TomlSerializer::serialize_tuple_end(Self) -> Unit raise @data.SerError
-pub fn TomlSerializer::serialize_tuple_struct_begin(Self, String, Int32) -> Unit raise @data.SerError
-pub fn TomlSerializer::serialize_tuple_struct_end(Self) -> Unit raise @data.SerError
-pub fn[T : @data.Serialize] TomlSerializer::serialize_tuple_struct_field(Self, T) -> Unit raise @data.SerError
-pub fn TomlSerializer::serialize_tuple_variant_begin(Self, @data.VariantInfo, Int32) -> Unit raise @data.SerError
-pub fn[T : @data.Serialize] TomlSerializer::serialize_tuple_variant_element(Self, T) -> Unit raise @data.SerError
-pub fn TomlSerializer::serialize_tuple_variant_end(Self) -> Unit raise @data.SerError
-pub fn TomlSerializer::serialize_uint(Self, UInt32) -> Unit raise @data.SerError
-pub fn TomlSerializer::serialize_uint16(Self, UInt16) -> Unit raise @data.SerError
-pub fn TomlSerializer::serialize_uint64(Self, UInt64) -> Unit raise @data.SerError
-pub fn TomlSerializer::serialize_unit(Self) -> Unit raise @data.SerError
-pub fn TomlSerializer::serialize_unit_struct(Self, String) -> Unit raise @data.SerError
-pub fn TomlSerializer::serialize_unit_variant(Self, @data.VariantInfo) -> Unit raise @data.SerError
-pub impl @data.Serializer for TomlSerializer
+pub fn TomlSerializer::serialize_bool(Self, Bool) -> Unit raise @serde.mbt.SerError
+pub fn TomlSerializer::serialize_byte(Self, Byte) -> Unit raise @serde.mbt.SerError
+pub fn TomlSerializer::serialize_bytes(Self, Bytes) -> Unit raise @serde.mbt.SerError
+pub fn TomlSerializer::serialize_char(Self, Char) -> Unit raise @serde.mbt.SerError
+pub fn TomlSerializer::serialize_double(Self, Double) -> Unit raise @serde.mbt.SerError
+pub fn[T : @serde.mbt.Serialize] TomlSerializer::serialize_field(Self, String, T) -> Unit raise @serde.mbt.SerError
+pub fn TomlSerializer::serialize_float(Self, Float) -> Unit raise @serde.mbt.SerError
+pub fn TomlSerializer::serialize_int(Self, Int32) -> Unit raise @serde.mbt.SerError
+pub fn TomlSerializer::serialize_int16(Self, Int16) -> Unit raise @serde.mbt.SerError
+pub fn TomlSerializer::serialize_int64(Self, Int64) -> Unit raise @serde.mbt.SerError
+pub fn TomlSerializer::serialize_map_begin(Self, Int32?) -> Unit raise @serde.mbt.SerError
+pub fn TomlSerializer::serialize_map_end(Self) -> Unit raise @serde.mbt.SerError
+pub fn[K : @serde.mbt.Serialize] TomlSerializer::serialize_map_key(Self, K) -> Unit raise @serde.mbt.SerError
+pub fn[V : @serde.mbt.Serialize] TomlSerializer::serialize_map_value(Self, V) -> Unit raise @serde.mbt.SerError
+pub fn[T : @serde.mbt.Serialize] TomlSerializer::serialize_newtype_struct(Self, String, T) -> Unit raise @serde.mbt.SerError
+pub fn[T : @serde.mbt.Serialize] TomlSerializer::serialize_newtype_variant(Self, @serde.mbt.VariantInfo, T) -> Unit raise @serde.mbt.SerError
+pub fn TomlSerializer::serialize_none(Self) -> Unit raise @serde.mbt.SerError
+pub fn TomlSerializer::serialize_seq_begin(Self, Int32?) -> Unit raise @serde.mbt.SerError
+pub fn[T : @serde.mbt.Serialize] TomlSerializer::serialize_seq_element(Self, T) -> Unit raise @serde.mbt.SerError
+pub fn TomlSerializer::serialize_seq_end(Self) -> Unit raise @serde.mbt.SerError
+pub fn[T : @serde.mbt.Serialize] TomlSerializer::serialize_some(Self, T) -> Unit raise @serde.mbt.SerError
+pub fn TomlSerializer::serialize_str_bytes(Self, BytesView) -> Unit raise @serde.mbt.SerError
+pub fn TomlSerializer::serialize_string(Self, String) -> Unit raise @serde.mbt.SerError
+pub fn TomlSerializer::serialize_struct_begin(Self, String, Int32) -> Unit raise @serde.mbt.SerError
+pub fn TomlSerializer::serialize_struct_end(Self) -> Unit raise @serde.mbt.SerError
+pub fn TomlSerializer::serialize_struct_variant_begin(Self, @serde.mbt.VariantInfo, Int32) -> Unit raise @serde.mbt.SerError
+pub fn TomlSerializer::serialize_struct_variant_end(Self) -> Unit raise @serde.mbt.SerError
+pub fn[T : @serde.mbt.Serialize] TomlSerializer::serialize_struct_variant_field(Self, String, T) -> Unit raise @serde.mbt.SerError
+pub fn TomlSerializer::serialize_tuple_begin(Self, Int32) -> Unit raise @serde.mbt.SerError
+pub fn[T : @serde.mbt.Serialize] TomlSerializer::serialize_tuple_element(Self, T) -> Unit raise @serde.mbt.SerError
+pub fn TomlSerializer::serialize_tuple_end(Self) -> Unit raise @serde.mbt.SerError
+pub fn TomlSerializer::serialize_tuple_struct_begin(Self, String, Int32) -> Unit raise @serde.mbt.SerError
+pub fn TomlSerializer::serialize_tuple_struct_end(Self) -> Unit raise @serde.mbt.SerError
+pub fn[T : @serde.mbt.Serialize] TomlSerializer::serialize_tuple_struct_field(Self, T) -> Unit raise @serde.mbt.SerError
+pub fn TomlSerializer::serialize_tuple_variant_begin(Self, @serde.mbt.VariantInfo, Int32) -> Unit raise @serde.mbt.SerError
+pub fn[T : @serde.mbt.Serialize] TomlSerializer::serialize_tuple_variant_element(Self, T) -> Unit raise @serde.mbt.SerError
+pub fn TomlSerializer::serialize_tuple_variant_end(Self) -> Unit raise @serde.mbt.SerError
+pub fn TomlSerializer::serialize_uint(Self, UInt32) -> Unit raise @serde.mbt.SerError
+pub fn TomlSerializer::serialize_uint16(Self, UInt16) -> Unit raise @serde.mbt.SerError
+pub fn TomlSerializer::serialize_uint64(Self, UInt64) -> Unit raise @serde.mbt.SerError
+pub fn TomlSerializer::serialize_unit(Self) -> Unit raise @serde.mbt.SerError
+pub fn TomlSerializer::serialize_unit_struct(Self, String) -> Unit raise @serde.mbt.SerError
+pub fn TomlSerializer::serialize_unit_variant(Self, @serde.mbt.VariantInfo) -> Unit raise @serde.mbt.SerError
+pub impl @serde.mbt.Serializer for TomlSerializer
 
 // Type aliases
 

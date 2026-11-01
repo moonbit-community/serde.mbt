@@ -16,7 +16,7 @@
 
 ///|
 priv enum Node {
-  Leaf(@data.Value)
+  Leaf(@serde.Value)
   Sub(Table)
   Arr(Array[Table])
 }
@@ -46,8 +46,8 @@ fn Table::find(self : Table, key : String) -> Node? {
 fn Table::table_at(
   self : Table,
   key : String,
-  path : @data.Path,
-) -> Table raise @data.DeError {
+  path : @serde.Path,
+) -> Table raise @serde.DeError {
   match self.find(key) {
     Some(Sub(t)) => t
     Some(Arr(tables)) =>
@@ -55,13 +55,13 @@ fn Table::table_at(
       match tables.last() {
         Some(t) => t
         None =>
-          raise @data.DeCustom(
+          raise @serde.DeCustom(
             path~,
             message="TOML: `\{key}` is an empty array of tables",
           )
       }
     Some(Leaf(_)) =>
-      raise @data.DeCustom(
+      raise @serde.DeCustom(
         path~,
         message="TOML: `\{key}` is already a value, not a table",
       )
@@ -77,8 +77,8 @@ fn Table::table_at(
 fn Table::push_array_table(
   self : Table,
   key : String,
-  path : @data.Path,
-) -> Table raise @data.DeError {
+  path : @serde.Path,
+) -> Table raise @serde.DeError {
   let fresh = Table::new()
   match self.find(key) {
     Some(Arr(tables)) => {
@@ -90,7 +90,7 @@ fn Table::push_array_table(
       fresh
     }
     _ =>
-      raise @data.DeCustom(
+      raise @serde.DeCustom(
         path~,
         message="TOML: `\{key}` is not an array of tables",
       )
@@ -98,22 +98,22 @@ fn Table::push_array_table(
 }
 
 ///|
-fn Table::to_value(self : Table) -> @data.Value {
+fn Table::to_value(self : Table) -> @serde.Value {
   let entries = []
   for entry in self.entries {
-    let key = @data.Value::Str(@utf8.encode(entry.0)[:])
+    let key = @serde.Value::Str(@utf8.encode(entry.0)[:])
     entries.push((key, node_to_value(entry.1)))
   }
-  @data.Map(ReadOnlyArray::from_array(entries))
+  @serde.Map(ReadOnlyArray::from_array(entries))
 }
 
 ///|
-fn node_to_value(node : Node) -> @data.Value {
+fn node_to_value(node : Node) -> @serde.Value {
   match node {
     Leaf(v) => v
     Sub(t) => t.to_value()
     Arr(tables) =>
-      @data.Seq(ReadOnlyArray::from_array(tables.map(t => t.to_value())))
+      @serde.Seq(ReadOnlyArray::from_array(tables.map(t => t.to_value())))
   }
 }
 
@@ -150,7 +150,7 @@ priv struct Parser {
 const EOF : Int32 = -1
 
 ///|
-fn parse(input : Bytes) -> @data.Value raise @data.DeError {
+fn parse(input : Bytes) -> @serde.Value raise @serde.DeError {
   let p = Parser::{ src: input, pos: 0, }
   let root = Table::new()
   let mut current = root
@@ -172,11 +172,11 @@ fn parse(input : Bytes) -> @data.Value raise @data.DeError {
         p.expect(0x5D)
       }
       guard path.length() > 0 else {
-        raise @data.DeCustom(path=Root, message="TOML: empty table header")
+        raise @serde.DeCustom(path=Root, message="TOML: empty table header")
       }
       let mut table = root
       for i, segment in path {
-        let at = @data.Root.key(path_prefix(path, i))
+        let at = @serde.Root.key(path_prefix(path, i))
         table = if i == path.length() - 1 && array_of {
           table.push_array_table(segment, at)
         } else {
@@ -189,10 +189,10 @@ fn parse(input : Bytes) -> @data.Value raise @data.DeError {
     }
     let path = p.key_path()
     guard path.length() > 0 else {
-      raise @data.DeCustom(path=Root, message="TOML: expected a key")
+      raise @serde.DeCustom(path=Root, message="TOML: expected a key")
     }
     p.expect(0x3D) // =
-    let at = @data.Root.key(
+    let at = @serde.Root.key(
       path_prefix(prefix + path, prefix.length() + path.length() - 1),
     )
     let value = p.value(at)
@@ -202,7 +202,7 @@ fn parse(input : Bytes) -> @data.Value raise @data.DeError {
     }
     let leaf = path[path.length() - 1]
     guard table.find(leaf) is None else {
-      raise @data.DeCustom(path=at, message="TOML: duplicate key `\{leaf}`")
+      raise @serde.DeCustom(path=at, message="TOML: duplicate key `\{leaf}`")
     }
     table.entries.push((leaf, Leaf(value)))
   }
@@ -266,10 +266,10 @@ fn Parser::spaces(self : Parser) -> Unit {
 }
 
 ///|
-fn Parser::expect(self : Parser, byte : Int32) -> Unit raise @data.DeError {
+fn Parser::expect(self : Parser, byte : Int32) -> Unit raise @serde.DeError {
   self.spaces()
   guard self.peek() == byte else {
-    raise @data.DeCustom(
+    raise @serde.DeCustom(
       path=Root,
       message="TOML: expected `\{describe(byte)}`, found `\{describe(self.peek())}`",
     )
@@ -303,7 +303,7 @@ fn is_bare(byte : Int32) -> Bool {
 ///
 /// Keys are decoded, unlike values: they get compared against each other and
 /// interpolated into error paths, and they are short.
-fn Parser::key_path(self : Parser) -> Array[String] raise @data.DeError {
+fn Parser::key_path(self : Parser) -> Array[String] raise @serde.DeError {
   let parts = []
   let mut more = true
   while more {
@@ -332,10 +332,10 @@ fn Parser::key_path(self : Parser) -> Array[String] raise @data.DeError {
 }
 
 ///|
-fn decode(raw : BytesView) -> String raise @data.DeError {
+fn decode(raw : BytesView) -> String raise @serde.DeError {
   @utf8.decode(raw) catch {
     _ =>
-      raise @data.InvalidValue(path=Root, expected="UTF-8", found="raw bytes")
+      raise @serde.InvalidValue(path=Root, expected="UTF-8", found="raw bytes")
   }
 }
 
@@ -345,7 +345,7 @@ fn decode(raw : BytesView) -> String raise @data.DeError {
 /// A literal string (`'…'`) never has escapes and a basic string (`"…"`)
 /// usually does not, so the common case returns a view into the input and
 /// copies nothing. Only a string that actually contains a backslash is built.
-fn Parser::quoted(self : Parser) -> BytesView raise @data.DeError {
+fn Parser::quoted(self : Parser) -> BytesView raise @serde.DeError {
   let quote = self.peek()
   self.bump()
   let start = self.pos
@@ -353,7 +353,7 @@ fn Parser::quoted(self : Parser) -> BytesView raise @data.DeError {
   let mut clean = true
   for ;; {
     guard i < self.src.length() else {
-      raise @data.DeCustom(path=Root, message="TOML: unterminated string")
+      raise @serde.DeCustom(path=Root, message="TOML: unterminated string")
     }
     let b = self.src[i].to_int()
     if b == quote {
@@ -374,7 +374,7 @@ fn Parser::quoted(self : Parser) -> BytesView raise @data.DeError {
   self.pos = start
   for ;; {
     guard !self.done() else {
-      raise @data.DeCustom(path=Root, message="TOML: unterminated string")
+      raise @serde.DeCustom(path=Root, message="TOML: unterminated string")
     }
     let b = self.peek()
     if b == quote {
@@ -396,7 +396,7 @@ fn Parser::quoted(self : Parser) -> BytesView raise @data.DeError {
         0x75 => write_utf8(out, self.hex_escape(4)) // u
         0x55 => write_utf8(out, self.hex_escape(8)) // U
         other =>
-          raise @data.DeCustom(
+          raise @serde.DeCustom(
             path=Root,
             message="TOML: unknown escape `\\\{describe(other)}`",
           )
@@ -414,7 +414,7 @@ fn Parser::quoted(self : Parser) -> BytesView raise @data.DeError {
 fn Parser::hex_escape(
   self : Parser,
   digits : Int32,
-) -> Int32 raise @data.DeError {
+) -> Int32 raise @serde.DeError {
   let mut acc = 0
   for _ in 0..<digits {
     let c = self.peek()
@@ -425,13 +425,13 @@ fn Parser::hex_escape(
     } else if c >= 0x41 && c <= 0x46 {
       c - 0x41 + 10
     } else {
-      raise @data.DeCustom(path=Root, message="TOML: bad `\\u` escape")
+      raise @serde.DeCustom(path=Root, message="TOML: bad `\\u` escape")
     }
     acc = acc * 16 + d
     self.bump()
   }
   guard Int32::to_char(acc) is Some(_) else {
-    raise @data.DeCustom(
+    raise @serde.DeCustom(
       path=Root,
       message="TOML: `\\u` escape is not a scalar value",
     )
@@ -442,14 +442,14 @@ fn Parser::hex_escape(
 ///|
 fn Parser::value(
   self : Parser,
-  at : @data.Path,
-) -> @data.Value raise @data.DeError {
+  at : @serde.Path,
+) -> @serde.Value raise @serde.DeError {
   self.spaces()
   let c = self.peek()
   if c == 0x22 || c == 0x27 { // " '
     // Borrowed straight from the input: the data model holds UTF-8, so there
     // is nothing to convert.
-    return @data.Str(self.quoted())
+    return @serde.Str(self.quoted())
   }
   if c == 0x5B { // [
     self.bump()
@@ -466,7 +466,7 @@ fn Parser::value(
         self.bump()
       }
     }
-    return @data.Seq(ReadOnlyArray::from_array(items))
+    return @serde.Seq(ReadOnlyArray::from_array(items))
   }
   if c == 0x7B { // {
     self.bump()
@@ -479,20 +479,20 @@ fn Parser::value(
       }
       let key = self.key_path()
       guard key.length() == 1 else {
-        raise @data.DeCustom(
+        raise @serde.DeCustom(
           path=at,
           message="TOML: dotted keys inside an inline table are not supported",
         )
       }
       self.expect(0x3D) // =
       let v = self.value(at)
-      entries.push((@data.Value::Str(@utf8.encode(key[0])[:]), v))
+      entries.push((@serde.Value::Str(@utf8.encode(key[0])[:]), v))
       self.spaces()
       if self.peek() == 0x2C { // ,
         self.bump()
       }
     }
-    return @data.Map(ReadOnlyArray::from_array(entries))
+    return @serde.Map(ReadOnlyArray::from_array(entries))
   }
   // A bare token: boolean, number, or something TOML has that we do not. It is
   // ASCII by construction and short, so decoding it costs nothing.
@@ -511,45 +511,45 @@ fn Parser::value(
 
 ///|
 /// A bare token, once its extent is known.
-fn scalar(text : String, at : @data.Path) -> @data.Value raise @data.DeError {
+fn scalar(text : String, at : @serde.Path) -> @serde.Value raise @serde.DeError {
   if text == "true" {
-    return @data.Boolean(true)
+    return @serde.Boolean(true)
   }
   if text == "false" {
-    return @data.Boolean(false)
+    return @serde.Boolean(false)
   }
   if text == "inf" || text == "+inf" {
-    return @data.Double(@double.infinity)
+    return @serde.Double(@double.infinity)
   }
   if text == "-inf" {
-    return @data.Double(@double.neg_infinity)
+    return @serde.Double(@double.neg_infinity)
   }
   if text == "nan" || text == "+nan" || text == "-nan" {
-    return @data.Double(@double.not_a_number)
+    return @serde.Double(@double.not_a_number)
   }
   guard text.length() > 0 else {
-    raise @data.DeCustom(path=at, message="TOML: expected a value")
+    raise @serde.DeCustom(path=at, message="TOML: expected a value")
   }
   // A datetime has no counterpart in the data model, and turning one into a
   // string would round-trip into something that is no longer a datetime.
   if looks_like_datetime(text) {
-    raise @data.DeCustom(
+    raise @serde.DeCustom(
       path=at,
       message="TOML: datetimes are not part of the data model",
     )
   }
   let cleaned = strip_underscores(text)
   if is_float(cleaned) {
-    @data.Double(
+    @serde.Double(
       @string.parse_double(cleaned) catch {
-        _ => raise @data.InvalidValue(path=at, expected="a float", found=text)
+        _ => raise @serde.InvalidValue(path=at, expected="a float", found=text)
       },
     )
   } else {
-    @data.Int(
+    @serde.Int(
       @string.parse_int64(cleaned) catch {
         _ =>
-          raise @data.InvalidValue(path=at, expected="an integer", found=text)
+          raise @serde.InvalidValue(path=at, expected="an integer", found=text)
       },
     )
   }

@@ -129,14 +129,14 @@ fn corpus_escapes(rows : Int32) -> Bytes {
 /// The corpora are valid by construction, and the parity test below proves it,
 /// so a benchmark body may treat failure as unreachable rather than propagate
 /// an error the timing loop cannot accept.
-fn parse(doc : Bytes) -> @data.Value {
+fn parse(doc : Bytes) -> @serde.Value {
   @json.from_bytes(doc) catch {
-    _ => @data.Null
+    _ => @serde.Null
   }
 }
 
 ///|
-fn write(value : @data.Value) -> Bytes {
+fn write(value : @serde.Value) -> Bytes {
   @json.to_bytes(value) catch {
     _ => b""
   }
@@ -167,7 +167,7 @@ fn corpora() -> Array[(String, Bytes)] {
 test "every corpus round-trips identically to core" {
   for entry in corpora() {
     let (name, doc) = entry
-    let ours : @data.Value = @json.from_bytes(doc)
+    let ours : @serde.Value = @json.from_bytes(doc)
     let theirs = @corejson.parse(@utf8.decode_lossy(doc))
     let ours_text = @json.to_string(ours)
     let theirs_text = theirs.stringify()
@@ -177,7 +177,7 @@ test "every corpus round-trips identically to core" {
       msg="corpus `\{name}` disagrees with core",
     )
     // And the document survives a round-trip through our own writer.
-    assert_eq((@json.from_bytes(@json.to_bytes(ours)) : @data.Value), ours)
+    assert_eq((@json.from_bytes(@json.to_bytes(ours)) : @serde.Value), ours)
   }
 }
 

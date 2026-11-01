@@ -46,9 +46,9 @@ pub fn CborSerializer::new() -> CborSerializer {
 /// The bytes written so far. Raises if a container was never closed.
 pub fn CborSerializer::finish(
   self : CborSerializer,
-) -> Bytes raise @data.SerError {
+) -> Bytes raise @serde.SerError {
   if self.breaks.length() > 0 {
-    raise @data.SerCustom(
+    raise @serde.SerCustom(
       message="CBOR: \{self.breaks.length()} container(s) opened but never ended",
     )
   }
@@ -141,88 +141,88 @@ fn CborSerializer::open(
 }
 
 ///|
-fn CborSerializer::close(self : CborSerializer) -> Unit raise @data.SerError {
+fn CborSerializer::close(self : CborSerializer) -> Unit raise @serde.SerError {
   match self.breaks.pop() {
     Some(true) => self.out.write_byte(BREAK)
     Some(false) => ()
     None =>
-      raise @data.SerCustom(message="CBOR: container ended without a begin")
+      raise @serde.SerCustom(message="CBOR: container ended without a begin")
   }
 }
 
 ///|
-pub impl @data.Serializer for CborSerializer with fn serialize_unit(self) {
+pub impl @serde.Serializer for CborSerializer with fn serialize_unit(self) {
   self.out.write_byte(b'\xf6')
 }
 
 ///|
-pub impl @data.Serializer for CborSerializer with fn serialize_bool(self, v) {
+pub impl @serde.Serializer for CborSerializer with fn serialize_bool(self, v) {
   self.out.write_byte(if v { b'\xf5' } else { b'\xf4' })
 }
 
 ///|
-pub impl @data.Serializer for CborSerializer with fn serialize_byte(self, v) {
+pub impl @serde.Serializer for CborSerializer with fn serialize_byte(self, v) {
   self.head(UNSIGNED, v.to_uint64())
 }
 
 ///|
-pub impl @data.Serializer for CborSerializer with fn serialize_int16(self, v) {
+pub impl @serde.Serializer for CborSerializer with fn serialize_int16(self, v) {
   self.int(v.to_int().to_int64())
 }
 
 ///|
-pub impl @data.Serializer for CborSerializer with fn serialize_uint16(self, v) {
+pub impl @serde.Serializer for CborSerializer with fn serialize_uint16(self, v) {
   self.head(UNSIGNED, v.to_uint64())
 }
 
 ///|
-pub impl @data.Serializer for CborSerializer with fn serialize_int(self, v) {
+pub impl @serde.Serializer for CborSerializer with fn serialize_int(self, v) {
   self.int(v.to_int64())
 }
 
 ///|
-pub impl @data.Serializer for CborSerializer with fn serialize_uint(self, v) {
+pub impl @serde.Serializer for CborSerializer with fn serialize_uint(self, v) {
   self.head(UNSIGNED, v.to_uint64())
 }
 
 ///|
-pub impl @data.Serializer for CborSerializer with fn serialize_int64(self, v) {
+pub impl @serde.Serializer for CborSerializer with fn serialize_int64(self, v) {
   self.int(v)
 }
 
 ///|
-pub impl @data.Serializer for CborSerializer with fn serialize_uint64(self, v) {
+pub impl @serde.Serializer for CborSerializer with fn serialize_uint64(self, v) {
   self.head(UNSIGNED, v)
 }
 
 ///|
 /// Single precision, not widened to double: CBOR has a head for it, and the
 /// whole point of the format is that the encoding says what the value is.
-pub impl @data.Serializer for CborSerializer with fn serialize_float(self, v) {
+pub impl @serde.Serializer for CborSerializer with fn serialize_float(self, v) {
   self.out.write_byte(b'\xfa')
   self.be(v.reinterpret_as_uint().to_uint64(), 4)
 }
 
 ///|
-pub impl @data.Serializer for CborSerializer with fn serialize_double(self, v) {
+pub impl @serde.Serializer for CborSerializer with fn serialize_double(self, v) {
   self.out.write_byte(b'\xfb')
   self.be(v.reinterpret_as_uint64(), 8)
 }
 
 ///|
-pub impl @data.Serializer for CborSerializer with fn serialize_char(self, v) {
+pub impl @serde.Serializer for CborSerializer with fn serialize_char(self, v) {
   self.blob(TEXT, @utf8.encode(v.to_string())[:])
 }
 
 ///|
-pub impl @data.Serializer for CborSerializer with fn serialize_string(self, v) {
+pub impl @serde.Serializer for CborSerializer with fn serialize_string(self, v) {
   self.blob(TEXT, @utf8.encode(v)[:])
 }
 
 ///|
 /// Overridden: the transport is bytes, so text that is already UTF-8 goes
 /// straight out without a round trip through `String`.
-pub impl @data.Serializer for CborSerializer with fn serialize_str_bytes(
+pub impl @serde.Serializer for CborSerializer with fn serialize_str_bytes(
   self,
   v,
 ) {
@@ -232,22 +232,22 @@ pub impl @data.Serializer for CborSerializer with fn serialize_str_bytes(
 ///|
 /// A byte string, which is what the data model meant. JSON has to spell this
 /// as an array of numbers; CBOR does not.
-pub impl @data.Serializer for CborSerializer with fn serialize_bytes(self, v) {
+pub impl @serde.Serializer for CborSerializer with fn serialize_bytes(self, v) {
   self.blob(BYTES, v[:])
 }
 
 ///|
-pub impl @data.Serializer for CborSerializer with fn serialize_none(self) {
+pub impl @serde.Serializer for CborSerializer with fn serialize_none(self) {
   self.out.write_byte(b'\xf6')
 }
 
 ///|
-pub impl @data.Serializer for CborSerializer with fn serialize_some(self, v) {
+pub impl @serde.Serializer for CborSerializer with fn serialize_some(self, v) {
   v.serialize(self)
 }
 
 ///|
-pub impl @data.Serializer for CborSerializer with fn serialize_unit_variant(
+pub impl @serde.Serializer for CborSerializer with fn serialize_unit_variant(
   self,
   info,
 ) {
@@ -255,7 +255,7 @@ pub impl @data.Serializer for CborSerializer with fn serialize_unit_variant(
 }
 
 ///|
-pub impl @data.Serializer for CborSerializer with fn serialize_newtype_variant(
+pub impl @serde.Serializer for CborSerializer with fn serialize_newtype_variant(
   self,
   info,
   v,
@@ -266,7 +266,7 @@ pub impl @data.Serializer for CborSerializer with fn serialize_newtype_variant(
 }
 
 ///|
-pub impl @data.Serializer for CborSerializer with fn serialize_seq_begin(
+pub impl @serde.Serializer for CborSerializer with fn serialize_seq_begin(
   self,
   hint,
 ) {
@@ -274,7 +274,7 @@ pub impl @data.Serializer for CborSerializer with fn serialize_seq_begin(
 }
 
 ///|
-pub impl @data.Serializer for CborSerializer with fn serialize_seq_element(
+pub impl @serde.Serializer for CborSerializer with fn serialize_seq_element(
   self,
   v,
 ) {
@@ -282,12 +282,12 @@ pub impl @data.Serializer for CborSerializer with fn serialize_seq_element(
 }
 
 ///|
-pub impl @data.Serializer for CborSerializer with fn serialize_seq_end(self) {
+pub impl @serde.Serializer for CborSerializer with fn serialize_seq_end(self) {
   self.close()
 }
 
 ///|
-pub impl @data.Serializer for CborSerializer with fn serialize_map_begin(
+pub impl @serde.Serializer for CborSerializer with fn serialize_map_begin(
   self,
   hint,
 ) {
@@ -295,12 +295,12 @@ pub impl @data.Serializer for CborSerializer with fn serialize_map_begin(
 }
 
 ///|
-pub impl @data.Serializer for CborSerializer with fn serialize_map_key(self, k) {
+pub impl @serde.Serializer for CborSerializer with fn serialize_map_key(self, k) {
   k.serialize(self)
 }
 
 ///|
-pub impl @data.Serializer for CborSerializer with fn serialize_map_value(
+pub impl @serde.Serializer for CborSerializer with fn serialize_map_value(
   self,
   v,
 ) {
@@ -308,12 +308,12 @@ pub impl @data.Serializer for CborSerializer with fn serialize_map_value(
 }
 
 ///|
-pub impl @data.Serializer for CborSerializer with fn serialize_map_end(self) {
+pub impl @serde.Serializer for CborSerializer with fn serialize_map_end(self) {
   self.close()
 }
 
 ///|
-pub impl @data.Serializer for CborSerializer with fn serialize_struct_begin(
+pub impl @serde.Serializer for CborSerializer with fn serialize_struct_begin(
   self,
   _name,
   len,
@@ -322,7 +322,7 @@ pub impl @data.Serializer for CborSerializer with fn serialize_struct_begin(
 }
 
 ///|
-pub impl @data.Serializer for CborSerializer with fn serialize_field(
+pub impl @serde.Serializer for CborSerializer with fn serialize_field(
   self,
   name,
   v,
@@ -332,12 +332,12 @@ pub impl @data.Serializer for CborSerializer with fn serialize_field(
 }
 
 ///|
-pub impl @data.Serializer for CborSerializer with fn serialize_struct_end(self) {
+pub impl @serde.Serializer for CborSerializer with fn serialize_struct_end(self) {
   self.close()
 }
 
 ///|
-pub impl @data.Serializer for CborSerializer with fn serialize_tuple_variant_begin(
+pub impl @serde.Serializer for CborSerializer with fn serialize_tuple_variant_begin(
   self,
   info,
   len,
@@ -348,14 +348,14 @@ pub impl @data.Serializer for CborSerializer with fn serialize_tuple_variant_beg
 }
 
 ///|
-pub impl @data.Serializer for CborSerializer with fn serialize_tuple_variant_end(
+pub impl @serde.Serializer for CborSerializer with fn serialize_tuple_variant_end(
   self,
 ) {
   self.close()
 }
 
 ///|
-pub impl @data.Serializer for CborSerializer with fn serialize_struct_variant_begin(
+pub impl @serde.Serializer for CborSerializer with fn serialize_struct_variant_begin(
   self,
   info,
   len,
@@ -366,13 +366,13 @@ pub impl @data.Serializer for CborSerializer with fn serialize_struct_variant_be
 }
 
 ///|
-pub impl @data.Serializer for CborSerializer with fn serialize_struct_variant_end(
+pub impl @serde.Serializer for CborSerializer with fn serialize_struct_variant_end(
   self,
 ) {
   self.close()
 }
 
 ///|
-pub impl @data.Serializer for CborSerializer with fn is_human_readable(_self) {
+pub impl @serde.Serializer for CborSerializer with fn is_human_readable(_self) {
   false
 }

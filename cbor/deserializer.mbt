@@ -8,7 +8,7 @@
 ///|
 /// One open array, map or struct.
 priv struct Scope {
-  base : @data.Path
+  base : @serde.Path
   /// Items still to read, or `INDEFINITE` for a container that ends at a break
   /// byte rather than at a count.
   mut remaining : Int32
@@ -28,7 +28,7 @@ let no_fields : ReadOnlyArray[String] = []
 ///|
 /// One open enum, remembering the path to restore on the way out.
 priv struct EnumScope {
-  base : @data.Path
+  base : @serde.Path
 }
 
 ///|
@@ -36,32 +36,32 @@ priv struct EnumScope {
 struct CborDeserializer {
   input : Bytes
   mut pos : Int32
-  mut path : @data.Path
+  mut path : @serde.Path
   scopes : Array[Scope]
   enums : Array[EnumScope]
 }
 
 ///|
 pub fn CborDeserializer::new(input : Bytes) -> CborDeserializer {
-  { input, pos: 0, path: @data.Root, scopes: [], enums: [], }
+  { input, pos: 0, path: @serde.Root, scopes: [], enums: [], }
 }
 
 ///|
 /// Checks that the whole input was consumed.
 pub fn CborDeserializer::finish(
   self : CborDeserializer,
-) -> Unit raise @data.DeError {
+) -> Unit raise @serde.DeError {
   if self.pos < self.input.length() {
-    raise @data.DeCustom(path=self.path, message="trailing input after value")
+    raise @serde.DeCustom(path=self.path, message="trailing input after value")
   }
 }
 
 // ---- reading heads ----
 
 ///|
-fn CborDeserializer::byte(self : CborDeserializer) -> Byte raise @data.DeError {
+fn CborDeserializer::byte(self : CborDeserializer) -> Byte raise @serde.DeError {
   if self.pos >= self.input.length() {
-    raise @data.Eof(path=self.path)
+    raise @serde.Eof(path=self.path)
   }
   let b = self.input[self.pos]
   self.pos = self.pos + 1
@@ -71,9 +71,9 @@ fn CborDeserializer::byte(self : CborDeserializer) -> Byte raise @data.DeError {
 ///|
 fn CborDeserializer::peek_byte(
   self : CborDeserializer,
-) -> Byte raise @data.DeError {
+) -> Byte raise @serde.DeError {
   if self.pos >= self.input.length() {
-    raise @data.Eof(path=self.path)
+    raise @serde.Eof(path=self.path)
   }
   self.input[self.pos]
 }
@@ -82,7 +82,7 @@ fn CborDeserializer::peek_byte(
 fn CborDeserializer::be(
   self : CborDeserializer,
   count : Int32,
-) -> UInt64 raise @data.DeError {
+) -> UInt64 raise @serde.DeError {
   let mut acc = 0UL
   for _ in 0..<count {
     acc = (acc << 8) | self.byte().to_uint64()
@@ -100,7 +100,7 @@ priv struct Head {
 }
 
 ///|
-fn CborDeserializer::head(self : CborDeserializer) -> Head raise @data.DeError {
+fn CborDeserializer::head(self : CborDeserializer) -> Head raise @serde.DeError {
   let initial = self.byte().to_int()
   let major = initial >> 5
   let info = initial & 0x1F
@@ -118,7 +118,7 @@ fn CborDeserializer::head(self : CborDeserializer) -> Head raise @data.DeError {
           indefinite: false,
         }
       } else {
-        raise @data.DeCustom(
+        raise @serde.DeCustom(
           path=self.path,
           message="CBOR: reserved additional information \{info}",
         )
@@ -134,7 +134,7 @@ fn CborDeserializer::head(self : CborDeserializer) -> Head raise @data.DeError {
 /// from encoders that mark their timestamps or bignums.
 fn CborDeserializer::untagged_head(
   self : CborDeserializer,
-) -> Head raise @data.DeError {
+) -> Head raise @serde.DeError {
   let mut h = self.head()
   while h.major == 6 {
     h = self.head()
@@ -147,10 +147,10 @@ fn CborDeserializer::expect_head(
   self : CborDeserializer,
   major : Int32,
   what : String,
-) -> Head raise @data.DeError {
+) -> Head raise @serde.DeError {
   let h = self.untagged_head()
   guard h.major == major else {
-    raise @data.InvalidType(
+    raise @serde.InvalidType(
       path=self.path,
       expected=what,
       found=major_name(h.major),
@@ -175,7 +175,7 @@ fn major_name(major : Int32) -> String {
 ///|
 fn CborDeserializer::at_break(
   self : CborDeserializer,
-) -> Bool raise @data.DeError {
+) -> Bool raise @serde.DeError {
   self.peek_byte() == BREAK
 }
 
@@ -188,12 +188,12 @@ fn CborDeserializer::at_break(
 /// `Int64` is out of range, and a negative one is `-1 - arg`.
 fn CborDeserializer::as_int64(
   self : CborDeserializer,
-) -> Int64 raise @data.DeError {
+) -> Int64 raise @serde.DeError {
   let h = self.untagged_head()
   match h.major {
     0 =>
       if h.arg > 0x7FFFFFFFFFFFFFFF {
-        raise @data.InvalidValue(
+        raise @serde.InvalidValue(
           path=self.path,
           expected="a signed integer",
           found=h.arg.to_string(),
@@ -203,7 +203,7 @@ fn CborDeserializer::as_int64(
       }
     1 =>
       if h.arg > 0x7FFFFFFFFFFFFFFF {
-        raise @data.InvalidValue(
+        raise @serde.InvalidValue(
           path=self.path,
           expected="a signed integer",
           found="-1-\{h.arg}",
@@ -212,7 +212,7 @@ fn CborDeserializer::as_int64(
         h.arg.reinterpret_as_int64().lnot()
       }
     other =>
-      raise @data.InvalidType(
+      raise @serde.InvalidType(
         path=self.path,
         expected="integer",
         found=major_name(other),
@@ -226,10 +226,14 @@ fn CborDeserializer::int_in_range(
   low : Int64,
   high : Int64,
   what : String,
-) -> Int64 raise @data.DeError {
+) -> Int64 raise @serde.DeError {
   let v = self.as_int64()
   guard v >= low && v <= high else {
-    raise @data.InvalidValue(path=self.path, expected=what, found=v.to_string())
+    raise @serde.InvalidValue(
+      path=self.path,
+      expected=what,
+      found=v.to_string(),
+    )
   }
   v
 }
@@ -237,10 +241,10 @@ fn CborDeserializer::int_in_range(
 ///|
 fn CborDeserializer::as_uint64(
   self : CborDeserializer,
-) -> UInt64 raise @data.DeError {
+) -> UInt64 raise @serde.DeError {
   let h = self.untagged_head()
   guard h.major == 0 else {
-    raise @data.InvalidType(
+    raise @serde.InvalidType(
       path=self.path,
       expected="an unsigned integer",
       found=major_name(h.major),
@@ -292,7 +296,7 @@ fn half_to_double(bits : Int32) -> Double {
 /// what a reader asking for one wants.
 fn CborDeserializer::as_double(
   self : CborDeserializer,
-) -> Double raise @data.DeError {
+) -> Double raise @serde.DeError {
   let before = self.pos
   let h = self.untagged_head()
   match h.major {
@@ -304,7 +308,7 @@ fn CborDeserializer::as_double(
           Float::reinterpret_from_uint(h.arg.to_uint()).to_double()
         _ if self.input[before] == b'\xfb' => h.arg.reinterpret_as_double()
         _ =>
-          raise @data.InvalidType(
+          raise @serde.InvalidType(
             path=self.path,
             expected="a double",
             found="a simple value",
@@ -313,7 +317,7 @@ fn CborDeserializer::as_double(
     0 => h.arg.to_double()
     1 => h.arg.reinterpret_as_int64().lnot().to_double()
     other =>
-      raise @data.InvalidType(
+      raise @serde.InvalidType(
         path=self.path,
         expected="a double",
         found=major_name(other),
@@ -333,7 +337,7 @@ fn CborDeserializer::blob(
   self : CborDeserializer,
   major : Int32,
   what : String,
-) -> BytesView raise @data.DeError {
+) -> BytesView raise @serde.DeError {
   let h = self.expect_head(major, what)
   if !h.indefinite {
     return self.take(h.arg)
@@ -342,7 +346,7 @@ fn CborDeserializer::blob(
   while !self.at_break() {
     let chunk = self.expect_head(major, what)
     guard !chunk.indefinite else {
-      raise @data.DeCustom(
+      raise @serde.DeCustom(
         path=self.path,
         message="CBOR: nested indefinite string",
       )
@@ -357,10 +361,10 @@ fn CborDeserializer::blob(
 fn CborDeserializer::take(
   self : CborDeserializer,
   length : UInt64,
-) -> BytesView raise @data.DeError {
+) -> BytesView raise @serde.DeError {
   let left = (self.input.length() - self.pos).to_int64().reinterpret_as_uint64()
   guard length <= left else {
-    raise @data.DeCustom(
+    raise @serde.DeCustom(
       path=self.path,
       message="CBOR: length \{length} exceeds the \{left} byte(s) remaining",
     )
@@ -375,10 +379,10 @@ fn CborDeserializer::take(
 fn CborDeserializer::decode_text(
   self : CborDeserializer,
   view : BytesView,
-) -> String raise @data.DeError {
+) -> String raise @serde.DeError {
   @utf8.decode(view) catch {
     _ =>
-      raise @data.InvalidValue(
+      raise @serde.InvalidValue(
         path=self.path,
         expected="UTF-8",
         found="raw bytes",
@@ -389,7 +393,7 @@ fn CborDeserializer::decode_text(
 ///|
 fn CborDeserializer::text(
   self : CborDeserializer,
-) -> String raise @data.DeError {
+) -> String raise @serde.DeError {
   self.decode_text(self.blob(TEXT, "string"))
 }
 
@@ -401,7 +405,7 @@ fn CborDeserializer::open(
   major : Int32,
   what : String,
   expected : ArrayView[String],
-) -> Int32? raise @data.DeError {
+) -> Int32? raise @serde.DeError {
   let h = self.expect_head(major, what)
   let remaining = if h.indefinite {
     INDEFINITE
@@ -417,11 +421,11 @@ fn CborDeserializer::open(
 }
 
 ///|
-fn CborDeserializer::top(self : CborDeserializer) -> Scope raise @data.DeError {
+fn CborDeserializer::top(self : CborDeserializer) -> Scope raise @serde.DeError {
   match self.scopes.last() {
     Some(scope) => scope
     None =>
-      raise @data.DeCustom(
+      raise @serde.DeCustom(
         path=self.path,
         message="CBOR: item outside a container",
       )
@@ -433,7 +437,7 @@ fn CborDeserializer::top(self : CborDeserializer) -> Scope raise @data.DeError {
 /// indefinite container and restoring the path either way.
 fn CborDeserializer::next_item(
   self : CborDeserializer,
-) -> Bool raise @data.DeError {
+) -> Bool raise @serde.DeError {
   let scope = self.top()
   if scope.remaining == INDEFINITE {
     if self.at_break() {
@@ -453,17 +457,17 @@ fn CborDeserializer::next_item(
 }
 
 ///|
-pub impl @data.Deserializer for CborDeserializer with fn path(self) {
+pub impl @serde.Deserializer for CborDeserializer with fn path(self) {
   self.path
 }
 
 // ---- primitives ----
 
 ///|
-pub impl @data.Deserializer for CborDeserializer with fn deserialize_unit(self) {
+pub impl @serde.Deserializer for CborDeserializer with fn deserialize_unit(self) {
   let h = self.untagged_head()
   guard h.major == 7 && h.arg == 22 else {
-    raise @data.InvalidType(
+    raise @serde.InvalidType(
       path=self.path,
       expected="unit",
       found=major_name(h.major),
@@ -472,13 +476,13 @@ pub impl @data.Deserializer for CborDeserializer with fn deserialize_unit(self) 
 }
 
 ///|
-pub impl @data.Deserializer for CborDeserializer with fn deserialize_bool(self) {
+pub impl @serde.Deserializer for CborDeserializer with fn deserialize_bool(self) {
   let h = self.untagged_head()
   match (h.major, h.arg) {
     (7, 20) => false
     (7, 21) => true
     _ =>
-      raise @data.InvalidType(
+      raise @serde.InvalidType(
         path=self.path,
         expected="boolean",
         found=major_name(h.major),
@@ -487,61 +491,67 @@ pub impl @data.Deserializer for CborDeserializer with fn deserialize_bool(self) 
 }
 
 ///|
-pub impl @data.Deserializer for CborDeserializer with fn deserialize_byte(self) {
+pub impl @serde.Deserializer for CborDeserializer with fn deserialize_byte(self) {
   self.int_in_range(0, 255, "a byte").to_byte()
 }
 
 ///|
-pub impl @data.Deserializer for CborDeserializer with fn deserialize_int16(self) {
+pub impl @serde.Deserializer for CborDeserializer with fn deserialize_int16(
+  self,
+) {
   Int16::from_int64(self.int_in_range(-32768, 32767, "an int16"))
 }
 
 ///|
-pub impl @data.Deserializer for CborDeserializer with fn deserialize_uint16(
+pub impl @serde.Deserializer for CborDeserializer with fn deserialize_uint16(
   self,
 ) {
   self.int_in_range(0, 65535, "a uint16").to_uint16()
 }
 
 ///|
-pub impl @data.Deserializer for CborDeserializer with fn deserialize_int(self) {
+pub impl @serde.Deserializer for CborDeserializer with fn deserialize_int(self) {
   self.int_in_range(-2147483648, 2147483647, "an int").to_int()
 }
 
 ///|
-pub impl @data.Deserializer for CborDeserializer with fn deserialize_uint(self) {
+pub impl @serde.Deserializer for CborDeserializer with fn deserialize_uint(self) {
   self.int_in_range(0, 4294967295, "a uint").reinterpret_as_uint64().to_uint()
 }
 
 ///|
-pub impl @data.Deserializer for CborDeserializer with fn deserialize_int64(self) {
+pub impl @serde.Deserializer for CborDeserializer with fn deserialize_int64(
+  self,
+) {
   self.as_int64()
 }
 
 ///|
-pub impl @data.Deserializer for CborDeserializer with fn deserialize_uint64(
+pub impl @serde.Deserializer for CborDeserializer with fn deserialize_uint64(
   self,
 ) {
   self.as_uint64()
 }
 
 ///|
-pub impl @data.Deserializer for CborDeserializer with fn deserialize_float(self) {
+pub impl @serde.Deserializer for CborDeserializer with fn deserialize_float(
+  self,
+) {
   Float::from_double(self.as_double())
 }
 
 ///|
-pub impl @data.Deserializer for CborDeserializer with fn deserialize_double(
+pub impl @serde.Deserializer for CborDeserializer with fn deserialize_double(
   self,
 ) {
   self.as_double()
 }
 
 ///|
-pub impl @data.Deserializer for CborDeserializer with fn deserialize_char(self) {
+pub impl @serde.Deserializer for CborDeserializer with fn deserialize_char(self) {
   let s = self.text()
   guard s.char_length() == 1 else {
-    raise @data.InvalidValue(
+    raise @serde.InvalidValue(
       path=self.path,
       expected="a one-character string",
       found=s,
@@ -551,7 +561,7 @@ pub impl @data.Deserializer for CborDeserializer with fn deserialize_char(self) 
 }
 
 ///|
-pub impl @data.Deserializer for CborDeserializer with fn deserialize_string(
+pub impl @serde.Deserializer for CborDeserializer with fn deserialize_string(
   self,
 ) {
   self.text()
@@ -560,47 +570,49 @@ pub impl @data.Deserializer for CborDeserializer with fn deserialize_string(
 ///|
 /// Overridden: the bytes are already in hand, so a consumer that does not want
 /// a `String` never pays for one.
-pub impl @data.Deserializer for CborDeserializer with fn deserialize_str_bytes(
+pub impl @serde.Deserializer for CborDeserializer with fn deserialize_str_bytes(
   self,
 ) {
   self.blob(TEXT, "string")
 }
 
 ///|
-pub impl @data.Deserializer for CborDeserializer with fn deserialize_bytes(self) {
+pub impl @serde.Deserializer for CborDeserializer with fn deserialize_bytes(
+  self,
+) {
   Bytes::from_iter(self.blob(BYTES, "bytes").iter())
 }
 
 ///|
-pub impl @data.Deserializer for CborDeserializer with fn deserialize_option(
+pub impl @serde.Deserializer for CborDeserializer with fn deserialize_option(
   self,
 ) {
   if self.peek_byte() == b'\xf6' {
     let _ = self.byte()
     None
   } else {
-    Some(@data.Deserialize::deserialize(self))
+    Some(@serde.Deserialize::deserialize(self))
   }
 }
 
 // ---- sequences and maps ----
 
 ///|
-pub impl @data.Deserializer for CborDeserializer with fn deserialize_seq_begin(
+pub impl @serde.Deserializer for CborDeserializer with fn deserialize_seq_begin(
   self,
 ) {
   self.open(ARRAY, "sequence", no_fields)
 }
 
 ///|
-pub impl @data.Deserializer for CborDeserializer with fn deserialize_seq_next(
+pub impl @serde.Deserializer for CborDeserializer with fn deserialize_seq_next(
   self,
 ) {
   guard self.next_item() else { return None }
   let scope = self.top()
   self.path = scope.base.index(scope.count)
   scope.count = scope.count + 1
-  Some(@data.Deserialize::deserialize(self))
+  Some(@serde.Deserialize::deserialize(self))
 }
 
 ///|
@@ -608,13 +620,13 @@ pub impl @data.Deserializer for CborDeserializer with fn deserialize_seq_next(
 /// tuple protocol never pops. A CBOR tuple is an array, so the head still has
 /// to be read — but its length comes from the type, and the elements are read
 /// unconditionally.
-pub impl @data.Deserializer for CborDeserializer with fn deserialize_tuple_begin(
+pub impl @serde.Deserializer for CborDeserializer with fn deserialize_tuple_begin(
   self,
   len,
 ) {
   let h = self.expect_head(ARRAY, "sequence")
   if !h.indefinite && h.arg != len.to_int64().reinterpret_as_uint64() {
-    raise @data.InvalidLength(
+    raise @serde.InvalidLength(
       path=self.path,
       expected=len,
       found=h.arg.to_uint().reinterpret_as_int(),
@@ -633,7 +645,7 @@ pub impl @data.Deserializer for CborDeserializer with fn deserialize_tuple_begin
 }
 
 ///|
-pub impl @data.Deserializer for CborDeserializer with fn deserialize_tuple_next(
+pub impl @serde.Deserializer for CborDeserializer with fn deserialize_tuple_next(
   self,
 ) {
   let scope = self.top()
@@ -642,11 +654,11 @@ pub impl @data.Deserializer for CborDeserializer with fn deserialize_tuple_next(
   if scope.remaining != INDEFINITE {
     scope.remaining = scope.remaining - 1
   }
-  @data.Deserialize::deserialize(self)
+  @serde.Deserialize::deserialize(self)
 }
 
 ///|
-pub impl @data.Deserializer for CborDeserializer with fn deserialize_tuple_end(
+pub impl @serde.Deserializer for CborDeserializer with fn deserialize_tuple_end(
   self,
 ) {
   let scope = self.top()
@@ -654,7 +666,7 @@ pub impl @data.Deserializer for CborDeserializer with fn deserialize_tuple_end(
   self.path = scope.base
   if scope.remaining == INDEFINITE {
     guard self.at_break() else {
-      raise @data.DeCustom(
+      raise @serde.DeCustom(
         path=self.path,
         message="CBOR: indefinite tuple did not end where the type does",
       )
@@ -664,31 +676,31 @@ pub impl @data.Deserializer for CborDeserializer with fn deserialize_tuple_end(
 }
 
 ///|
-pub impl @data.Deserializer for CborDeserializer with fn deserialize_map_begin(
+pub impl @serde.Deserializer for CborDeserializer with fn deserialize_map_begin(
   self,
 ) {
   self.open(MAP, "map", no_fields)
 }
 
 ///|
-pub impl @data.Deserializer for CborDeserializer with fn deserialize_map_next_key(
+pub impl @serde.Deserializer for CborDeserializer with fn deserialize_map_next_key(
   self,
 ) {
   guard self.next_item() else { return None }
-  Some(@data.Deserialize::deserialize(self))
+  Some(@serde.Deserialize::deserialize(self))
 }
 
 ///|
-pub impl @data.Deserializer for CborDeserializer with fn deserialize_map_value(
+pub impl @serde.Deserializer for CborDeserializer with fn deserialize_map_value(
   self,
 ) {
-  @data.Deserialize::deserialize(self)
+  @serde.Deserialize::deserialize(self)
 }
 
 // ---- structs ----
 
 ///|
-pub impl @data.Deserializer for CborDeserializer with fn deserialize_struct_begin(
+pub impl @serde.Deserializer for CborDeserializer with fn deserialize_struct_begin(
   self,
   _name,
   fields,
@@ -697,7 +709,7 @@ pub impl @data.Deserializer for CborDeserializer with fn deserialize_struct_begi
 }
 
 ///|
-pub impl @data.Deserializer for CborDeserializer with fn deserialize_field_name(
+pub impl @serde.Deserializer for CborDeserializer with fn deserialize_field_name(
   self,
 ) {
   guard self.next_item() else { return None }
@@ -713,12 +725,14 @@ pub impl @data.Deserializer for CborDeserializer with fn deserialize_field_name(
 }
 
 ///|
-pub impl @data.Deserializer for CborDeserializer with fn deserialize_field(self) {
+pub impl @serde.Deserializer for CborDeserializer with fn deserialize_field(
+  self,
+) {
   guard self.next_item() else { return None }
   let scope = self.top()
   let key = self.blob(TEXT, "string")
-  let field = @data.FieldIdentifier::from_bytes(key, scope.count)
-  let name = match @data.FieldIdentifier::name(field) {
+  let field = @serde.FieldIdentifier::from_bytes(key, scope.count)
+  let name = match @serde.FieldIdentifier::name(field) {
     Some(name) => name
     None => self.decode_text(key)
   }
@@ -728,24 +742,24 @@ pub impl @data.Deserializer for CborDeserializer with fn deserialize_field(self)
 }
 
 ///|
-pub impl @data.Deserializer for CborDeserializer with fn deserialize_field_value(
+pub impl @serde.Deserializer for CborDeserializer with fn deserialize_field_value(
   self,
 ) {
-  @data.Deserialize::deserialize(self)
+  @serde.Deserialize::deserialize(self)
 }
 
 ///|
 /// Implementable here, unlike in a non-self-describing format: every head says
 /// how much follows it, so a value can be stepped over without knowing what it
 /// was meant to be.
-pub impl @data.Deserializer for CborDeserializer with fn skip_value(self) {
+pub impl @serde.Deserializer for CborDeserializer with fn skip_value(self) {
   let _ = self.parse_any()
 }
 
 // ---- enums ----
 
 ///|
-pub impl @data.Deserializer for CborDeserializer with fn deserialize_enum_begin(
+pub impl @serde.Deserializer for CborDeserializer with fn deserialize_enum_begin(
   self,
   _name,
   variants,
@@ -755,7 +769,7 @@ pub impl @data.Deserializer for CborDeserializer with fn deserialize_enum_begin(
   if wrapped {
     let h = self.expect_head(MAP, "map")
     guard !h.indefinite && h.arg == 1 else {
-      raise @data.DeCustom(
+      raise @serde.DeCustom(
         path=base,
         message="CBOR: an enum is a one-entry map, not \{h.arg}",
       )
@@ -770,7 +784,7 @@ pub impl @data.Deserializer for CborDeserializer with fn deserialize_enum_begin(
     }
   }
   guard index >= 0 else {
-    raise @data.UnknownVariant(path=base, variant=name, expected=variants)
+    raise @serde.UnknownVariant(path=base, variant=name, expected=variants)
   }
   self.enums.push({ base, })
   self.path = base.key(name)
@@ -778,30 +792,30 @@ pub impl @data.Deserializer for CborDeserializer with fn deserialize_enum_begin(
 }
 
 ///|
-pub impl @data.Deserializer for CborDeserializer with fn deserialize_unit_variant(
+pub impl @serde.Deserializer for CborDeserializer with fn deserialize_unit_variant(
   _self,
 ) {
 
 }
 
 ///|
-pub impl @data.Deserializer for CborDeserializer with fn deserialize_newtype_variant(
+pub impl @serde.Deserializer for CborDeserializer with fn deserialize_newtype_variant(
   self,
 ) {
-  @data.Deserialize::deserialize(self)
+  @serde.Deserialize::deserialize(self)
 }
 
 ///|
 /// A definite one-entry map needs nothing consumed on the way out, so this
 /// restores the path and no more — the same shape the trait's default has, but
 /// the path bookkeeping has to happen somewhere.
-pub impl @data.Deserializer for CborDeserializer with fn deserialize_enum_end(
+pub impl @serde.Deserializer for CborDeserializer with fn deserialize_enum_end(
   self,
 ) {
   match self.enums.pop() {
     Some(scope) => self.path = scope.base
     None =>
-      raise @data.DeCustom(
+      raise @serde.DeCustom(
         path=self.path,
         message="CBOR: enum ended without a begin",
       )
@@ -812,26 +826,26 @@ pub impl @data.Deserializer for CborDeserializer with fn deserialize_enum_end(
 
 ///|
 /// Reads whatever is present. CBOR is self-describing, so this is total.
-pub impl @data.Deserializer for CborDeserializer with fn deserialize_any(self) {
+pub impl @serde.Deserializer for CborDeserializer with fn deserialize_any(self) {
   self.parse_any()
 }
 
 ///|
 fn CborDeserializer::parse_any(
   self : CborDeserializer,
-) -> @data.Value raise @data.DeError {
+) -> @serde.Value raise @serde.DeError {
   let start = self.pos
   let h = self.untagged_head()
   match h.major {
-    0 => @data.UInt(h.arg)
-    1 => @data.Int(h.arg.reinterpret_as_int64().lnot())
+    0 => @serde.UInt(h.arg)
+    1 => @serde.Int(h.arg.reinterpret_as_int64().lnot())
     2 => {
       self.pos = start
-      @data.Bytes(Bytes::from_iter(self.blob(BYTES, "bytes").iter()))
+      @serde.Bytes(Bytes::from_iter(self.blob(BYTES, "bytes").iter()))
     }
     3 => {
       self.pos = start
-      @data.Str(self.blob(TEXT, "string"))
+      @serde.Str(self.blob(TEXT, "string"))
     }
     4 => {
       let items = []
@@ -845,7 +859,7 @@ fn CborDeserializer::parse_any(
           items.push(self.parse_any())
         }
       }
-      @data.Seq(ReadOnlyArray::from_array(items))
+      @serde.Seq(ReadOnlyArray::from_array(items))
     }
     5 => {
       let entries = []
@@ -861,23 +875,23 @@ fn CborDeserializer::parse_any(
           entries.push((k, self.parse_any()))
         }
       }
-      @data.Map(ReadOnlyArray::from_array(entries))
+      @serde.Map(ReadOnlyArray::from_array(entries))
     }
     _ =>
       match h.arg {
-        20 => @data.Boolean(false)
-        21 => @data.Boolean(true)
-        22 | 23 => @data.Null
+        20 => @serde.Boolean(false)
+        21 => @serde.Boolean(true)
+        22 | 23 => @serde.Null
         _ => {
           self.pos = start
-          @data.Double(self.as_double())
+          @serde.Double(self.as_double())
         }
       }
   }
 }
 
 ///|
-pub impl @data.Deserializer for CborDeserializer with fn is_human_readable(
+pub impl @serde.Deserializer for CborDeserializer with fn is_human_readable(
   _self,
 ) {
   false

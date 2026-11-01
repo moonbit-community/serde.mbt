@@ -1,4 +1,4 @@
-// CBOR (RFC 8949), as a format for the `Yu-zh/data` data model.
+// CBOR (RFC 8949), as a format for the `moonbit-community/serde.mbt` data model.
 //
 // The second self-describing format, and the one that fits the data model most
 // closely. Three things JSON has to fake, CBOR carries natively:
@@ -32,7 +32,7 @@
 
 ///|
 /// Serializes any value to CBOR.
-pub fn[T : @data.Serialize] to_bytes(value : T) -> Bytes raise @data.SerError {
+pub fn[T : @serde.Serialize] to_bytes(value : T) -> Bytes raise @serde.SerError {
   let serializer = CborSerializer::new()
   value.serialize(serializer)
   serializer.finish()
@@ -43,11 +43,11 @@ pub fn[T : @data.Serialize] to_bytes(value : T) -> Bytes raise @data.SerError {
 ///
 /// Raises if the input has trailing content after the value, matching
 /// `@json.from_bytes`.
-pub fn[T : @data.Deserialize] from_bytes(
+pub fn[T : @serde.Deserialize] from_bytes(
   input : Bytes,
-) -> T raise @data.DeError {
+) -> T raise @serde.DeError {
   let deserializer = CborDeserializer::new(input)
-  let value = @data.Deserialize::deserialize(deserializer)
+  let value = @serde.Deserialize::deserialize(deserializer)
   deserializer.finish()
   value
 }

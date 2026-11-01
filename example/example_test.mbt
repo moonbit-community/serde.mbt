@@ -1,7 +1,7 @@
 // Acceptance tests for the generator.
 //
 // Nothing here is hand-written serialization code: every implementation these
-// tests exercise came out of `moonx Yu-zh/data/derive`. They are the check
+// tests exercise came out of `moonx moonbit-community/serde.mbt/derive`. They are the check
 // that generated impls behave the same as the hand-written ones the core and
 // JSON packages test.
 
@@ -9,11 +9,11 @@
 test "a generated record round-trips through both formats" {
   let p = @example.Point::{ x: 1, y: 2, label: Some("origin"), }
   inspect(
-    @data.to_value(p),
+    @serde.to_value(p),
     content="{\"x\": 1, \"y\": 2, \"label\": \"origin\"}",
   )
   inspect(@json.to_string(p), content="{\"x\":1,\"y\":2,\"label\":\"origin\"}")
-  assert_eq((@data.from_value(@data.to_value(p)) : @example.Point), p)
+  assert_eq((@serde.from_value(@serde.to_value(p)) : @example.Point), p)
   assert_eq((@json.from_string(@json.to_string(p)) : @example.Point), p)
 }
 
@@ -66,7 +66,10 @@ test "every generated variant shape round-trips" {
       (@json.from_string(@json.to_string(shape)) : @example.Shape),
       shape,
     )
-    assert_eq((@data.from_value(@data.to_value(shape)) : @example.Shape), shape)
+    assert_eq(
+      (@serde.from_value(@serde.to_value(shape)) : @example.Shape),
+      shape,
+    )
   }
 }
 
@@ -112,9 +115,9 @@ test "generic types derive with a bound per parameter" {
 test "a tuple struct becomes a sequence" {
   let c = @example.Rgb(1, 2, 3)
   inspect(@json.to_string(c), content="[1,2,3]")
-  inspect(@data.to_value(c), content="[1, 2, 3]")
+  inspect(@serde.to_value(c), content="[1, 2, 3]")
   assert_eq((@json.from_string(@json.to_string(c)) : @example.Rgb), c)
-  assert_eq((@data.from_value(@data.to_value(c)) : @example.Rgb), c)
+  assert_eq((@serde.from_value(@serde.to_value(c)) : @example.Rgb), c)
 }
 
 ///|
@@ -123,18 +126,18 @@ test "a tuple struct becomes a sequence" {
 test "a newtype struct is written as the value it wraps" {
   let m = @example.Meters(1.5)
   inspect(@json.to_string(m), content="1.5")
-  inspect(@data.to_value(m), content="1.5")
+  inspect(@serde.to_value(m), content="1.5")
   assert_eq((@json.from_string(@json.to_string(m)) : @example.Meters), m)
-  assert_eq((@data.from_value(@data.to_value(m)) : @example.Meters), m)
+  assert_eq((@serde.from_value(@serde.to_value(m)) : @example.Meters), m)
 }
 
 ///|
 test "a fieldless struct is written as unit" {
   let m = @example.Marker::{ }
   inspect(@json.to_string(m), content="null")
-  inspect(@data.to_value(m), content="null")
+  inspect(@serde.to_value(m), content="null")
   assert_eq((@json.from_string(@json.to_string(m)) : @example.Marker), m)
-  assert_eq((@data.from_value(@data.to_value(m)) : @example.Marker), m)
+  assert_eq((@serde.from_value(@serde.to_value(m)) : @example.Marker), m)
 }
 
 ///|

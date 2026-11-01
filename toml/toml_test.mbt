@@ -9,7 +9,7 @@ pub(all) struct Server {
 } derive(Eq, Debug)
 
 ///|
-pub impl @data.Serialize for Server with fn serialize(self, s) {
+pub impl @serde.Serialize for Server with fn serialize(self, s) {
   s.serialize_struct_begin("Server", 4)
   s.serialize_field("host", self.host)
   s.serialize_field("port", self.port)
@@ -19,7 +19,7 @@ pub impl @data.Serialize for Server with fn serialize(self, s) {
 }
 
 ///|
-pub impl @data.Deserialize for Server with fn deserialize(d) {
+pub impl @serde.Deserialize for Server with fn deserialize(d) {
   d.deserialize_struct_begin("Server", ["host", "port", "tags", "timeout"])
   let mut host : String? = None
   let mut port : Int32? = None
@@ -35,9 +35,9 @@ pub impl @data.Deserialize for Server with fn deserialize(d) {
     }
   }
   {
-    host: @data.required(host, name="host", path=d.path()),
-    port: @data.required(port, name="port", path=d.path()),
-    tags: @data.required(tags, name="tags", path=d.path()),
+    host: @serde.required(host, name="host", path=d.path()),
+    port: @serde.required(port, name="port", path=d.path()),
+    tags: @serde.required(tags, name="tags", path=d.path()),
     timeout,
   }
 }
@@ -49,7 +49,7 @@ pub(all) struct Config {
 } derive(Eq, Debug)
 
 ///|
-pub impl @data.Serialize for Config with fn serialize(self, s) {
+pub impl @serde.Serialize for Config with fn serialize(self, s) {
   s.serialize_struct_begin("Config", 2)
   s.serialize_field("name", self.name)
   s.serialize_field("server", self.server)
@@ -57,7 +57,7 @@ pub impl @data.Serialize for Config with fn serialize(self, s) {
 }
 
 ///|
-pub impl @data.Deserialize for Config with fn deserialize(d) {
+pub impl @serde.Deserialize for Config with fn deserialize(d) {
   d.deserialize_struct_begin("Config", ["name", "server"])
   let mut name : String? = None
   let mut server : Server? = None
@@ -69,8 +69,8 @@ pub impl @data.Deserialize for Config with fn deserialize(d) {
     }
   }
   {
-    name: @data.required(name, name="name", path=d.path()),
-    server: @data.required(server, name="server", path=d.path()),
+    name: @serde.required(name, name="name", path=d.path()),
+    server: @serde.required(server, name="server", path=d.path()),
   }
 }
 
@@ -104,7 +104,7 @@ test "a nested struct becomes a sub-table" {
 /// serializer sees `serialize_field` in declaration order with no lookahead,
 /// and would emit `b = 3` into `[sub]` — silently, in the wrong table.
 test "a scalar declared after a sub-table is hoisted above it" {
-  let doc : Map[String, @data.Value] = {
+  let doc : Map[String, @serde.Value] = {
     "a": Int(1L),
     "sub": Map([(Str(b"x"), Int(2L))]),
     "b": Int(3L),
@@ -350,7 +350,7 @@ test "a duplicate key is an error rather than a silent overwrite" {
 test "the serializer type produces what to_string does" {
   let doc : Map[String, Int32] = { "a": 1 }
   let s = @toml.TomlSerializer::new()
-  @data.Serialize::serialize(doc, s)
+  @serde.Serialize::serialize(doc, s)
   assert_eq(s.finish(), @toml.to_bytes(doc))
 }
 
@@ -358,7 +358,7 @@ test "the serializer type produces what to_string does" {
 test "the deserializer type reads what from_string does" {
   let text = b"a = 1\nb = 2\n"
   let d = @toml.TomlDeserializer::new(text)
-  let direct : Map[String, Int32] = @data.Deserialize::deserialize(d)
+  let direct : Map[String, Int32] = @serde.Deserialize::deserialize(d)
   d.finish()
   assert_eq(direct, (@toml.from_bytes(text) : Map[String, Int32]))
 }
@@ -367,9 +367,9 @@ test "the deserializer type reads what from_string does" {
 /// Answered on purpose rather than inherited from `Value`, which returns the
 /// same thing today and might not always.
 test "TOML declares itself human-readable" {
-  assert_true(@data.Serializer::is_human_readable(@toml.TomlSerializer::new()))
+  assert_true(@serde.Serializer::is_human_readable(@toml.TomlSerializer::new()))
   assert_true(
-    @data.Deserializer::is_human_readable(@toml.TomlDeserializer::new(b"")),
+    @serde.Deserializer::is_human_readable(@toml.TomlDeserializer::new(b"")),
   )
 }
 
@@ -377,13 +377,13 @@ test "TOML declares itself human-readable" {
 /// The reordering has to survive going through the trait, not only through
 /// `to_string` — the serializer is where the buffering lives.
 test "a scalar after a sub-table is hoisted through the trait too" {
-  let doc : Map[String, @data.Value] = {
+  let doc : Map[String, @serde.Value] = {
     "a": Int(1L),
     "sub": Map([(Str(b"x"), Int(2L))]),
     "b": Int(3L),
   }
   let s = @toml.TomlSerializer::new()
-  @data.Serialize::serialize(doc, s)
+  @serde.Serialize::serialize(doc, s)
   inspect(
     @utf8.decode_lossy(s.finish()),
     content=(

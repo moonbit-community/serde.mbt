@@ -1,6 +1,6 @@
 // Types whose implementations are generated, not written.
 //
-// Run `moonx Yu-zh/data/derive example` (or, inside this repo,
+// Run `moonx moonbit-community/serde.mbt/derive example` (or, inside this repo,
 // `moon run derive -- example`) to regenerate `types_derive.mbt` after
 // changing anything here.
 

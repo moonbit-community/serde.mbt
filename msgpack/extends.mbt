@@ -1,5 +1,5 @@
 ///|
-pub extend MsgpackDeserializer with @data.Deserializer::{
+pub extend MsgpackDeserializer with @serde.Deserializer::{
   deserialize_any,
   deserialize_bool,
   deserialize_byte,
@@ -42,7 +42,7 @@ pub extend MsgpackDeserializer with @data.Deserializer::{
 }
 
 ///|
-pub extend MsgpackSerializer with @data.Serializer::{
+pub extend MsgpackSerializer with @serde.Serializer::{
   is_human_readable,
   serialize_bool,
   serialize_byte,

@@ -33,9 +33,9 @@ pub fn JsonSerializer::new() -> JsonSerializer {
 /// The UTF-8 bytes written so far. Raises if a container was never closed.
 pub fn JsonSerializer::finish(
   self : JsonSerializer,
-) -> Bytes raise @data.SerError {
+) -> Bytes raise @serde.SerError {
   if self.stack.length() > 0 {
-    raise @data.SerCustom(
+    raise @serde.SerCustom(
       message="JSON: \{self.stack.length()} container(s) opened but never ended",
     )
   }
@@ -71,9 +71,9 @@ fn JsonSerializer::pre_value(self : JsonSerializer) -> Unit {
 }
 
 ///|
-fn JsonSerializer::pre_key(self : JsonSerializer) -> Unit raise @data.SerError {
+fn JsonSerializer::pre_key(self : JsonSerializer) -> Unit raise @serde.SerError {
   guard self.top() is Some(frame) && frame.is_object else {
-    raise @data.SerCustom(message="JSON: object key written outside an object")
+    raise @serde.SerCustom(message="JSON: object key written outside an object")
   }
   if frame.len > 0 {
     self.out.write_byte(b',')
@@ -97,12 +97,12 @@ fn JsonSerializer::close(
   self : JsonSerializer,
   is_object : Bool,
   ch : Byte,
-) -> Unit raise @data.SerError {
+) -> Unit raise @serde.SerError {
   guard self.stack.pop() is Some(frame) else {
-    raise @data.SerCustom(message="JSON: container ended without a begin")
+    raise @serde.SerCustom(message="JSON: container ended without a begin")
   }
   guard frame.is_object == is_object else {
-    raise @data.SerCustom(message="JSON: mismatched container end")
+    raise @serde.SerCustom(message="JSON: mismatched container end")
   }
   self.out.write_byte(ch)
 }
@@ -113,9 +113,9 @@ fn JsonSerializer::close(
 fn JsonSerializer::reject_key(
   self : JsonSerializer,
   kind : String,
-) -> Unit raise @data.SerError {
+) -> Unit raise @serde.SerError {
   if self.in_key {
-    raise @data.UnsupportedType(format="JSON", kind="\{kind} as an object key")
+    raise @serde.UnsupportedType(format="JSON", kind="\{kind} as an object key")
   }
 }
 
@@ -248,80 +248,80 @@ fn JsonSerializer::write_literal(
   self : JsonSerializer,
   kind : String,
   text : String,
-) -> Unit raise @data.SerError {
+) -> Unit raise @serde.SerError {
   self.reject_key(kind)
   self.pre_value()
   self.out.write_string_utf8(text)
 }
 
 ///|
-pub impl @data.Serializer for JsonSerializer with fn serialize_unit(self) {
+pub impl @serde.Serializer for JsonSerializer with fn serialize_unit(self) {
   self.write_literal("null", "null")
 }
 
 ///|
-pub impl @data.Serializer for JsonSerializer with fn serialize_bool(self, v) {
+pub impl @serde.Serializer for JsonSerializer with fn serialize_bool(self, v) {
   self.write_literal("a boolean", if v { "true" } else { "false" })
 }
 
 ///|
-pub impl @data.Serializer for JsonSerializer with fn serialize_byte(self, v) {
+pub impl @serde.Serializer for JsonSerializer with fn serialize_byte(self, v) {
   self.write_number(v.to_int().to_string())
 }
 
 ///|
-pub impl @data.Serializer for JsonSerializer with fn serialize_int16(self, v) {
+pub impl @serde.Serializer for JsonSerializer with fn serialize_int16(self, v) {
   self.write_number(v.to_int().to_string())
 }
 
 ///|
-pub impl @data.Serializer for JsonSerializer with fn serialize_uint16(self, v) {
+pub impl @serde.Serializer for JsonSerializer with fn serialize_uint16(self, v) {
   self.write_number(v.to_int().to_string())
 }
 
 ///|
-pub impl @data.Serializer for JsonSerializer with fn serialize_int(self, v) {
+pub impl @serde.Serializer for JsonSerializer with fn serialize_int(self, v) {
   self.write_number(v.to_string())
 }
 
 ///|
-pub impl @data.Serializer for JsonSerializer with fn serialize_uint(self, v) {
+pub impl @serde.Serializer for JsonSerializer with fn serialize_uint(self, v) {
   self.write_number(v.to_string())
 }
 
 ///|
-pub impl @data.Serializer for JsonSerializer with fn serialize_int64(self, v) {
+pub impl @serde.Serializer for JsonSerializer with fn serialize_int64(self, v) {
   self.write_number(v.to_string())
 }
 
 ///|
-pub impl @data.Serializer for JsonSerializer with fn serialize_uint64(self, v) {
+pub impl @serde.Serializer for JsonSerializer with fn serialize_uint64(self, v) {
   self.write_number(v.to_string())
 }
 
 ///|
-pub impl @data.Serializer for JsonSerializer with fn serialize_float(self, v) {
+pub impl @serde.Serializer for JsonSerializer with fn serialize_float(self, v) {
   self.serialize_double(v.to_double())
 }
 
 ///|
 /// JSON has no spelling for NaN or infinity. `serde_json` silently writes
 /// `null`; raising instead keeps the loss from being invisible.
-pub impl @data.Serializer for JsonSerializer with fn serialize_double(self, v) {
+pub impl @serde.Serializer for JsonSerializer with fn serialize_double(self, v) {
   if v.is_nan() || v.is_inf() {
-    raise @data.UnsupportedType(format="JSON", kind="NaN or infinity")
+    raise @serde.UnsupportedType(format="JSON", kind="NaN or infinity")
   }
   self.write_number(v.to_string())
 }
 
 ///|
-pub impl @data.Serializer for JsonSerializer with fn serialize_char(self, v) {
+pub impl @serde.Serializer for JsonSerializer with fn serialize_char(self, v) {
   self.pre_value()
   self.write_quoted(v.to_string())
 }
 
 ///|
-pub impl @data.Serializer for JsonSerializer with fn serialize_string(self, v) {
+pub impl @serde.Serializer for JsonSerializer with fn serialize_string(self, v) {
   self.pre_value()
   self.write_quoted(v)
 }
@@ -330,7 +330,7 @@ pub impl @data.Serializer for JsonSerializer with fn serialize_string(self, v) {
 /// Text that is already UTF-8 is written straight out: no decode on the way
 /// in, no encode on the way back, so a document can be read and rewritten
 /// without ever being converted.
-pub impl @data.Serializer for JsonSerializer with fn serialize_str_bytes(
+pub impl @serde.Serializer for JsonSerializer with fn serialize_str_bytes(
   self,
   v,
 ) {
@@ -343,7 +343,7 @@ pub impl @data.Serializer for JsonSerializer with fn serialize_str_bytes(
 ///|
 /// JSON has no byte string, so bytes become an array of numbers, matching
 /// `serde_json`.
-pub impl @data.Serializer for JsonSerializer with fn serialize_bytes(self, v) {
+pub impl @serde.Serializer for JsonSerializer with fn serialize_bytes(self, v) {
   self.reject_key("a byte string")
   self.pre_value()
   self.out.write_byte(b'[')
@@ -357,17 +357,17 @@ pub impl @data.Serializer for JsonSerializer with fn serialize_bytes(self, v) {
 }
 
 ///|
-pub impl @data.Serializer for JsonSerializer with fn serialize_none(self) {
+pub impl @serde.Serializer for JsonSerializer with fn serialize_none(self) {
   self.write_literal("null", "null")
 }
 
 ///|
-pub impl @data.Serializer for JsonSerializer with fn serialize_some(self, v) {
+pub impl @serde.Serializer for JsonSerializer with fn serialize_some(self, v) {
   v.serialize(self)
 }
 
 ///|
-pub impl @data.Serializer for JsonSerializer with fn serialize_seq_begin(
+pub impl @serde.Serializer for JsonSerializer with fn serialize_seq_begin(
   self,
   _hint,
 ) {
@@ -376,7 +376,7 @@ pub impl @data.Serializer for JsonSerializer with fn serialize_seq_begin(
 }
 
 ///|
-pub impl @data.Serializer for JsonSerializer with fn serialize_seq_element(
+pub impl @serde.Serializer for JsonSerializer with fn serialize_seq_element(
   self,
   v,
 ) {
@@ -384,12 +384,12 @@ pub impl @data.Serializer for JsonSerializer with fn serialize_seq_element(
 }
 
 ///|
-pub impl @data.Serializer for JsonSerializer with fn serialize_seq_end(self) {
+pub impl @serde.Serializer for JsonSerializer with fn serialize_seq_end(self) {
   self.close(false, b']')
 }
 
 ///|
-pub impl @data.Serializer for JsonSerializer with fn serialize_map_begin(
+pub impl @serde.Serializer for JsonSerializer with fn serialize_map_begin(
   self,
   _hint,
 ) {
@@ -398,7 +398,7 @@ pub impl @data.Serializer for JsonSerializer with fn serialize_map_begin(
 }
 
 ///|
-pub impl @data.Serializer for JsonSerializer with fn serialize_map_key(self, k) {
+pub impl @serde.Serializer for JsonSerializer with fn serialize_map_key(self, k) {
   self.pre_key()
   self.in_key = true
   k.serialize(self)
@@ -407,7 +407,7 @@ pub impl @data.Serializer for JsonSerializer with fn serialize_map_key(self, k) 
 }
 
 ///|
-pub impl @data.Serializer for JsonSerializer with fn serialize_map_value(
+pub impl @serde.Serializer for JsonSerializer with fn serialize_map_value(
   self,
   v,
 ) {
@@ -415,12 +415,12 @@ pub impl @data.Serializer for JsonSerializer with fn serialize_map_value(
 }
 
 ///|
-pub impl @data.Serializer for JsonSerializer with fn serialize_map_end(self) {
+pub impl @serde.Serializer for JsonSerializer with fn serialize_map_end(self) {
   self.close(true, b'}')
 }
 
 ///|
-pub impl @data.Serializer for JsonSerializer with fn serialize_struct_begin(
+pub impl @serde.Serializer for JsonSerializer with fn serialize_struct_begin(
   self,
   _name,
   _len,
@@ -430,7 +430,7 @@ pub impl @data.Serializer for JsonSerializer with fn serialize_struct_begin(
 }
 
 ///|
-pub impl @data.Serializer for JsonSerializer with fn serialize_field(
+pub impl @serde.Serializer for JsonSerializer with fn serialize_field(
   self,
   name,
   v,
@@ -442,12 +442,12 @@ pub impl @data.Serializer for JsonSerializer with fn serialize_field(
 }
 
 ///|
-pub impl @data.Serializer for JsonSerializer with fn serialize_struct_end(self) {
+pub impl @serde.Serializer for JsonSerializer with fn serialize_struct_end(self) {
   self.close(true, b'}')
 }
 
 ///|
-pub impl @data.Serializer for JsonSerializer with fn serialize_unit_variant(
+pub impl @serde.Serializer for JsonSerializer with fn serialize_unit_variant(
   self,
   info,
 ) {
@@ -458,7 +458,7 @@ pub impl @data.Serializer for JsonSerializer with fn serialize_unit_variant(
 fn JsonSerializer::open_variant(
   self : JsonSerializer,
   name : String,
-) -> Unit raise @data.SerError {
+) -> Unit raise @serde.SerError {
   self.reject_key("an enum")
   self.open(true, b'{')
   self.pre_key()
@@ -467,7 +467,7 @@ fn JsonSerializer::open_variant(
 }
 
 ///|
-pub impl @data.Serializer for JsonSerializer with fn serialize_newtype_variant(
+pub impl @serde.Serializer for JsonSerializer with fn serialize_newtype_variant(
   self,
   info,
   v,
@@ -478,7 +478,7 @@ pub impl @data.Serializer for JsonSerializer with fn serialize_newtype_variant(
 }
 
 ///|
-pub impl @data.Serializer for JsonSerializer with fn serialize_tuple_variant_begin(
+pub impl @serde.Serializer for JsonSerializer with fn serialize_tuple_variant_begin(
   self,
   info,
   _len,
@@ -488,7 +488,7 @@ pub impl @data.Serializer for JsonSerializer with fn serialize_tuple_variant_beg
 }
 
 ///|
-pub impl @data.Serializer for JsonSerializer with fn serialize_tuple_variant_end(
+pub impl @serde.Serializer for JsonSerializer with fn serialize_tuple_variant_end(
   self,
 ) {
   self.close(false, b']')
@@ -496,7 +496,7 @@ pub impl @data.Serializer for JsonSerializer with fn serialize_tuple_variant_end
 }
 
 ///|
-pub impl @data.Serializer for JsonSerializer with fn serialize_struct_variant_begin(
+pub impl @serde.Serializer for JsonSerializer with fn serialize_struct_variant_begin(
   self,
   info,
   _len,
@@ -506,7 +506,7 @@ pub impl @data.Serializer for JsonSerializer with fn serialize_struct_variant_be
 }
 
 ///|
-pub impl @data.Serializer for JsonSerializer with fn serialize_struct_variant_end(
+pub impl @serde.Serializer for JsonSerializer with fn serialize_struct_variant_end(
   self,
 ) {
   self.close(true, b'}')

@@ -18,8 +18,8 @@ fn PathTracker::new() -> PathTracker {
 }
 
 ///|
-fn PathTracker::materialize(self : PathTracker) -> @data.Path {
-  for i in 0..<self.depth; current = @data.Root {
+fn PathTracker::materialize(self : PathTracker) -> @serde.Path {
+  for i in 0..<self.depth; current = @serde.Root {
     let index = self.indices[i]
     continue if index < 0 {
         current.key(self.keys[i])
@@ -120,7 +120,7 @@ pub fn JsonDeserializer::new(input : Bytes) -> JsonDeserializer {
 /// Builds the public, persistent representation only for callers that need
 /// to observe the path. The success path never calls this method.
 #inline(never)
-fn JsonDeserializer::current_path(self : JsonDeserializer) -> @data.Path {
+fn JsonDeserializer::current_path(self : JsonDeserializer) -> @serde.Path {
   self.path.materialize()
 }
 
@@ -128,8 +128,8 @@ fn JsonDeserializer::current_path(self : JsonDeserializer) -> @data.Path {
 /// Cold error helpers keep path materialisation and error-object construction
 /// out of the parser's successful machine-code paths.
 #inline(never)
-fn JsonDeserializer::eof_error(self : JsonDeserializer) -> @data.DeError {
-  @data.Eof(path=self.current_path())
+fn JsonDeserializer::eof_error(self : JsonDeserializer) -> @serde.DeError {
+  @serde.Eof(path=self.current_path())
 }
 
 ///|
@@ -137,8 +137,8 @@ fn JsonDeserializer::eof_error(self : JsonDeserializer) -> @data.DeError {
 fn JsonDeserializer::custom_error(
   self : JsonDeserializer,
   message : String,
-) -> @data.DeError {
-  @data.DeCustom(path=self.current_path(), message~)
+) -> @serde.DeError {
+  @serde.DeCustom(path=self.current_path(), message~)
 }
 
 ///|
@@ -147,8 +147,8 @@ fn JsonDeserializer::invalid_value_error(
   self : JsonDeserializer,
   expected : String,
   found : String,
-) -> @data.DeError {
-  @data.InvalidValue(path=self.current_path(), expected~, found~)
+) -> @serde.DeError {
+  @serde.InvalidValue(path=self.current_path(), expected~, found~)
 }
 
 ///|
@@ -157,8 +157,8 @@ fn JsonDeserializer::unknown_variant_error(
   self : JsonDeserializer,
   variant : String,
   expected : ArrayView[String],
-) -> @data.DeError {
-  @data.UnknownVariant(path=self.current_path(), variant~, expected~)
+) -> @serde.DeError {
+  @serde.UnknownVariant(path=self.current_path(), variant~, expected~)
 }
 
 ///|
@@ -183,7 +183,7 @@ fn JsonDeserializer::set_index(
 /// Checks that the whole input was consumed.
 pub fn JsonDeserializer::finish(
   self : JsonDeserializer,
-) -> Unit raise @data.DeError {
+) -> Unit raise @serde.DeError {
   self.skip_ws()
   if self.pos < self.input.length() {
     raise self.custom_error("trailing input after value")
@@ -246,7 +246,9 @@ fn JsonDeserializer::peek_or_end(self : JsonDeserializer) -> Int32 {
 }
 
 ///|
-fn JsonDeserializer::peek(self : JsonDeserializer) -> Int32 raise @data.DeError {
+fn JsonDeserializer::peek(
+  self : JsonDeserializer,
+) -> Int32 raise @serde.DeError {
   let token = self.peek_or_end()
   if token < 0 {
     raise self.eof_error()
@@ -296,7 +298,7 @@ fn JsonDeserializer::try_expect(self : JsonDeserializer, ch : Char) -> Bool {
 fn JsonDeserializer::expect(
   self : JsonDeserializer,
   ch : Char,
-) -> Unit raise @data.DeError {
+) -> Unit raise @serde.DeError {
   if self.try_expect(ch) {
     return
   }
@@ -327,7 +329,7 @@ fn JsonDeserializer::eat(self : JsonDeserializer, literal : String) -> Bool {
 fn[T] JsonDeserializer::bad_literal(
   self : JsonDeserializer,
   expected : String,
-) -> T raise @data.DeError {
+) -> T raise @serde.DeError {
   raise self.custom_error("invalid literal, expected `\{expected}`")
 }
 
@@ -336,8 +338,8 @@ fn[T] JsonDeserializer::bad_literal(
 fn[T] JsonDeserializer::mismatch(
   self : JsonDeserializer,
   expected : String,
-) -> T raise @data.DeError {
-  raise @data.InvalidType(
+) -> T raise @serde.DeError {
+  raise @serde.InvalidType(
     path=self.current_path(),
     expected~,
     found=self.found(),
@@ -347,7 +349,9 @@ fn[T] JsonDeserializer::mismatch(
 // ---- strings ----
 
 ///|
-fn JsonDeserializer::hex4(self : JsonDeserializer) -> Int32 raise @data.DeError {
+fn JsonDeserializer::hex4(
+  self : JsonDeserializer,
+) -> Int32 raise @serde.DeError {
   if self.pos + 4 > self.input.length() {
     raise self.eof_error()
   }
@@ -389,7 +393,7 @@ fn JsonDeserializer::eat_u_escape(self : JsonDeserializer) -> Bool {
 fn JsonDeserializer::decode_escape(
   self : JsonDeserializer,
   out : @buffer.Buffer,
-) -> Unit raise @data.DeError {
+) -> Unit raise @serde.DeError {
   if self.at_end() {
     raise self.eof_error()
   }
@@ -445,7 +449,7 @@ fn JsonDeserializer::decode_escape(
 /// input belongs to the caller and may not be padded.
 fn JsonDeserializer::string_extent(
   self : JsonDeserializer,
-) -> (Int32, Int32, Bool) raise @data.DeError {
+) -> (Int32, Int32, Bool) raise @serde.DeError {
   guard self.peek() == 0x22 else { self.mismatch("string") }
   let start = self.pos + 1
   let limit = self.input.length()
@@ -477,7 +481,7 @@ fn JsonDeserializer::classify_stop(
   self : JsonDeserializer,
   start : Int32,
   at : Int32,
-) -> (Int32, Int32, Bool) raise @data.DeError {
+) -> (Int32, Int32, Bool) raise @serde.DeError {
   match self.code(at) {
     0x22 => (start, at, true)
     0x5C => (start, at, false)
@@ -494,7 +498,7 @@ fn JsonDeserializer::classify_stop(
 /// UTF-8 directly, so the fragments never pay for a conversion each.
 fn JsonDeserializer::parse_string_bytes(
   self : JsonDeserializer,
-) -> BytesView raise @data.DeError {
+) -> BytesView raise @serde.DeError {
   let (start, end, clean) = self.string_extent()
   if clean {
     self.pos = end + 1
@@ -531,7 +535,7 @@ fn JsonDeserializer::parse_string_bytes(
 /// The same string, decoded — for whoever actually asked for a `String`.
 fn JsonDeserializer::parse_string(
   self : JsonDeserializer,
-) -> String raise @data.DeError {
+) -> String raise @serde.DeError {
   let bytes = self.parse_string_bytes()
   @utf8.decode(bytes) catch {
     _ => raise self.custom_error("input is not valid UTF-8")
@@ -570,7 +574,7 @@ fn JsonDeserializer::spells(
 fn JsonDeserializer::variant_index(
   self : JsonDeserializer,
   variants : ArrayView[String],
-) -> Int32 raise @data.DeError {
+) -> Int32 raise @serde.DeError {
   let (start, end, clean) = self.string_extent()
   if clean {
     for i, name in variants {
@@ -601,7 +605,7 @@ fn JsonDeserializer::variant_index(
 fn JsonDeserializer::identifier(
   self : JsonDeserializer,
   expected : ArrayView[String],
-) -> String raise @data.DeError {
+) -> String raise @serde.DeError {
   let (start, end, clean) = self.string_extent()
   if clean {
     for name in expected {
@@ -769,7 +773,7 @@ fn scan_to_double(scan : NumberScan, text : () -> String) -> Double? {
 /// Scans the number at the cursor, advancing past it.
 fn JsonDeserializer::take_number(
   self : JsonDeserializer,
-) -> (NumberScan, Int32, Int32) raise @data.DeError {
+) -> (NumberScan, Int32, Int32) raise @serde.DeError {
   self.skip_ws()
   let start = self.pos
   guard scan_number(self.input[start:]) is Some((scan, used)) else {
@@ -798,7 +802,7 @@ fn JsonDeserializer::int64_in_span(
   self : JsonDeserializer,
   start : Int32,
   end : Int32,
-) -> Int64 raise @data.DeError {
+) -> Int64 raise @serde.DeError {
   let mut i = start
   let negative = self.code(i) == 0x2D
   if negative || self.code(i) == 0x2B {
@@ -841,7 +845,7 @@ fn JsonDeserializer::uint64_in_span(
   self : JsonDeserializer,
   start : Int32,
   end : Int32,
-) -> UInt64 raise @data.DeError {
+) -> UInt64 raise @serde.DeError {
   let mut i = start
   guard i < end && self.code(i) != 0x2D else {
     raise self.invalid_value_error(
@@ -877,7 +881,7 @@ fn JsonDeserializer::uint64_in_span(
 ///|
 fn JsonDeserializer::read_int64(
   self : JsonDeserializer,
-) -> Int64 raise @data.DeError {
+) -> Int64 raise @serde.DeError {
   if self.bare is Some(raw) {
     let text = @ascii.decode_lossy(raw)
     return @string.parse_int64(text) catch {
@@ -894,7 +898,7 @@ fn JsonDeserializer::read_int64(
 ///|
 fn JsonDeserializer::read_double(
   self : JsonDeserializer,
-) -> Double raise @data.DeError {
+) -> Double raise @serde.DeError {
   if self.bare is Some(raw) {
     let text = @ascii.decode_lossy(raw)
     return @string.parse_double(text) catch {
@@ -915,7 +919,7 @@ fn JsonDeserializer::int_in_range(
   lo : Int64,
   hi : Int64,
   what : String,
-) -> Int64 raise @data.DeError {
+) -> Int64 raise @serde.DeError {
   let value = self.read_int64()
   if value < lo || value > hi {
     raise self.invalid_value_error(what, value.to_string())
@@ -939,7 +943,7 @@ fn JsonDeserializer::push_scope(
 ///|
 fn JsonDeserializer::top_scope(
   self : JsonDeserializer,
-) -> Scope raise @data.DeError {
+) -> Scope raise @serde.DeError {
   guard self.scopes.length() > 0 else {
     raise self.custom_error("JSON: container read without a begin")
   }
@@ -949,7 +953,7 @@ fn JsonDeserializer::top_scope(
 ///|
 fn JsonDeserializer::pop_scope(
   self : JsonDeserializer,
-) -> Unit raise @data.DeError {
+) -> Unit raise @serde.DeError {
   guard self.scopes.pop() is Some(scope) else {
     raise self.custom_error("JSON: container ended without a begin")
   }
@@ -965,7 +969,7 @@ fn JsonDeserializer::pop_scope(
 fn JsonDeserializer::next_item(
   self : JsonDeserializer,
   closing : Int32,
-) -> Bool raise @data.DeError {
+) -> Bool raise @serde.DeError {
   let scope = self.top_scope()
   if self.peek() == closing {
     self.pos = self.pos + 1
@@ -983,7 +987,7 @@ fn JsonDeserializer::next_item(
 ///|
 fn JsonDeserializer::parse_any(
   self : JsonDeserializer,
-) -> @data.Value raise @data.DeError {
+) -> @serde.Value raise @serde.DeError {
   if self.bare is Some(raw) {
     return Str(raw)
   }
@@ -1002,7 +1006,7 @@ fn JsonDeserializer::parse_any(
         // The key goes into the data model as the bytes it already is.
         let key = self.parse_string_bytes()
         guard self.try_expect(':') else { self.expect(':') }
-        entries.push((@data.Str(key), self.parse_any()))
+        entries.push((@serde.Str(key), self.parse_any()))
       }
       self.pos = self.pos + 1
       Map(ReadOnlyArray::from_array(entries))
@@ -1038,19 +1042,19 @@ fn JsonDeserializer::parse_any(
       if scan.integral {
         // Prefer the narrowest representation that holds the digits, then fall
         // back to a float the way most JSON readers do.
-        @data.Int(self.int64_in_span(from, to)) catch {
+        @serde.Int(self.int64_in_span(from, to)) catch {
           _ =>
-            @data.UInt(self.uint64_in_span(from, to)) catch {
+            @serde.UInt(self.uint64_in_span(from, to)) catch {
               _ =>
                 match scan_to_double(scan, text) {
-                  Some(value) => @data.Double(value)
+                  Some(value) => @serde.Double(value)
                   None => raise self.invalid_value_error("a number", text())
                 }
             }
         }
       } else {
         match scan_to_double(scan, text) {
-          Some(value) => @data.Double(value)
+          Some(value) => @serde.Double(value)
           None => raise self.invalid_value_error("a number", text())
         }
       }
@@ -1061,12 +1065,12 @@ fn JsonDeserializer::parse_any(
 // ---- Deserializer ----
 
 ///|
-pub impl @data.Deserializer for JsonDeserializer with fn path(self) {
+pub impl @serde.Deserializer for JsonDeserializer with fn path(self) {
   self.current_path()
 }
 
 ///|
-pub impl @data.Deserializer for JsonDeserializer with fn deserialize_unit(self) {
+pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_unit(self) {
   if self.eat("null") {
     return
   }
@@ -1077,7 +1081,7 @@ pub impl @data.Deserializer for JsonDeserializer with fn deserialize_unit(self) 
 }
 
 ///|
-pub impl @data.Deserializer for JsonDeserializer with fn deserialize_bool(self) {
+pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_bool(self) {
   if self.eat("true") {
     true
   } else if self.eat("false") {
@@ -1090,39 +1094,43 @@ pub impl @data.Deserializer for JsonDeserializer with fn deserialize_bool(self) 
 }
 
 ///|
-pub impl @data.Deserializer for JsonDeserializer with fn deserialize_byte(self) {
+pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_byte(self) {
   self.int_in_range(0L, 255L, "a byte").to_byte()
 }
 
 ///|
-pub impl @data.Deserializer for JsonDeserializer with fn deserialize_int16(self) {
+pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_int16(
+  self,
+) {
   Int16::from_int64(self.int_in_range(-32768L, 32767L, "an int16"))
 }
 
 ///|
-pub impl @data.Deserializer for JsonDeserializer with fn deserialize_uint16(
+pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_uint16(
   self,
 ) {
   self.int_in_range(0L, 65535L, "a uint16").to_uint16()
 }
 
 ///|
-pub impl @data.Deserializer for JsonDeserializer with fn deserialize_int(self) {
+pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_int(self) {
   self.int_in_range(-2147483648L, 2147483647L, "an int").to_int()
 }
 
 ///|
-pub impl @data.Deserializer for JsonDeserializer with fn deserialize_uint(self) {
+pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_uint(self) {
   self.int_in_range(0L, 4294967295L, "a uint").reinterpret_as_uint64().to_uint()
 }
 
 ///|
-pub impl @data.Deserializer for JsonDeserializer with fn deserialize_int64(self) {
+pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_int64(
+  self,
+) {
   self.read_int64()
 }
 
 ///|
-pub impl @data.Deserializer for JsonDeserializer with fn deserialize_uint64(
+pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_uint64(
   self,
 ) {
   if self.bare is Some(raw) {
@@ -1142,19 +1150,21 @@ pub impl @data.Deserializer for JsonDeserializer with fn deserialize_uint64(
 }
 
 ///|
-pub impl @data.Deserializer for JsonDeserializer with fn deserialize_float(self) {
+pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_float(
+  self,
+) {
   Float::from_double(self.read_double())
 }
 
 ///|
-pub impl @data.Deserializer for JsonDeserializer with fn deserialize_double(
+pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_double(
   self,
 ) {
   self.read_double()
 }
 
 ///|
-pub impl @data.Deserializer for JsonDeserializer with fn deserialize_char(self) {
+pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_char(self) {
   let text = self.deserialize_string()
   if text.char_length() != 1 {
     raise self.invalid_value_error("a single character", text)
@@ -1163,7 +1173,7 @@ pub impl @data.Deserializer for JsonDeserializer with fn deserialize_char(self) 
 }
 
 ///|
-pub impl @data.Deserializer for JsonDeserializer with fn deserialize_string(
+pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_string(
   self,
 ) {
   if self.bare is Some(raw) {
@@ -1179,7 +1189,7 @@ pub impl @data.Deserializer for JsonDeserializer with fn deserialize_string(
 /// The read counterpart of `serialize_str_bytes`, handing back the input's own
 /// bytes instead of decoding them into a `String`. Mirrors `deserialize_string`
 /// exactly, minus the decode.
-pub impl @data.Deserializer for JsonDeserializer with fn deserialize_str_bytes(
+pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_str_bytes(
   self,
 ) {
   if self.bare is Some(raw) {
@@ -1191,7 +1201,9 @@ pub impl @data.Deserializer for JsonDeserializer with fn deserialize_str_bytes(
 
 ///|
 /// The mirror of writing bytes as an array of numbers.
-pub impl @data.Deserializer for JsonDeserializer with fn deserialize_bytes(self) {
+pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_bytes(
+  self,
+) {
   guard self.peek() == 0x5B else { self.mismatch("byte string") }
   self.pos = self.pos + 1
   let out = []
@@ -1206,18 +1218,18 @@ pub impl @data.Deserializer for JsonDeserializer with fn deserialize_bytes(self)
 }
 
 ///|
-pub impl @data.Deserializer for JsonDeserializer with fn deserialize_option(
+pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_option(
   self,
 ) {
   if self.eat("null") {
     None
   } else {
-    Some(@data.Deserialize::deserialize(self))
+    Some(@serde.Deserialize::deserialize(self))
   }
 }
 
 ///|
-pub impl @data.Deserializer for JsonDeserializer with fn deserialize_seq_begin(
+pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_seq_begin(
   self,
 ) {
   self.expect('[')
@@ -1227,18 +1239,18 @@ pub impl @data.Deserializer for JsonDeserializer with fn deserialize_seq_begin(
 }
 
 ///|
-pub impl @data.Deserializer for JsonDeserializer with fn deserialize_seq_next(
+pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_seq_next(
   self,
 ) {
   guard self.next_item(0x5D) else { return None }
   let scope = self.top_scope()
   self.set_index(scope.base_depth, scope.count)
   scope.count = scope.count + 1
-  Some(@data.Deserialize::deserialize(self))
+  Some(@serde.Deserialize::deserialize(self))
 }
 
 ///|
-pub impl @data.Deserializer for JsonDeserializer with fn deserialize_map_begin(
+pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_map_begin(
   self,
 ) {
   self.expect('{')
@@ -1247,7 +1259,7 @@ pub impl @data.Deserializer for JsonDeserializer with fn deserialize_map_begin(
 }
 
 ///|
-pub impl @data.Deserializer for JsonDeserializer with fn deserialize_map_next_key(
+pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_map_next_key(
   self,
 ) {
   guard self.next_item(0x7D) else { return None }
@@ -1256,18 +1268,18 @@ pub impl @data.Deserializer for JsonDeserializer with fn deserialize_map_next_ke
   self.expect(':')
   self.set_key(scope.base_depth, @ascii.decode_lossy(key))
   scope.count = scope.count + 1
-  Some(@data.Deserialize::deserialize(self.key_reader(key)))
+  Some(@serde.Deserialize::deserialize(self.key_reader(key)))
 }
 
 ///|
-pub impl @data.Deserializer for JsonDeserializer with fn deserialize_map_value(
+pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_map_value(
   self,
 ) {
-  @data.Deserialize::deserialize(self)
+  @serde.Deserialize::deserialize(self)
 }
 
 ///|
-pub impl @data.Deserializer for JsonDeserializer with fn deserialize_struct_begin(
+pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_struct_begin(
   self,
   _name,
   fields,
@@ -1277,7 +1289,7 @@ pub impl @data.Deserializer for JsonDeserializer with fn deserialize_struct_begi
 }
 
 ///|
-pub impl @data.Deserializer for JsonDeserializer with fn deserialize_field_name(
+pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_field_name(
   self,
 ) {
   guard self.next_item(0x7D) else { return None }
@@ -1290,14 +1302,16 @@ pub impl @data.Deserializer for JsonDeserializer with fn deserialize_field_name(
 }
 
 ///|
-pub impl @data.Deserializer for JsonDeserializer with fn deserialize_field(self) {
+pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_field(
+  self,
+) {
   guard self.next_item(0x7D) else { return None }
   let scope = self.top_scope()
   let (start, end, clean) = self.string_extent()
   if clean {
     let key = self.input[start:end]
-    let field = @data.FieldIdentifier::from_bytes(key, scope.count)
-    match @data.FieldIdentifier::name(field) {
+    let field = @serde.FieldIdentifier::from_bytes(key, scope.count)
+    match @serde.FieldIdentifier::name(field) {
       Some(name) => {
         self.pos = end + 1
         self.expect(':')
@@ -1309,9 +1323,9 @@ pub impl @data.Deserializer for JsonDeserializer with fn deserialize_field(self)
     }
   }
   let name = self.parse_string()
-  let field = @data.FieldIdentifier::from_string(name)
+  let field = @serde.FieldIdentifier::from_string(name)
   self.expect(':')
-  match @data.FieldIdentifier::name(field) {
+  match @serde.FieldIdentifier::name(field) {
     Some(canonical) => self.set_key(scope.base_depth, canonical)
     None => self.set_key(scope.base_depth, name)
   }
@@ -1320,19 +1334,19 @@ pub impl @data.Deserializer for JsonDeserializer with fn deserialize_field(self)
 }
 
 ///|
-pub impl @data.Deserializer for JsonDeserializer with fn deserialize_field_value(
+pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_field_value(
   self,
 ) {
-  @data.Deserialize::deserialize(self)
+  @serde.Deserialize::deserialize(self)
 }
 
 ///|
-pub impl @data.Deserializer for JsonDeserializer with fn skip_value(self) {
+pub impl @serde.Deserializer for JsonDeserializer with fn skip_value(self) {
   let _ = self.parse_any()
 }
 
 ///|
-pub impl @data.Deserializer for JsonDeserializer with fn deserialize_enum_begin(
+pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_enum_begin(
   self,
   _name,
   variants,
@@ -1352,21 +1366,21 @@ pub impl @data.Deserializer for JsonDeserializer with fn deserialize_enum_begin(
 }
 
 ///|
-pub impl @data.Deserializer for JsonDeserializer with fn deserialize_unit_variant(
+pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_unit_variant(
   self,
 ) {
   ignore(self)
 }
 
 ///|
-pub impl @data.Deserializer for JsonDeserializer with fn deserialize_newtype_variant(
+pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_newtype_variant(
   self,
 ) {
-  @data.Deserialize::deserialize(self)
+  @serde.Deserialize::deserialize(self)
 }
 
 ///|
-pub impl @data.Deserializer for JsonDeserializer with fn deserialize_enum_end(
+pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_enum_end(
   self,
 ) {
   guard self.enums.pop() is Some(scope) else {
@@ -1379,7 +1393,7 @@ pub impl @data.Deserializer for JsonDeserializer with fn deserialize_enum_end(
 }
 
 ///|
-pub impl @data.Deserializer for JsonDeserializer with fn deserialize_any(self) {
+pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_any(self) {
   self.parse_any()
 }
 
@@ -1388,7 +1402,7 @@ pub impl @data.Deserializer for JsonDeserializer with fn deserialize_any(self) {
 /// because a JSON array has a closing `]` that something has to consume and
 /// `deserialize_tuple_next` — reading a known number of elements — never sees
 /// the end of the array.
-pub impl @data.Deserializer for JsonDeserializer with fn deserialize_tuple_begin(
+pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_tuple_begin(
   self,
   _len,
 ) {
@@ -1397,7 +1411,7 @@ pub impl @data.Deserializer for JsonDeserializer with fn deserialize_tuple_begin
 }
 
 ///|
-pub impl @data.Deserializer for JsonDeserializer with fn deserialize_tuple_next(
+pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_tuple_next(
   self,
 ) {
   let scope = self.top_scope()
@@ -1409,11 +1423,11 @@ pub impl @data.Deserializer for JsonDeserializer with fn deserialize_tuple_next(
   }
   self.set_index(scope.base_depth, scope.count)
   scope.count = scope.count + 1
-  @data.Deserialize::deserialize(self)
+  @serde.Deserialize::deserialize(self)
 }
 
 ///|
-pub impl @data.Deserializer for JsonDeserializer with fn deserialize_tuple_end(
+pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_tuple_end(
   self,
 ) {
   self.expect(']')

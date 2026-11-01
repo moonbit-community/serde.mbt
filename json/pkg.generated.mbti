@@ -1,114 +1,114 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "Yu-zh/data/json"
+package "moonbit-community/serde.mbt/json"
 
 import {
-  "Yu-zh/data",
+  "moonbit-community/serde.mbt",
 }
 
 // Values
-pub fn[T : @data.Deserialize] from_bytes(Bytes) -> T raise @data.DeError
+pub fn[T : @serde.mbt.Deserialize] from_bytes(Bytes) -> T raise @serde.mbt.DeError
 
-pub fn[T : @data.Deserialize] from_string(String) -> T raise @data.DeError
+pub fn[T : @serde.mbt.Deserialize] from_string(String) -> T raise @serde.mbt.DeError
 
-pub fn[T : @data.Serialize] to_bytes(T) -> Bytes raise @data.SerError
+pub fn[T : @serde.mbt.Serialize] to_bytes(T) -> Bytes raise @serde.mbt.SerError
 
-pub fn[T : @data.Serialize] to_string(T) -> String raise @data.SerError
+pub fn[T : @serde.mbt.Serialize] to_string(T) -> String raise @serde.mbt.SerError
 
 // Errors
 
 // Types and methods
 type JsonDeserializer
-pub fn JsonDeserializer::deserialize_any(Self) -> @data.Value raise @data.DeError
-pub fn JsonDeserializer::deserialize_bool(Self) -> Bool raise @data.DeError
-pub fn JsonDeserializer::deserialize_byte(Self) -> Byte raise @data.DeError
-pub fn JsonDeserializer::deserialize_bytes(Self) -> Bytes raise @data.DeError
-pub fn JsonDeserializer::deserialize_char(Self) -> Char raise @data.DeError
-pub fn JsonDeserializer::deserialize_double(Self) -> Double raise @data.DeError
-pub fn JsonDeserializer::deserialize_enum_begin(Self, String, ArrayView[String]) -> Int32 raise @data.DeError
-pub fn JsonDeserializer::deserialize_enum_end(Self) -> Unit raise @data.DeError
-pub fn[F : @data.FieldIdentifier] JsonDeserializer::deserialize_field(Self) -> F? raise @data.DeError
-pub fn JsonDeserializer::deserialize_field_name(Self) -> String? raise @data.DeError
-pub fn[T : @data.Deserialize] JsonDeserializer::deserialize_field_value(Self) -> T raise @data.DeError
-pub fn JsonDeserializer::deserialize_float(Self) -> Float raise @data.DeError
-pub fn JsonDeserializer::deserialize_int(Self) -> Int32 raise @data.DeError
-pub fn JsonDeserializer::deserialize_int16(Self) -> Int16 raise @data.DeError
-pub fn JsonDeserializer::deserialize_int64(Self) -> Int64 raise @data.DeError
-pub fn JsonDeserializer::deserialize_map_begin(Self) -> Int32? raise @data.DeError
-pub fn[K : @data.Deserialize] JsonDeserializer::deserialize_map_next_key(Self) -> K? raise @data.DeError
-pub fn[V : @data.Deserialize] JsonDeserializer::deserialize_map_value(Self) -> V raise @data.DeError
-pub fn[T : @data.Deserialize] JsonDeserializer::deserialize_newtype_struct(Self, String) -> T raise @data.DeError
-pub fn[T : @data.Deserialize] JsonDeserializer::deserialize_newtype_variant(Self) -> T raise @data.DeError
-pub fn[T : @data.Deserialize] JsonDeserializer::deserialize_option(Self) -> T? raise @data.DeError
-pub fn JsonDeserializer::deserialize_seq_begin(Self) -> Int32? raise @data.DeError
-pub fn[T : @data.Deserialize] JsonDeserializer::deserialize_seq_next(Self) -> T? raise @data.DeError
-pub fn JsonDeserializer::deserialize_str_bytes(Self) -> BytesView raise @data.DeError
-pub fn JsonDeserializer::deserialize_string(Self) -> String raise @data.DeError
-pub fn JsonDeserializer::deserialize_struct_begin(Self, String, ArrayView[String]) -> Unit raise @data.DeError
-pub fn JsonDeserializer::deserialize_tuple_begin(Self, Int32) -> Unit raise @data.DeError
-pub fn JsonDeserializer::deserialize_tuple_end(Self) -> Unit raise @data.DeError
-pub fn[T : @data.Deserialize] JsonDeserializer::deserialize_tuple_next(Self) -> T raise @data.DeError
-pub fn JsonDeserializer::deserialize_tuple_struct_begin(Self, String, Int32) -> Unit raise @data.DeError
-pub fn JsonDeserializer::deserialize_uint(Self) -> UInt32 raise @data.DeError
-pub fn JsonDeserializer::deserialize_uint16(Self) -> UInt16 raise @data.DeError
-pub fn JsonDeserializer::deserialize_uint64(Self) -> UInt64 raise @data.DeError
-pub fn JsonDeserializer::deserialize_unit(Self) -> Unit raise @data.DeError
-pub fn JsonDeserializer::deserialize_unit_struct(Self, String) -> Unit raise @data.DeError
-pub fn JsonDeserializer::deserialize_unit_variant(Self) -> Unit raise @data.DeError
-pub fn JsonDeserializer::finish(Self) -> Unit raise @data.DeError
+pub fn JsonDeserializer::deserialize_any(Self) -> @serde.mbt.Value raise @serde.mbt.DeError
+pub fn JsonDeserializer::deserialize_bool(Self) -> Bool raise @serde.mbt.DeError
+pub fn JsonDeserializer::deserialize_byte(Self) -> Byte raise @serde.mbt.DeError
+pub fn JsonDeserializer::deserialize_bytes(Self) -> Bytes raise @serde.mbt.DeError
+pub fn JsonDeserializer::deserialize_char(Self) -> Char raise @serde.mbt.DeError
+pub fn JsonDeserializer::deserialize_double(Self) -> Double raise @serde.mbt.DeError
+pub fn JsonDeserializer::deserialize_enum_begin(Self, String, ArrayView[String]) -> Int32 raise @serde.mbt.DeError
+pub fn JsonDeserializer::deserialize_enum_end(Self) -> Unit raise @serde.mbt.DeError
+pub fn[F : @serde.mbt.FieldIdentifier] JsonDeserializer::deserialize_field(Self) -> F? raise @serde.mbt.DeError
+pub fn JsonDeserializer::deserialize_field_name(Self) -> String? raise @serde.mbt.DeError
+pub fn[T : @serde.mbt.Deserialize] JsonDeserializer::deserialize_field_value(Self) -> T raise @serde.mbt.DeError
+pub fn JsonDeserializer::deserialize_float(Self) -> Float raise @serde.mbt.DeError
+pub fn JsonDeserializer::deserialize_int(Self) -> Int32 raise @serde.mbt.DeError
+pub fn JsonDeserializer::deserialize_int16(Self) -> Int16 raise @serde.mbt.DeError
+pub fn JsonDeserializer::deserialize_int64(Self) -> Int64 raise @serde.mbt.DeError
+pub fn JsonDeserializer::deserialize_map_begin(Self) -> Int32? raise @serde.mbt.DeError
+pub fn[K : @serde.mbt.Deserialize] JsonDeserializer::deserialize_map_next_key(Self) -> K? raise @serde.mbt.DeError
+pub fn[V : @serde.mbt.Deserialize] JsonDeserializer::deserialize_map_value(Self) -> V raise @serde.mbt.DeError
+pub fn[T : @serde.mbt.Deserialize] JsonDeserializer::deserialize_newtype_struct(Self, String) -> T raise @serde.mbt.DeError
+pub fn[T : @serde.mbt.Deserialize] JsonDeserializer::deserialize_newtype_variant(Self) -> T raise @serde.mbt.DeError
+pub fn[T : @serde.mbt.Deserialize] JsonDeserializer::deserialize_option(Self) -> T? raise @serde.mbt.DeError
+pub fn JsonDeserializer::deserialize_seq_begin(Self) -> Int32? raise @serde.mbt.DeError
+pub fn[T : @serde.mbt.Deserialize] JsonDeserializer::deserialize_seq_next(Self) -> T? raise @serde.mbt.DeError
+pub fn JsonDeserializer::deserialize_str_bytes(Self) -> BytesView raise @serde.mbt.DeError
+pub fn JsonDeserializer::deserialize_string(Self) -> String raise @serde.mbt.DeError
+pub fn JsonDeserializer::deserialize_struct_begin(Self, String, ArrayView[String]) -> Unit raise @serde.mbt.DeError
+pub fn JsonDeserializer::deserialize_tuple_begin(Self, Int32) -> Unit raise @serde.mbt.DeError
+pub fn JsonDeserializer::deserialize_tuple_end(Self) -> Unit raise @serde.mbt.DeError
+pub fn[T : @serde.mbt.Deserialize] JsonDeserializer::deserialize_tuple_next(Self) -> T raise @serde.mbt.DeError
+pub fn JsonDeserializer::deserialize_tuple_struct_begin(Self, String, Int32) -> Unit raise @serde.mbt.DeError
+pub fn JsonDeserializer::deserialize_uint(Self) -> UInt32 raise @serde.mbt.DeError
+pub fn JsonDeserializer::deserialize_uint16(Self) -> UInt16 raise @serde.mbt.DeError
+pub fn JsonDeserializer::deserialize_uint64(Self) -> UInt64 raise @serde.mbt.DeError
+pub fn JsonDeserializer::deserialize_unit(Self) -> Unit raise @serde.mbt.DeError
+pub fn JsonDeserializer::deserialize_unit_struct(Self, String) -> Unit raise @serde.mbt.DeError
+pub fn JsonDeserializer::deserialize_unit_variant(Self) -> Unit raise @serde.mbt.DeError
+pub fn JsonDeserializer::finish(Self) -> Unit raise @serde.mbt.DeError
 pub fn JsonDeserializer::is_human_readable(Self) -> Bool
 pub fn JsonDeserializer::new(Bytes) -> Self
-pub fn JsonDeserializer::path(Self) -> @data.Path
-pub fn JsonDeserializer::skip_value(Self) -> Unit raise @data.DeError
-pub impl @data.Deserializer for JsonDeserializer
+pub fn JsonDeserializer::path(Self) -> @serde.mbt.Path
+pub fn JsonDeserializer::skip_value(Self) -> Unit raise @serde.mbt.DeError
+pub impl @serde.mbt.Deserializer for JsonDeserializer
 
 type JsonSerializer
-pub fn JsonSerializer::finish(Self) -> Bytes raise @data.SerError
+pub fn JsonSerializer::finish(Self) -> Bytes raise @serde.mbt.SerError
 pub fn JsonSerializer::is_human_readable(Self) -> Bool
 pub fn JsonSerializer::new() -> Self
-pub fn JsonSerializer::serialize_bool(Self, Bool) -> Unit raise @data.SerError
-pub fn JsonSerializer::serialize_byte(Self, Byte) -> Unit raise @data.SerError
-pub fn JsonSerializer::serialize_bytes(Self, Bytes) -> Unit raise @data.SerError
-pub fn JsonSerializer::serialize_char(Self, Char) -> Unit raise @data.SerError
-pub fn JsonSerializer::serialize_double(Self, Double) -> Unit raise @data.SerError
-pub fn[T : @data.Serialize] JsonSerializer::serialize_field(Self, String, T) -> Unit raise @data.SerError
-pub fn JsonSerializer::serialize_float(Self, Float) -> Unit raise @data.SerError
-pub fn JsonSerializer::serialize_int(Self, Int32) -> Unit raise @data.SerError
-pub fn JsonSerializer::serialize_int16(Self, Int16) -> Unit raise @data.SerError
-pub fn JsonSerializer::serialize_int64(Self, Int64) -> Unit raise @data.SerError
-pub fn JsonSerializer::serialize_map_begin(Self, Int32?) -> Unit raise @data.SerError
-pub fn JsonSerializer::serialize_map_end(Self) -> Unit raise @data.SerError
-pub fn[K : @data.Serialize] JsonSerializer::serialize_map_key(Self, K) -> Unit raise @data.SerError
-pub fn[V : @data.Serialize] JsonSerializer::serialize_map_value(Self, V) -> Unit raise @data.SerError
-pub fn[T : @data.Serialize] JsonSerializer::serialize_newtype_struct(Self, String, T) -> Unit raise @data.SerError
-pub fn[T : @data.Serialize] JsonSerializer::serialize_newtype_variant(Self, @data.VariantInfo, T) -> Unit raise @data.SerError
-pub fn JsonSerializer::serialize_none(Self) -> Unit raise @data.SerError
-pub fn JsonSerializer::serialize_seq_begin(Self, Int32?) -> Unit raise @data.SerError
-pub fn[T : @data.Serialize] JsonSerializer::serialize_seq_element(Self, T) -> Unit raise @data.SerError
-pub fn JsonSerializer::serialize_seq_end(Self) -> Unit raise @data.SerError
-pub fn[T : @data.Serialize] JsonSerializer::serialize_some(Self, T) -> Unit raise @data.SerError
-pub fn JsonSerializer::serialize_str_bytes(Self, BytesView) -> Unit raise @data.SerError
-pub fn JsonSerializer::serialize_string(Self, String) -> Unit raise @data.SerError
-pub fn JsonSerializer::serialize_struct_begin(Self, String, Int32) -> Unit raise @data.SerError
-pub fn JsonSerializer::serialize_struct_end(Self) -> Unit raise @data.SerError
-pub fn JsonSerializer::serialize_struct_variant_begin(Self, @data.VariantInfo, Int32) -> Unit raise @data.SerError
-pub fn JsonSerializer::serialize_struct_variant_end(Self) -> Unit raise @data.SerError
-pub fn[T : @data.Serialize] JsonSerializer::serialize_struct_variant_field(Self, String, T) -> Unit raise @data.SerError
-pub fn JsonSerializer::serialize_tuple_begin(Self, Int32) -> Unit raise @data.SerError
-pub fn[T : @data.Serialize] JsonSerializer::serialize_tuple_element(Self, T) -> Unit raise @data.SerError
-pub fn JsonSerializer::serialize_tuple_end(Self) -> Unit raise @data.SerError
-pub fn JsonSerializer::serialize_tuple_struct_begin(Self, String, Int32) -> Unit raise @data.SerError
-pub fn JsonSerializer::serialize_tuple_struct_end(Self) -> Unit raise @data.SerError
-pub fn[T : @data.Serialize] JsonSerializer::serialize_tuple_struct_field(Self, T) -> Unit raise @data.SerError
-pub fn JsonSerializer::serialize_tuple_variant_begin(Self, @data.VariantInfo, Int32) -> Unit raise @data.SerError
-pub fn[T : @data.Serialize] JsonSerializer::serialize_tuple_variant_element(Self, T) -> Unit raise @data.SerError
-pub fn JsonSerializer::serialize_tuple_variant_end(Self) -> Unit raise @data.SerError
-pub fn JsonSerializer::serialize_uint(Self, UInt32) -> Unit raise @data.SerError
-pub fn JsonSerializer::serialize_uint16(Self, UInt16) -> Unit raise @data.SerError
-pub fn JsonSerializer::serialize_uint64(Self, UInt64) -> Unit raise @data.SerError
-pub fn JsonSerializer::serialize_unit(Self) -> Unit raise @data.SerError
-pub fn JsonSerializer::serialize_unit_struct(Self, String) -> Unit raise @data.SerError
-pub fn JsonSerializer::serialize_unit_variant(Self, @data.VariantInfo) -> Unit raise @data.SerError
-pub impl @data.Serializer for JsonSerializer
+pub fn JsonSerializer::serialize_bool(Self, Bool) -> Unit raise @serde.mbt.SerError
+pub fn JsonSerializer::serialize_byte(Self, Byte) -> Unit raise @serde.mbt.SerError
+pub fn JsonSerializer::serialize_bytes(Self, Bytes) -> Unit raise @serde.mbt.SerError
+pub fn JsonSerializer::serialize_char(Self, Char) -> Unit raise @serde.mbt.SerError
+pub fn JsonSerializer::serialize_double(Self, Double) -> Unit raise @serde.mbt.SerError
+pub fn[T : @serde.mbt.Serialize] JsonSerializer::serialize_field(Self, String, T) -> Unit raise @serde.mbt.SerError
+pub fn JsonSerializer::serialize_float(Self, Float) -> Unit raise @serde.mbt.SerError
+pub fn JsonSerializer::serialize_int(Self, Int32) -> Unit raise @serde.mbt.SerError
+pub fn JsonSerializer::serialize_int16(Self, Int16) -> Unit raise @serde.mbt.SerError
+pub fn JsonSerializer::serialize_int64(Self, Int64) -> Unit raise @serde.mbt.SerError
+pub fn JsonSerializer::serialize_map_begin(Self, Int32?) -> Unit raise @serde.mbt.SerError
+pub fn JsonSerializer::serialize_map_end(Self) -> Unit raise @serde.mbt.SerError
+pub fn[K : @serde.mbt.Serialize] JsonSerializer::serialize_map_key(Self, K) -> Unit raise @serde.mbt.SerError
+pub fn[V : @serde.mbt.Serialize] JsonSerializer::serialize_map_value(Self, V) -> Unit raise @serde.mbt.SerError
+pub fn[T : @serde.mbt.Serialize] JsonSerializer::serialize_newtype_struct(Self, String, T) -> Unit raise @serde.mbt.SerError
+pub fn[T : @serde.mbt.Serialize] JsonSerializer::serialize_newtype_variant(Self, @serde.mbt.VariantInfo, T) -> Unit raise @serde.mbt.SerError
+pub fn JsonSerializer::serialize_none(Self) -> Unit raise @serde.mbt.SerError
+pub fn JsonSerializer::serialize_seq_begin(Self, Int32?) -> Unit raise @serde.mbt.SerError
+pub fn[T : @serde.mbt.Serialize] JsonSerializer::serialize_seq_element(Self, T) -> Unit raise @serde.mbt.SerError
+pub fn JsonSerializer::serialize_seq_end(Self) -> Unit raise @serde.mbt.SerError
+pub fn[T : @serde.mbt.Serialize] JsonSerializer::serialize_some(Self, T) -> Unit raise @serde.mbt.SerError
+pub fn JsonSerializer::serialize_str_bytes(Self, BytesView) -> Unit raise @serde.mbt.SerError
+pub fn JsonSerializer::serialize_string(Self, String) -> Unit raise @serde.mbt.SerError
+pub fn JsonSerializer::serialize_struct_begin(Self, String, Int32) -> Unit raise @serde.mbt.SerError
+pub fn JsonSerializer::serialize_struct_end(Self) -> Unit raise @serde.mbt.SerError
+pub fn JsonSerializer::serialize_struct_variant_begin(Self, @serde.mbt.VariantInfo, Int32) -> Unit raise @serde.mbt.SerError
+pub fn JsonSerializer::serialize_struct_variant_end(Self) -> Unit raise @serde.mbt.SerError
+pub fn[T : @serde.mbt.Serialize] JsonSerializer::serialize_struct_variant_field(Self, String, T) -> Unit raise @serde.mbt.SerError
+pub fn JsonSerializer::serialize_tuple_begin(Self, Int32) -> Unit raise @serde.mbt.SerError
+pub fn[T : @serde.mbt.Serialize] JsonSerializer::serialize_tuple_element(Self, T) -> Unit raise @serde.mbt.SerError
+pub fn JsonSerializer::serialize_tuple_end(Self) -> Unit raise @serde.mbt.SerError
+pub fn JsonSerializer::serialize_tuple_struct_begin(Self, String, Int32) -> Unit raise @serde.mbt.SerError
+pub fn JsonSerializer::serialize_tuple_struct_end(Self) -> Unit raise @serde.mbt.SerError
+pub fn[T : @serde.mbt.Serialize] JsonSerializer::serialize_tuple_struct_field(Self, T) -> Unit raise @serde.mbt.SerError
+pub fn JsonSerializer::serialize_tuple_variant_begin(Self, @serde.mbt.VariantInfo, Int32) -> Unit raise @serde.mbt.SerError
+pub fn[T : @serde.mbt.Serialize] JsonSerializer::serialize_tuple_variant_element(Self, T) -> Unit raise @serde.mbt.SerError
+pub fn JsonSerializer::serialize_tuple_variant_end(Self) -> Unit raise @serde.mbt.SerError
+pub fn JsonSerializer::serialize_uint(Self, UInt32) -> Unit raise @serde.mbt.SerError
+pub fn JsonSerializer::serialize_uint16(Self, UInt16) -> Unit raise @serde.mbt.SerError
+pub fn JsonSerializer::serialize_uint64(Self, UInt64) -> Unit raise @serde.mbt.SerError
+pub fn JsonSerializer::serialize_unit(Self) -> Unit raise @serde.mbt.SerError
+pub fn JsonSerializer::serialize_unit_struct(Self, String) -> Unit raise @serde.mbt.SerError
+pub fn JsonSerializer::serialize_unit_variant(Self, @serde.mbt.VariantInfo) -> Unit raise @serde.mbt.SerError
+pub impl @serde.mbt.Serializer for JsonSerializer
 
 // Type aliases
 

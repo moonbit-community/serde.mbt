@@ -8,7 +8,7 @@
 ///|
 /// One open array, map or struct.
 priv struct Scope {
-  base : @data.Path
+  base : @serde.Path
   mut remaining : Int32
   mut count : Int32
   /// The immutable field names the caller declared, empty for arrays and
@@ -21,7 +21,7 @@ let no_fields : ReadOnlyArray[String] = []
 
 ///|
 priv struct EnumScope {
-  base : @data.Path
+  base : @serde.Path
 }
 
 ///|
@@ -29,23 +29,23 @@ priv struct EnumScope {
 struct MsgpackDeserializer {
   input : Bytes
   mut pos : Int32
-  mut path : @data.Path
+  mut path : @serde.Path
   scopes : Array[Scope]
   enums : Array[EnumScope]
 }
 
 ///|
 pub fn MsgpackDeserializer::new(input : Bytes) -> MsgpackDeserializer {
-  { input, pos: 0, path: @data.Root, scopes: [], enums: [], }
+  { input, pos: 0, path: @serde.Root, scopes: [], enums: [], }
 }
 
 ///|
 /// Checks that the whole input was consumed.
 pub fn MsgpackDeserializer::finish(
   self : MsgpackDeserializer,
-) -> Unit raise @data.DeError {
+) -> Unit raise @serde.DeError {
   if self.pos < self.input.length() {
-    raise @data.DeCustom(path=self.path, message="trailing input after value")
+    raise @serde.DeCustom(path=self.path, message="trailing input after value")
   }
 }
 
@@ -54,9 +54,9 @@ pub fn MsgpackDeserializer::finish(
 ///|
 fn MsgpackDeserializer::marker(
   self : MsgpackDeserializer,
-) -> Int32 raise @data.DeError {
+) -> Int32 raise @serde.DeError {
   if self.pos >= self.input.length() {
-    raise @data.Eof(path=self.path)
+    raise @serde.Eof(path=self.path)
   }
   let b = self.input[self.pos].to_int()
   self.pos = self.pos + 1
@@ -66,9 +66,9 @@ fn MsgpackDeserializer::marker(
 ///|
 fn MsgpackDeserializer::peek(
   self : MsgpackDeserializer,
-) -> Int32 raise @data.DeError {
+) -> Int32 raise @serde.DeError {
   if self.pos >= self.input.length() {
-    raise @data.Eof(path=self.path)
+    raise @serde.Eof(path=self.path)
   }
   self.input[self.pos].to_int()
 }
@@ -77,7 +77,7 @@ fn MsgpackDeserializer::peek(
 fn MsgpackDeserializer::be(
   self : MsgpackDeserializer,
   count : Int32,
-) -> UInt64 raise @data.DeError {
+) -> UInt64 raise @serde.DeError {
   let mut acc = 0UL
   for _ in 0..<count {
     acc = (acc << 8) | self.marker().to_uint64()
@@ -90,10 +90,10 @@ fn MsgpackDeserializer::be(
 fn MsgpackDeserializer::bounded(
   self : MsgpackDeserializer,
   n : UInt64,
-) -> Int32 raise @data.DeError {
+) -> Int32 raise @serde.DeError {
   let left = (self.input.length() - self.pos).to_int64().reinterpret_as_uint64()
   guard n <= left else {
-    raise @data.DeCustom(
+    raise @serde.DeCustom(
       path=self.path,
       message="MessagePack: length \{n} exceeds the \{left} byte(s) remaining",
     )
@@ -141,8 +141,8 @@ fn[T] MsgpackDeserializer::mismatch(
   self : MsgpackDeserializer,
   expected : String,
   marker : Int32,
-) -> T raise @data.DeError {
-  raise @data.InvalidType(path=self.path, expected~, found=kind_name(marker))
+) -> T raise @serde.DeError {
+  raise @serde.InvalidType(path=self.path, expected~, found=kind_name(marker))
 }
 
 // ---- integers ----
@@ -150,7 +150,7 @@ fn[T] MsgpackDeserializer::mismatch(
 ///|
 fn MsgpackDeserializer::as_int64(
   self : MsgpackDeserializer,
-) -> Int64 raise @data.DeError {
+) -> Int64 raise @serde.DeError {
   let m = self.marker()
   if m < 0x80 {
     m.to_int64()
@@ -164,7 +164,7 @@ fn MsgpackDeserializer::as_int64(
       0xcf => {
         let v = self.be(8)
         guard v <= 0x7FFFFFFFFFFFFFFF else {
-          raise @data.InvalidValue(
+          raise @serde.InvalidValue(
             path=self.path,
             expected="a signed integer",
             found=v.to_string(),
@@ -194,10 +194,14 @@ fn MsgpackDeserializer::int_in_range(
   low : Int64,
   high : Int64,
   what : String,
-) -> Int64 raise @data.DeError {
+) -> Int64 raise @serde.DeError {
   let v = self.as_int64()
   guard v >= low && v <= high else {
-    raise @data.InvalidValue(path=self.path, expected=what, found=v.to_string())
+    raise @serde.InvalidValue(
+      path=self.path,
+      expected=what,
+      found=v.to_string(),
+    )
   }
   v
 }
@@ -205,7 +209,7 @@ fn MsgpackDeserializer::int_in_range(
 ///|
 fn MsgpackDeserializer::as_uint64(
   self : MsgpackDeserializer,
-) -> UInt64 raise @data.DeError {
+) -> UInt64 raise @serde.DeError {
   let m = self.peek()
   if m == 0xcf {
     let _ = self.marker()
@@ -213,7 +217,7 @@ fn MsgpackDeserializer::as_uint64(
   } else {
     let v = self.as_int64()
     guard v >= 0 else {
-      raise @data.InvalidValue(
+      raise @serde.InvalidValue(
         path=self.path,
         expected="an unsigned integer",
         found=v.to_string(),
@@ -226,7 +230,7 @@ fn MsgpackDeserializer::as_uint64(
 ///|
 fn MsgpackDeserializer::as_double(
   self : MsgpackDeserializer,
-) -> Double raise @data.DeError {
+) -> Double raise @serde.DeError {
   let m = self.peek()
   match m {
     0xca => {
@@ -249,7 +253,7 @@ fn MsgpackDeserializer::as_double(
 /// The length of a string header, whichever of the four forms it took.
 fn MsgpackDeserializer::text_len(
   self : MsgpackDeserializer,
-) -> Int32 raise @data.DeError {
+) -> Int32 raise @serde.DeError {
   let m = self.marker()
   if m >= 0xa0 && m < 0xc0 {
     m & 0x1F
@@ -266,7 +270,7 @@ fn MsgpackDeserializer::text_len(
 ///|
 fn MsgpackDeserializer::str_bytes(
   self : MsgpackDeserializer,
-) -> BytesView raise @data.DeError {
+) -> BytesView raise @serde.DeError {
   let n = self.text_len()
   let _ = self.bounded(n.to_int64().reinterpret_as_uint64())
   self.take(n)
@@ -276,10 +280,10 @@ fn MsgpackDeserializer::str_bytes(
 fn MsgpackDeserializer::decode_text(
   self : MsgpackDeserializer,
   view : BytesView,
-) -> String raise @data.DeError {
+) -> String raise @serde.DeError {
   @utf8.decode(view) catch {
     _ =>
-      raise @data.InvalidValue(
+      raise @serde.InvalidValue(
         path=self.path,
         expected="UTF-8",
         found="raw bytes",
@@ -290,14 +294,14 @@ fn MsgpackDeserializer::decode_text(
 ///|
 fn MsgpackDeserializer::text(
   self : MsgpackDeserializer,
-) -> String raise @data.DeError {
+) -> String raise @serde.DeError {
   self.decode_text(self.str_bytes())
 }
 
 ///|
 fn MsgpackDeserializer::bin(
   self : MsgpackDeserializer,
-) -> BytesView raise @data.DeError {
+) -> BytesView raise @serde.DeError {
   let m = self.marker()
   let n = match m {
     0xc4 => self.bounded(self.be(1))
@@ -317,7 +321,7 @@ fn MsgpackDeserializer::open(
   m32 : Int32,
   what : String,
   expected : ArrayView[String],
-) -> Int32 raise @data.DeError {
+) -> Int32 raise @serde.DeError {
   let m = self.marker()
   let n = if m >= fix && m < fix + 16 {
     m & 0x0F
@@ -335,11 +339,11 @@ fn MsgpackDeserializer::open(
 ///|
 fn MsgpackDeserializer::top(
   self : MsgpackDeserializer,
-) -> Scope raise @data.DeError {
+) -> Scope raise @serde.DeError {
   match self.scopes.last() {
     Some(scope) => scope
     None =>
-      raise @data.DeCustom(
+      raise @serde.DeCustom(
         path=self.path,
         message="MessagePack: item outside a container",
       )
@@ -349,7 +353,7 @@ fn MsgpackDeserializer::top(
 ///|
 fn MsgpackDeserializer::next_item(
   self : MsgpackDeserializer,
-) -> Bool raise @data.DeError {
+) -> Bool raise @serde.DeError {
   let scope = self.top()
   if scope.remaining == 0 {
     let _ = self.scopes.pop()
@@ -364,12 +368,12 @@ fn MsgpackDeserializer::next_item(
 // ---- the trait ----
 
 ///|
-pub impl @data.Deserializer for MsgpackDeserializer with fn path(self) {
+pub impl @serde.Deserializer for MsgpackDeserializer with fn path(self) {
   self.path
 }
 
 ///|
-pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_unit(
+pub impl @serde.Deserializer for MsgpackDeserializer with fn deserialize_unit(
   self,
 ) {
   let m = self.marker()
@@ -377,7 +381,7 @@ pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_unit(
 }
 
 ///|
-pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_bool(
+pub impl @serde.Deserializer for MsgpackDeserializer with fn deserialize_bool(
   self,
 ) {
   match self.marker() {
@@ -388,75 +392,75 @@ pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_bool(
 }
 
 ///|
-pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_byte(
+pub impl @serde.Deserializer for MsgpackDeserializer with fn deserialize_byte(
   self,
 ) {
   self.int_in_range(0, 255, "a byte").to_byte()
 }
 
 ///|
-pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_int16(
+pub impl @serde.Deserializer for MsgpackDeserializer with fn deserialize_int16(
   self,
 ) {
   Int16::from_int64(self.int_in_range(-32768, 32767, "an int16"))
 }
 
 ///|
-pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_uint16(
+pub impl @serde.Deserializer for MsgpackDeserializer with fn deserialize_uint16(
   self,
 ) {
   self.int_in_range(0, 65535, "a uint16").to_uint16()
 }
 
 ///|
-pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_int(
+pub impl @serde.Deserializer for MsgpackDeserializer with fn deserialize_int(
   self,
 ) {
   self.int_in_range(-2147483648, 2147483647, "an int").to_int()
 }
 
 ///|
-pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_uint(
+pub impl @serde.Deserializer for MsgpackDeserializer with fn deserialize_uint(
   self,
 ) {
   self.int_in_range(0, 4294967295, "a uint").reinterpret_as_uint64().to_uint()
 }
 
 ///|
-pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_int64(
+pub impl @serde.Deserializer for MsgpackDeserializer with fn deserialize_int64(
   self,
 ) {
   self.as_int64()
 }
 
 ///|
-pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_uint64(
+pub impl @serde.Deserializer for MsgpackDeserializer with fn deserialize_uint64(
   self,
 ) {
   self.as_uint64()
 }
 
 ///|
-pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_float(
+pub impl @serde.Deserializer for MsgpackDeserializer with fn deserialize_float(
   self,
 ) {
   Float::from_double(self.as_double())
 }
 
 ///|
-pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_double(
+pub impl @serde.Deserializer for MsgpackDeserializer with fn deserialize_double(
   self,
 ) {
   self.as_double()
 }
 
 ///|
-pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_char(
+pub impl @serde.Deserializer for MsgpackDeserializer with fn deserialize_char(
   self,
 ) {
   let s = self.text()
   guard s.char_length() == 1 else {
-    raise @data.InvalidValue(
+    raise @serde.InvalidValue(
       path=self.path,
       expected="a one-character string",
       found=s,
@@ -466,7 +470,7 @@ pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_char(
 }
 
 ///|
-pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_string(
+pub impl @serde.Deserializer for MsgpackDeserializer with fn deserialize_string(
   self,
 ) {
   self.text()
@@ -475,76 +479,76 @@ pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_string(
 ///|
 /// Overridden: the bytes are in hand, so a consumer that does not want a
 /// `String` never pays for one.
-pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_str_bytes(
+pub impl @serde.Deserializer for MsgpackDeserializer with fn deserialize_str_bytes(
   self,
 ) {
   self.str_bytes()
 }
 
 ///|
-pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_bytes(
+pub impl @serde.Deserializer for MsgpackDeserializer with fn deserialize_bytes(
   self,
 ) {
   Bytes::from_iter(self.bin().iter())
 }
 
 ///|
-pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_option(
+pub impl @serde.Deserializer for MsgpackDeserializer with fn deserialize_option(
   self,
 ) {
   if self.peek() == 0xc0 {
     let _ = self.marker()
     None
   } else {
-    Some(@data.Deserialize::deserialize(self))
+    Some(@serde.Deserialize::deserialize(self))
   }
 }
 
 ///|
-pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_seq_begin(
+pub impl @serde.Deserializer for MsgpackDeserializer with fn deserialize_seq_begin(
   self,
 ) {
   Some(self.open(0x90, 0xdc, 0xdd, "sequence", no_fields))
 }
 
 ///|
-pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_seq_next(
+pub impl @serde.Deserializer for MsgpackDeserializer with fn deserialize_seq_next(
   self,
 ) {
   guard self.next_item() else { return None }
   let scope = self.top()
   self.path = scope.base.index(scope.count)
   scope.count = scope.count + 1
-  Some(@data.Deserialize::deserialize(self))
+  Some(@serde.Deserialize::deserialize(self))
 }
 
 ///|
 /// Overridden away from the sequence default, which would leave a scope the
 /// tuple protocol never pops. The header still has to be read — a tuple is an
 /// array on the wire — but its length comes from the type.
-pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_tuple_begin(
+pub impl @serde.Deserializer for MsgpackDeserializer with fn deserialize_tuple_begin(
   self,
   len,
 ) {
   let n = self.open(0x90, 0xdc, 0xdd, "sequence", no_fields)
   guard n == len else {
-    raise @data.InvalidLength(path=self.path, expected=len, found=n)
+    raise @serde.InvalidLength(path=self.path, expected=len, found=n)
   }
 }
 
 ///|
-pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_tuple_next(
+pub impl @serde.Deserializer for MsgpackDeserializer with fn deserialize_tuple_next(
   self,
 ) {
   let scope = self.top()
   self.path = scope.base.index(scope.count)
   scope.count = scope.count + 1
   scope.remaining = scope.remaining - 1
-  @data.Deserialize::deserialize(self)
+  @serde.Deserialize::deserialize(self)
 }
 
 ///|
-pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_tuple_end(
+pub impl @serde.Deserializer for MsgpackDeserializer with fn deserialize_tuple_end(
   self,
 ) {
   let scope = self.top()
@@ -553,29 +557,29 @@ pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_tuple_en
 }
 
 ///|
-pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_map_begin(
+pub impl @serde.Deserializer for MsgpackDeserializer with fn deserialize_map_begin(
   self,
 ) {
   Some(self.open(0x80, 0xde, 0xdf, "map", no_fields))
 }
 
 ///|
-pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_map_next_key(
+pub impl @serde.Deserializer for MsgpackDeserializer with fn deserialize_map_next_key(
   self,
 ) {
   guard self.next_item() else { return None }
-  Some(@data.Deserialize::deserialize(self))
+  Some(@serde.Deserialize::deserialize(self))
 }
 
 ///|
-pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_map_value(
+pub impl @serde.Deserializer for MsgpackDeserializer with fn deserialize_map_value(
   self,
 ) {
-  @data.Deserialize::deserialize(self)
+  @serde.Deserialize::deserialize(self)
 }
 
 ///|
-pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_struct_begin(
+pub impl @serde.Deserializer for MsgpackDeserializer with fn deserialize_struct_begin(
   self,
   _name,
   fields,
@@ -584,7 +588,7 @@ pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_struct_b
 }
 
 ///|
-pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_field_name(
+pub impl @serde.Deserializer for MsgpackDeserializer with fn deserialize_field_name(
   self,
 ) {
   guard self.next_item() else { return None }
@@ -600,14 +604,14 @@ pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_field_na
 }
 
 ///|
-pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_field(
+pub impl @serde.Deserializer for MsgpackDeserializer with fn deserialize_field(
   self,
 ) {
   guard self.next_item() else { return None }
   let scope = self.top()
   let key = self.str_bytes()
-  let field = @data.FieldIdentifier::from_bytes(key, scope.count)
-  let name = match @data.FieldIdentifier::name(field) {
+  let field = @serde.FieldIdentifier::from_bytes(key, scope.count)
+  let name = match @serde.FieldIdentifier::name(field) {
     Some(name) => name
     None => self.decode_text(key)
   }
@@ -617,21 +621,21 @@ pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_field(
 }
 
 ///|
-pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_field_value(
+pub impl @serde.Deserializer for MsgpackDeserializer with fn deserialize_field_value(
   self,
 ) {
-  @data.Deserialize::deserialize(self)
+  @serde.Deserialize::deserialize(self)
 }
 
 ///|
 /// Implementable, as in CBOR and unlike the non-self-describing fixture: every
 /// marker says how much follows it.
-pub impl @data.Deserializer for MsgpackDeserializer with fn skip_value(self) {
+pub impl @serde.Deserializer for MsgpackDeserializer with fn skip_value(self) {
   let _ = self.parse_any()
 }
 
 ///|
-pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_enum_begin(
+pub impl @serde.Deserializer for MsgpackDeserializer with fn deserialize_enum_begin(
   self,
   _name,
   variants,
@@ -642,7 +646,7 @@ pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_enum_beg
   if wrapped {
     let n = self.open(0x80, 0xde, 0xdf, "map", no_fields)
     guard n == 1 else {
-      raise @data.DeCustom(
+      raise @serde.DeCustom(
         path=base,
         message="MessagePack: an enum is a one-entry map, not \{n}",
       )
@@ -658,7 +662,7 @@ pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_enum_beg
     }
   }
   guard index >= 0 else {
-    raise @data.UnknownVariant(path=base, variant=name, expected=variants)
+    raise @serde.UnknownVariant(path=base, variant=name, expected=variants)
   }
   self.enums.push({ base, })
   self.path = base.key(name)
@@ -666,27 +670,27 @@ pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_enum_beg
 }
 
 ///|
-pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_unit_variant(
+pub impl @serde.Deserializer for MsgpackDeserializer with fn deserialize_unit_variant(
   _self,
 ) {
 
 }
 
 ///|
-pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_newtype_variant(
+pub impl @serde.Deserializer for MsgpackDeserializer with fn deserialize_newtype_variant(
   self,
 ) {
-  @data.Deserialize::deserialize(self)
+  @serde.Deserialize::deserialize(self)
 }
 
 ///|
-pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_enum_end(
+pub impl @serde.Deserializer for MsgpackDeserializer with fn deserialize_enum_end(
   self,
 ) {
   match self.enums.pop() {
     Some(scope) => self.path = scope.base
     None =>
-      raise @data.DeCustom(
+      raise @serde.DeCustom(
         path=self.path,
         message="MessagePack: enum ended without a begin",
       )
@@ -694,7 +698,7 @@ pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_enum_end
 }
 
 ///|
-pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_any(
+pub impl @serde.Deserializer for MsgpackDeserializer with fn deserialize_any(
   self,
 ) {
   self.parse_any()
@@ -703,18 +707,18 @@ pub impl @data.Deserializer for MsgpackDeserializer with fn deserialize_any(
 ///|
 fn MsgpackDeserializer::parse_any(
   self : MsgpackDeserializer,
-) -> @data.Value raise @data.DeError {
+) -> @serde.Value raise @serde.DeError {
   let m = self.peek()
   if m < 0x80 || m >= 0xe0 || (m >= 0xcc && m <= 0xd3) {
     let v = self.as_int64()
     return if v >= 0 {
-      @data.UInt(v.reinterpret_as_uint64())
+      @serde.UInt(v.reinterpret_as_uint64())
     } else {
-      @data.Int(v)
+      @serde.Int(v)
     }
   }
   if m >= 0xa0 && m < 0xc0 {
-    return @data.Str(self.str_bytes())
+    return @serde.Str(self.str_bytes())
   }
   if m >= 0x80 && m < 0x90 {
     return self.any_map()
@@ -725,18 +729,18 @@ fn MsgpackDeserializer::parse_any(
   match m {
     0xc0 => {
       let _ = self.marker()
-      @data.Null
+      @serde.Null
     }
-    0xc2 | 0xc3 => @data.Boolean(self.marker() == 0xc3)
-    0xc4 | 0xc5 | 0xc6 => @data.Bytes(Bytes::from_iter(self.bin().iter()))
-    0xca | 0xcb => @data.Double(self.as_double())
-    0xd9 | 0xda | 0xdb => @data.Str(self.str_bytes())
+    0xc2 | 0xc3 => @serde.Boolean(self.marker() == 0xc3)
+    0xc4 | 0xc5 | 0xc6 => @serde.Bytes(Bytes::from_iter(self.bin().iter()))
+    0xca | 0xcb => @serde.Double(self.as_double())
+    0xd9 | 0xda | 0xdb => @serde.Str(self.str_bytes())
     0xdc | 0xdd => self.any_seq()
     0xde | 0xdf => self.any_map()
     // An ext is a type byte and an opaque payload with no inner value to fall
     // back to, unlike a CBOR tag, and `Value` has no case for one.
     _ =>
-      raise @data.DeCustom(
+      raise @serde.DeCustom(
         path=self.path,
         message="MessagePack: extension types are not part of the data model",
       )
@@ -746,20 +750,20 @@ fn MsgpackDeserializer::parse_any(
 ///|
 fn MsgpackDeserializer::any_seq(
   self : MsgpackDeserializer,
-) -> @data.Value raise @data.DeError {
+) -> @serde.Value raise @serde.DeError {
   let n = self.open(0x90, 0xdc, 0xdd, "sequence", no_fields)
   let items = []
   for _ in 0..<n {
     items.push(self.parse_any())
   }
   let _ = self.scopes.pop()
-  @data.Seq(ReadOnlyArray::from_array(items))
+  @serde.Seq(ReadOnlyArray::from_array(items))
 }
 
 ///|
 fn MsgpackDeserializer::any_map(
   self : MsgpackDeserializer,
-) -> @data.Value raise @data.DeError {
+) -> @serde.Value raise @serde.DeError {
   let n = self.open(0x80, 0xde, 0xdf, "map", no_fields)
   let entries = []
   for _ in 0..<n {
@@ -767,11 +771,11 @@ fn MsgpackDeserializer::any_map(
     entries.push((k, self.parse_any()))
   }
   let _ = self.scopes.pop()
-  @data.Map(ReadOnlyArray::from_array(entries))
+  @serde.Map(ReadOnlyArray::from_array(entries))
 }
 
 ///|
-pub impl @data.Deserializer for MsgpackDeserializer with fn is_human_readable(
+pub impl @serde.Deserializer for MsgpackDeserializer with fn is_human_readable(
   _self,
 ) {
   false

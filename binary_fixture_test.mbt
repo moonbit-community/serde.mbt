@@ -98,11 +98,11 @@ fn BinSerializer::blob(self : BinSerializer, payload : BytesView) -> Unit {
 fn BinSerializer::count(
   self : BinSerializer,
   hint : Int32?,
-) -> Unit raise @data.SerError {
+) -> Unit raise @serde.SerError {
   match hint {
     Some(n) => self.u32(n.reinterpret_as_uint())
     None =>
-      raise @data.UnsupportedType(
+      raise @serde.UnsupportedType(
         format="bin",
         kind="a sequence of unknown length",
       )
@@ -110,47 +110,47 @@ fn BinSerializer::count(
 }
 
 ///|
-impl @data.Serializer for BinSerializer with fn serialize_unit(_self) {
+impl @serde.Serializer for BinSerializer with fn serialize_unit(_self) {
 
 }
 
 ///|
-impl @data.Serializer for BinSerializer with fn serialize_bool(self, v) {
+impl @serde.Serializer for BinSerializer with fn serialize_bool(self, v) {
   self.out.write_byte(if v { b'\x01' } else { b'\x00' })
 }
 
 ///|
-impl @data.Serializer for BinSerializer with fn serialize_byte(self, v) {
+impl @serde.Serializer for BinSerializer with fn serialize_byte(self, v) {
   self.out.write_byte(v)
 }
 
 ///|
-impl @data.Serializer for BinSerializer with fn serialize_int16(self, v) {
+impl @serde.Serializer for BinSerializer with fn serialize_int16(self, v) {
   self.u16(v.to_int())
 }
 
 ///|
-impl @data.Serializer for BinSerializer with fn serialize_uint16(self, v) {
+impl @serde.Serializer for BinSerializer with fn serialize_uint16(self, v) {
   self.u16(v.to_int())
 }
 
 ///|
-impl @data.Serializer for BinSerializer with fn serialize_int(self, v) {
+impl @serde.Serializer for BinSerializer with fn serialize_int(self, v) {
   self.u32(v.reinterpret_as_uint())
 }
 
 ///|
-impl @data.Serializer for BinSerializer with fn serialize_uint(self, v) {
+impl @serde.Serializer for BinSerializer with fn serialize_uint(self, v) {
   self.u32(v)
 }
 
 ///|
-impl @data.Serializer for BinSerializer with fn serialize_int64(self, v) {
+impl @serde.Serializer for BinSerializer with fn serialize_int64(self, v) {
   self.u64(v.reinterpret_as_uint64())
 }
 
 ///|
-impl @data.Serializer for BinSerializer with fn serialize_uint64(self, v) {
+impl @serde.Serializer for BinSerializer with fn serialize_uint64(self, v) {
   self.u64(v)
 }
 
@@ -158,44 +158,44 @@ impl @data.Serializer for BinSerializer with fn serialize_uint64(self, v) {
 /// Widened rather than written as four bytes: every `Float` is exactly a
 /// `Double`, and `Float::from_double` of that value returns it unchanged, so
 /// the round trip is bit-exact without needing a 32-bit reinterpret.
-impl @data.Serializer for BinSerializer with fn serialize_float(self, v) {
+impl @serde.Serializer for BinSerializer with fn serialize_float(self, v) {
   self.u64(v.to_double().reinterpret_as_uint64())
 }
 
 ///|
-impl @data.Serializer for BinSerializer with fn serialize_double(self, v) {
+impl @serde.Serializer for BinSerializer with fn serialize_double(self, v) {
   self.u64(v.reinterpret_as_uint64())
 }
 
 ///|
-impl @data.Serializer for BinSerializer with fn serialize_char(self, v) {
+impl @serde.Serializer for BinSerializer with fn serialize_char(self, v) {
   self.u32(v.to_int().reinterpret_as_uint())
 }
 
 ///|
-impl @data.Serializer for BinSerializer with fn serialize_string(self, v) {
+impl @serde.Serializer for BinSerializer with fn serialize_string(self, v) {
   self.blob(@utf8.encode(v)[:])
 }
 
 ///|
 /// Overridden, unlike in JSON. The transport is bytes, so text that is already
 /// UTF-8 should never be decoded into a `String` just to be encoded again.
-impl @data.Serializer for BinSerializer with fn serialize_str_bytes(self, v) {
+impl @serde.Serializer for BinSerializer with fn serialize_str_bytes(self, v) {
   self.blob(v)
 }
 
 ///|
-impl @data.Serializer for BinSerializer with fn serialize_bytes(self, v) {
+impl @serde.Serializer for BinSerializer with fn serialize_bytes(self, v) {
   self.blob(v[:])
 }
 
 ///|
-impl @data.Serializer for BinSerializer with fn serialize_none(self) {
+impl @serde.Serializer for BinSerializer with fn serialize_none(self) {
   self.out.write_byte(b'\x00')
 }
 
 ///|
-impl @data.Serializer for BinSerializer with fn serialize_some(self, v) {
+impl @serde.Serializer for BinSerializer with fn serialize_some(self, v) {
   self.out.write_byte(b'\x01')
   v.serialize(self)
 }
@@ -203,7 +203,7 @@ impl @data.Serializer for BinSerializer with fn serialize_some(self, v) {
 ///|
 /// The index, not the name — which is the whole reason `VariantInfo` carries
 /// one. Nothing about the variant's spelling reaches the wire.
-impl @data.Serializer for BinSerializer with fn serialize_unit_variant(
+impl @serde.Serializer for BinSerializer with fn serialize_unit_variant(
   self,
   info,
 ) {
@@ -211,7 +211,7 @@ impl @data.Serializer for BinSerializer with fn serialize_unit_variant(
 }
 
 ///|
-impl @data.Serializer for BinSerializer with fn serialize_newtype_variant(
+impl @serde.Serializer for BinSerializer with fn serialize_newtype_variant(
   self,
   info,
   v,
@@ -221,17 +221,17 @@ impl @data.Serializer for BinSerializer with fn serialize_newtype_variant(
 }
 
 ///|
-impl @data.Serializer for BinSerializer with fn serialize_seq_begin(self, hint) {
+impl @serde.Serializer for BinSerializer with fn serialize_seq_begin(self, hint) {
   self.count(hint)
 }
 
 ///|
-impl @data.Serializer for BinSerializer with fn serialize_seq_element(self, v) {
+impl @serde.Serializer for BinSerializer with fn serialize_seq_element(self, v) {
   v.serialize(self)
 }
 
 ///|
-impl @data.Serializer for BinSerializer with fn serialize_seq_end(_self) {
+impl @serde.Serializer for BinSerializer with fn serialize_seq_end(_self) {
 
 }
 
@@ -239,7 +239,7 @@ impl @data.Serializer for BinSerializer with fn serialize_seq_end(_self) {
 /// Overridden away from the sequence default, which would write a count a
 /// tuple's length already implies. Every real format has had to override these
 /// three; only `Value` uses the defaults.
-impl @data.Serializer for BinSerializer with fn serialize_tuple_begin(
+impl @serde.Serializer for BinSerializer with fn serialize_tuple_begin(
   _self,
   _len,
 ) {
@@ -247,37 +247,40 @@ impl @data.Serializer for BinSerializer with fn serialize_tuple_begin(
 }
 
 ///|
-impl @data.Serializer for BinSerializer with fn serialize_tuple_element(self, v) {
+impl @serde.Serializer for BinSerializer with fn serialize_tuple_element(
+  self,
+  v,
+) {
   v.serialize(self)
 }
 
 ///|
-impl @data.Serializer for BinSerializer with fn serialize_tuple_end(_self) {
+impl @serde.Serializer for BinSerializer with fn serialize_tuple_end(_self) {
 
 }
 
 ///|
-impl @data.Serializer for BinSerializer with fn serialize_map_begin(self, hint) {
+impl @serde.Serializer for BinSerializer with fn serialize_map_begin(self, hint) {
   self.count(hint)
 }
 
 ///|
-impl @data.Serializer for BinSerializer with fn serialize_map_key(self, k) {
+impl @serde.Serializer for BinSerializer with fn serialize_map_key(self, k) {
   k.serialize(self)
 }
 
 ///|
-impl @data.Serializer for BinSerializer with fn serialize_map_value(self, v) {
+impl @serde.Serializer for BinSerializer with fn serialize_map_value(self, v) {
   v.serialize(self)
 }
 
 ///|
-impl @data.Serializer for BinSerializer with fn serialize_map_end(_self) {
+impl @serde.Serializer for BinSerializer with fn serialize_map_end(_self) {
 
 }
 
 ///|
-impl @data.Serializer for BinSerializer with fn serialize_struct_begin(
+impl @serde.Serializer for BinSerializer with fn serialize_struct_begin(
   _self,
   _name,
   _len,
@@ -288,17 +291,17 @@ impl @data.Serializer for BinSerializer with fn serialize_struct_begin(
 ///|
 /// The name is dropped on the floor. Reading it back depends on the type
 /// handing the same `fields` array to `deserialize_struct_begin`.
-impl @data.Serializer for BinSerializer with fn serialize_field(self, _name, v) {
+impl @serde.Serializer for BinSerializer with fn serialize_field(self, _name, v) {
   v.serialize(self)
 }
 
 ///|
-impl @data.Serializer for BinSerializer with fn serialize_struct_end(_self) {
+impl @serde.Serializer for BinSerializer with fn serialize_struct_end(_self) {
 
 }
 
 ///|
-impl @data.Serializer for BinSerializer with fn serialize_tuple_variant_begin(
+impl @serde.Serializer for BinSerializer with fn serialize_tuple_variant_begin(
   self,
   info,
   _len,
@@ -307,7 +310,7 @@ impl @data.Serializer for BinSerializer with fn serialize_tuple_variant_begin(
 }
 
 ///|
-impl @data.Serializer for BinSerializer with fn serialize_tuple_variant_element(
+impl @serde.Serializer for BinSerializer with fn serialize_tuple_variant_element(
   self,
   v,
 ) {
@@ -315,14 +318,14 @@ impl @data.Serializer for BinSerializer with fn serialize_tuple_variant_element(
 }
 
 ///|
-impl @data.Serializer for BinSerializer with fn serialize_tuple_variant_end(
+impl @serde.Serializer for BinSerializer with fn serialize_tuple_variant_end(
   _self,
 ) {
 
 }
 
 ///|
-impl @data.Serializer for BinSerializer with fn serialize_struct_variant_begin(
+impl @serde.Serializer for BinSerializer with fn serialize_struct_variant_begin(
   self,
   info,
   _len,
@@ -331,7 +334,7 @@ impl @data.Serializer for BinSerializer with fn serialize_struct_variant_begin(
 }
 
 ///|
-impl @data.Serializer for BinSerializer with fn serialize_struct_variant_field(
+impl @serde.Serializer for BinSerializer with fn serialize_struct_variant_field(
   self,
   _name,
   v,
@@ -340,14 +343,14 @@ impl @data.Serializer for BinSerializer with fn serialize_struct_variant_field(
 }
 
 ///|
-impl @data.Serializer for BinSerializer with fn serialize_struct_variant_end(
+impl @serde.Serializer for BinSerializer with fn serialize_struct_variant_end(
   _self,
 ) {
 
 }
 
 ///|
-impl @data.Serializer for BinSerializer with fn is_human_readable(_self) {
+impl @serde.Serializer for BinSerializer with fn is_human_readable(_self) {
   false
 }
 
@@ -384,16 +387,16 @@ fn BinDeserializer::new(input : Bytes) -> BinDeserializer {
 }
 
 ///|
-fn BinDeserializer::finish(self : BinDeserializer) -> Unit raise @data.DeError {
+fn BinDeserializer::finish(self : BinDeserializer) -> Unit raise @serde.DeError {
   if self.pos < self.input.length() {
-    raise @data.DeCustom(path=Root, message="bin: trailing input after value")
+    raise @serde.DeCustom(path=Root, message="bin: trailing input after value")
   }
 }
 
 ///|
-fn BinDeserializer::byte(self : BinDeserializer) -> Byte raise @data.DeError {
+fn BinDeserializer::byte(self : BinDeserializer) -> Byte raise @serde.DeError {
   if self.pos >= self.input.length() {
-    raise @data.Eof(path=Root)
+    raise @serde.Eof(path=Root)
   }
   let b = self.input[self.pos]
   self.pos = self.pos + 1
@@ -401,14 +404,14 @@ fn BinDeserializer::byte(self : BinDeserializer) -> Byte raise @data.DeError {
 }
 
 ///|
-fn BinDeserializer::u16(self : BinDeserializer) -> Int32 raise @data.DeError {
+fn BinDeserializer::u16(self : BinDeserializer) -> Int32 raise @serde.DeError {
   let a = self.byte().to_int()
   let b = self.byte().to_int()
   a | (b << 8)
 }
 
 ///|
-fn BinDeserializer::u32(self : BinDeserializer) -> UInt32 raise @data.DeError {
+fn BinDeserializer::u32(self : BinDeserializer) -> UInt32 raise @serde.DeError {
   let a = self.byte().to_uint()
   let b = self.byte().to_uint()
   let c = self.byte().to_uint()
@@ -417,7 +420,7 @@ fn BinDeserializer::u32(self : BinDeserializer) -> UInt32 raise @data.DeError {
 }
 
 ///|
-fn BinDeserializer::u64(self : BinDeserializer) -> UInt64 raise @data.DeError {
+fn BinDeserializer::u64(self : BinDeserializer) -> UInt64 raise @serde.DeError {
   let lo = self.u32().to_uint64()
   let hi = self.u32().to_uint64()
   lo | (hi << 32)
@@ -429,14 +432,14 @@ fn BinDeserializer::u64(self : BinDeserializer) -> UInt64 raise @data.DeError {
 /// A format that can do this should: it turns a corrupt length into an error at
 /// the point of reading rather than an allocation. `cautious_capacity` in
 /// `impls.mbt` is the backstop for formats that cannot.
-fn BinDeserializer::count(self : BinDeserializer) -> Int32 raise @data.DeError {
+fn BinDeserializer::count(self : BinDeserializer) -> Int32 raise @serde.DeError {
   let n = self.u32().reinterpret_as_int()
   let left = self.input.length() - self.pos
   if n < 0 || n > left {
     // Not `InvalidLength`: that one means a sequence had the wrong number of
     // elements, which is a statement about the type. This is a statement about
     // the input — a count that cannot possibly be satisfied by the bytes left.
-    raise @data.DeCustom(
+    raise @serde.DeCustom(
       path=Root,
       message="bin: length \{n} exceeds the \{left} byte(s) remaining",
     )
@@ -447,7 +450,7 @@ fn BinDeserializer::count(self : BinDeserializer) -> Int32 raise @data.DeError {
 ///|
 fn BinDeserializer::blob(
   self : BinDeserializer,
-) -> BytesView raise @data.DeError {
+) -> BytesView raise @serde.DeError {
   let n = self.count()
   let view = self.input[self.pos:self.pos + n]
   self.pos = self.pos + n
@@ -459,22 +462,22 @@ fn BinDeserializer::blob(
 ///
 /// `path` has no default, so even a format with no interest in error paths must
 /// implement it. The cost is one line, but it is a line every format pays.
-impl @data.Deserializer for BinDeserializer with fn path(_self) {
+impl @serde.Deserializer for BinDeserializer with fn path(_self) {
   Root
 }
 
 ///|
-impl @data.Deserializer for BinDeserializer with fn deserialize_unit(_self) {
+impl @serde.Deserializer for BinDeserializer with fn deserialize_unit(_self) {
 
 }
 
 ///|
-impl @data.Deserializer for BinDeserializer with fn deserialize_bool(self) {
+impl @serde.Deserializer for BinDeserializer with fn deserialize_bool(self) {
   match self.byte() {
     b'\x00' => false
     b'\x01' => true
     other =>
-      raise @data.InvalidValue(
+      raise @serde.InvalidValue(
         path=Root,
         expected="a boolean tag",
         found=other.to_int().to_string(),
@@ -483,12 +486,12 @@ impl @data.Deserializer for BinDeserializer with fn deserialize_bool(self) {
 }
 
 ///|
-impl @data.Deserializer for BinDeserializer with fn deserialize_byte(self) {
+impl @serde.Deserializer for BinDeserializer with fn deserialize_byte(self) {
   self.byte()
 }
 
 ///|
-impl @data.Deserializer for BinDeserializer with fn deserialize_int16(self) {
+impl @serde.Deserializer for BinDeserializer with fn deserialize_int16(self) {
   let raw = self.u16()
   Int16::from_int64(
     (if raw >= 0x8000 { raw - 0x10000 } else { raw }).to_int64(),
@@ -496,47 +499,47 @@ impl @data.Deserializer for BinDeserializer with fn deserialize_int16(self) {
 }
 
 ///|
-impl @data.Deserializer for BinDeserializer with fn deserialize_uint16(self) {
+impl @serde.Deserializer for BinDeserializer with fn deserialize_uint16(self) {
   self.u16().to_int64().to_uint16()
 }
 
 ///|
-impl @data.Deserializer for BinDeserializer with fn deserialize_int(self) {
+impl @serde.Deserializer for BinDeserializer with fn deserialize_int(self) {
   self.u32().reinterpret_as_int()
 }
 
 ///|
-impl @data.Deserializer for BinDeserializer with fn deserialize_uint(self) {
+impl @serde.Deserializer for BinDeserializer with fn deserialize_uint(self) {
   self.u32()
 }
 
 ///|
-impl @data.Deserializer for BinDeserializer with fn deserialize_int64(self) {
+impl @serde.Deserializer for BinDeserializer with fn deserialize_int64(self) {
   self.u64().reinterpret_as_int64()
 }
 
 ///|
-impl @data.Deserializer for BinDeserializer with fn deserialize_uint64(self) {
+impl @serde.Deserializer for BinDeserializer with fn deserialize_uint64(self) {
   self.u64()
 }
 
 ///|
-impl @data.Deserializer for BinDeserializer with fn deserialize_float(self) {
+impl @serde.Deserializer for BinDeserializer with fn deserialize_float(self) {
   Float::from_double(self.u64().reinterpret_as_double())
 }
 
 ///|
-impl @data.Deserializer for BinDeserializer with fn deserialize_double(self) {
+impl @serde.Deserializer for BinDeserializer with fn deserialize_double(self) {
   self.u64().reinterpret_as_double()
 }
 
 ///|
-impl @data.Deserializer for BinDeserializer with fn deserialize_char(self) {
+impl @serde.Deserializer for BinDeserializer with fn deserialize_char(self) {
   let code = self.u32().reinterpret_as_int()
   match Int32::to_char(code) {
     Some(c) => c
     None =>
-      raise @data.InvalidValue(
+      raise @serde.InvalidValue(
         path=Root,
         expected="a Unicode scalar value",
         found=code.to_string(),
@@ -545,33 +548,33 @@ impl @data.Deserializer for BinDeserializer with fn deserialize_char(self) {
 }
 
 ///|
-impl @data.Deserializer for BinDeserializer with fn deserialize_string(self) {
+impl @serde.Deserializer for BinDeserializer with fn deserialize_string(self) {
   let view = self.blob()
   @utf8.decode(view) catch {
     _ =>
-      raise @data.InvalidValue(path=Root, expected="UTF-8", found="raw bytes")
+      raise @serde.InvalidValue(path=Root, expected="UTF-8", found="raw bytes")
   }
 }
 
 ///|
 /// Overridden, unlike in JSON: the bytes are already in hand, so a consumer
 /// that does not want a `String` never pays for one.
-impl @data.Deserializer for BinDeserializer with fn deserialize_str_bytes(self) {
+impl @serde.Deserializer for BinDeserializer with fn deserialize_str_bytes(self) {
   self.blob()
 }
 
 ///|
-impl @data.Deserializer for BinDeserializer with fn deserialize_bytes(self) {
+impl @serde.Deserializer for BinDeserializer with fn deserialize_bytes(self) {
   Bytes::from_iter(self.blob().iter())
 }
 
 ///|
-impl @data.Deserializer for BinDeserializer with fn deserialize_option(self) {
+impl @serde.Deserializer for BinDeserializer with fn deserialize_option(self) {
   match self.byte() {
     b'\x00' => None
-    b'\x01' => Some(@data.Deserialize::deserialize(self))
+    b'\x01' => Some(@serde.Deserialize::deserialize(self))
     other =>
-      raise @data.InvalidValue(
+      raise @serde.InvalidValue(
         path=Root,
         expected="an option tag",
         found=other.to_int().to_string(),
@@ -580,17 +583,17 @@ impl @data.Deserializer for BinDeserializer with fn deserialize_option(self) {
 }
 
 ///|
-impl @data.Deserializer for BinDeserializer with fn deserialize_seq_begin(self) {
+impl @serde.Deserializer for BinDeserializer with fn deserialize_seq_begin(self) {
   let n = self.count()
   self.counts.push(n)
   Some(n)
 }
 
 ///|
-impl @data.Deserializer for BinDeserializer with fn deserialize_seq_next(self) {
+impl @serde.Deserializer for BinDeserializer with fn deserialize_seq_next(self) {
   let top = self.counts.length() - 1
   guard top >= 0 else {
-    raise @data.DeCustom(
+    raise @serde.DeCustom(
       path=Root,
       message="bin: sequence item outside a sequence",
     )
@@ -600,7 +603,7 @@ impl @data.Deserializer for BinDeserializer with fn deserialize_seq_next(self) {
     None
   } else {
     self.counts[top] = self.counts[top] - 1
-    Some(@data.Deserialize::deserialize(self))
+    Some(@serde.Deserialize::deserialize(self))
   }
 }
 
@@ -608,7 +611,7 @@ impl @data.Deserializer for BinDeserializer with fn deserialize_seq_next(self) {
 /// Overridden away from the sequence default, which would read a count the
 /// tuple encoding never wrote. A tuple's length comes from the type, so the
 /// wire carries nothing and these three are pure pass-throughs.
-impl @data.Deserializer for BinDeserializer with fn deserialize_tuple_begin(
+impl @serde.Deserializer for BinDeserializer with fn deserialize_tuple_begin(
   _self,
   _len,
 ) {
@@ -616,48 +619,52 @@ impl @data.Deserializer for BinDeserializer with fn deserialize_tuple_begin(
 }
 
 ///|
-impl @data.Deserializer for BinDeserializer with fn deserialize_tuple_next(self) {
-  @data.Deserialize::deserialize(self)
+impl @serde.Deserializer for BinDeserializer with fn deserialize_tuple_next(
+  self,
+) {
+  @serde.Deserialize::deserialize(self)
 }
 
 ///|
-impl @data.Deserializer for BinDeserializer with fn deserialize_tuple_end(_self) {
+impl @serde.Deserializer for BinDeserializer with fn deserialize_tuple_end(
+  _self,
+) {
 
 }
 
 ///|
-impl @data.Deserializer for BinDeserializer with fn deserialize_map_begin(self) {
+impl @serde.Deserializer for BinDeserializer with fn deserialize_map_begin(self) {
   let n = self.count()
   self.counts.push(n)
   Some(n)
 }
 
 ///|
-impl @data.Deserializer for BinDeserializer with fn deserialize_map_next_key(
+impl @serde.Deserializer for BinDeserializer with fn deserialize_map_next_key(
   self,
 ) {
   let top = self.counts.length() - 1
   guard top >= 0 else {
-    raise @data.DeCustom(path=Root, message="bin: map key outside a map")
+    raise @serde.DeCustom(path=Root, message="bin: map key outside a map")
   }
   if self.counts[top] == 0 {
     let _ = self.counts.pop()
     None
   } else {
     self.counts[top] = self.counts[top] - 1
-    Some(@data.Deserialize::deserialize(self))
+    Some(@serde.Deserialize::deserialize(self))
   }
 }
 
 ///|
-impl @data.Deserializer for BinDeserializer with fn deserialize_map_value(self) {
-  @data.Deserialize::deserialize(self)
+impl @serde.Deserializer for BinDeserializer with fn deserialize_map_value(self) {
+  @serde.Deserialize::deserialize(self)
 }
 
 ///|
 /// `fields` is the schema. Nothing in the input says how many fields there are
 /// or what they are called; the type does, and that is enough.
-impl @data.Deserializer for BinDeserializer with fn deserialize_struct_begin(
+impl @serde.Deserializer for BinDeserializer with fn deserialize_struct_begin(
   self,
   _name,
   fields,
@@ -668,10 +675,10 @@ impl @data.Deserializer for BinDeserializer with fn deserialize_struct_begin(
 ///|
 fn BinDeserializer::next_field_index(
   self : BinDeserializer,
-) -> Int32? raise @data.DeError {
+) -> Int32? raise @serde.DeError {
   let top = self.fields.length() - 1
   guard top >= 0 else {
-    raise @data.DeCustom(path=Root, message="bin: field outside a struct")
+    raise @serde.DeCustom(path=Root, message="bin: field outside a struct")
   }
   let cursor = self.fields[top]
   if cursor.next >= cursor.names.length() {
@@ -685,19 +692,21 @@ fn BinDeserializer::next_field_index(
 }
 
 ///|
-impl @data.Deserializer for BinDeserializer with fn deserialize_field(self) {
+impl @serde.Deserializer for BinDeserializer with fn deserialize_field(self) {
   match self.next_field_index() {
-    Some(index) => Some(@data.FieldIdentifier::from_index(index))
+    Some(index) => Some(@serde.FieldIdentifier::from_index(index))
     None => None
   }
 }
 
 ///|
 /// The decoded-name compatibility path for hand-written consumers.
-impl @data.Deserializer for BinDeserializer with fn deserialize_field_name(self) {
+impl @serde.Deserializer for BinDeserializer with fn deserialize_field_name(
+  self,
+) {
   let top = self.fields.length() - 1
   guard top >= 0 else {
-    raise @data.DeCustom(path=Root, message="bin: field outside a struct")
+    raise @serde.DeCustom(path=Root, message="bin: field outside a struct")
   }
   let cursor = self.fields[top]
   match self.next_field_index() {
@@ -707,10 +716,10 @@ impl @data.Deserializer for BinDeserializer with fn deserialize_field_name(self)
 }
 
 ///|
-impl @data.Deserializer for BinDeserializer with fn deserialize_field_value(
+impl @serde.Deserializer for BinDeserializer with fn deserialize_field_value(
   self,
 ) {
-  @data.Deserialize::deserialize(self)
+  @serde.Deserialize::deserialize(self)
 }
 
 ///|
@@ -720,8 +729,8 @@ impl @data.Deserializer for BinDeserializer with fn deserialize_field_value(
 /// what a non-self-describing format does not record. It stays unreachable
 /// because `deserialize_field` only supplies positions declared by the type,
 /// so the generated `Unknown` arm has nothing to match.
-impl @data.Deserializer for BinDeserializer with fn skip_value(_self) {
-  raise @data.DeCustom(
+impl @serde.Deserializer for BinDeserializer with fn skip_value(_self) {
+  raise @serde.DeCustom(
     path=Root,
     message="bin: cannot skip a value in a non-self-describing format",
   )
@@ -731,14 +740,14 @@ impl @data.Deserializer for BinDeserializer with fn skip_value(_self) {
 /// `variants` is to enums what `fields` is to structs — except that here the
 /// wire already carries the index, so nothing is needed from it but a bounds
 /// check. The names are never consulted at all.
-impl @data.Deserializer for BinDeserializer with fn deserialize_enum_begin(
+impl @serde.Deserializer for BinDeserializer with fn deserialize_enum_begin(
   self,
   _name,
   variants,
 ) {
   let index = self.u32().reinterpret_as_int()
   if index < 0 || index >= variants.length() {
-    raise @data.UnknownVariant(
+    raise @serde.UnknownVariant(
       path=Root,
       variant=index.to_string(),
       expected=variants,
@@ -748,49 +757,49 @@ impl @data.Deserializer for BinDeserializer with fn deserialize_enum_begin(
 }
 
 ///|
-impl @data.Deserializer for BinDeserializer with fn deserialize_unit_variant(
+impl @serde.Deserializer for BinDeserializer with fn deserialize_unit_variant(
   _self,
 ) {
 
 }
 
 ///|
-impl @data.Deserializer for BinDeserializer with fn deserialize_newtype_variant(
+impl @serde.Deserializer for BinDeserializer with fn deserialize_newtype_variant(
   self,
 ) {
-  @data.Deserialize::deserialize(self)
+  @serde.Deserialize::deserialize(self)
 }
 
 ///|
 /// Not overridden: the default does nothing, and nothing is correct. An
 /// external tag with no wrapper leaves no delimiter to close.
-impl @data.Deserializer for BinDeserializer with fn deserialize_any(_self) {
-  raise @data.DeCustom(
+impl @serde.Deserializer for BinDeserializer with fn deserialize_any(_self) {
+  raise @serde.DeCustom(
     path=Root,
     message="bin: not self-describing, deserialize_any is impossible",
   )
 }
 
 ///|
-impl @data.Deserializer for BinDeserializer with fn is_human_readable(_self) {
+impl @serde.Deserializer for BinDeserializer with fn is_human_readable(_self) {
   false
 }
 
 // ---- entry points ----
 
 ///|
-fn[T : @data.Serialize] bin_to_bytes(value : T) -> Bytes raise @data.SerError {
+fn[T : @serde.Serialize] bin_to_bytes(value : T) -> Bytes raise @serde.SerError {
   let s = BinSerializer::new()
   value.serialize(s)
   s.finish()
 }
 
 ///|
-fn[T : @data.Deserialize] bin_from_bytes(
+fn[T : @serde.Deserialize] bin_from_bytes(
   input : Bytes,
-) -> T raise @data.DeError {
+) -> T raise @serde.DeError {
   let d = BinDeserializer::new(input)
-  let value = @data.Deserialize::deserialize(d)
+  let value = @serde.Deserialize::deserialize(d)
   d.finish()
   value
 }
@@ -855,7 +864,7 @@ test "a variant index outside the type's variants is rejected" {
 /// "what is here?", only "give me the thing I asked for".
 test "deserialize_any is impossible and says so" {
   let bytes = bin_to_bytes(42)
-  try (bin_from_bytes(bytes) : @data.Value) catch {
+  try (bin_from_bytes(bytes) : @serde.Value) catch {
     e =>
       inspect(
         e,
@@ -871,9 +880,9 @@ test "deserialize_any is impossible and says so" {
 ///|
 test "the format declares itself unreadable by people" {
   let s = BinSerializer::new()
-  assert_false(@data.Serializer::is_human_readable(s))
+  assert_false(@serde.Serializer::is_human_readable(s))
   let d = BinDeserializer::new(b"")
-  assert_false(@data.Deserializer::is_human_readable(d))
+  assert_false(@serde.Deserializer::is_human_readable(d))
 }
 
 ///|

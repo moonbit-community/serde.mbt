@@ -1,5 +1,5 @@
 ///|
-pub extend JsonSerializer with @data.Serializer::{
+pub extend JsonSerializer with @serde.Serializer::{
   is_human_readable,
   serialize_bool,
   serialize_byte,
@@ -47,7 +47,7 @@ pub extend JsonSerializer with @data.Serializer::{
 }
 
 ///|
-pub extend JsonDeserializer with @data.Deserializer::{
+pub extend JsonDeserializer with @serde.Deserializer::{
   deserialize_any,
   deserialize_bool,
   deserialize_byte,

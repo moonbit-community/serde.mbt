@@ -1,4 +1,4 @@
-# Yu-zh/data
+# moonbit-community/serde.mbt
 
 A serde-shaped serialization framework for MoonBit.
 
@@ -20,21 +20,23 @@ pub(all) struct User {
 let bytes = @json.to_bytes(user)
 
 ///|
-let value = @data.to_value(user)
+let value = @serde.to_value(user)
 ```
 
 ## Install
 
 ```bash
-moon add Yu-zh/data
+moon add moonbit-community/serde.mbt
 ```
 
-Then import what you need in `moon.pkg`:
+Then import what you need in `moon.pkg`. The root package needs the `@serde`
+alias: the module name ends in `.mbt`, so there is no usable default, and the
+code the derive generator writes refers to `@serde`.
 
 ```
 import {
-  "Yu-zh/data",
-  "Yu-zh/data/json",
+  "moonbit-community/serde.mbt" @serde,
+  "moonbit-community/serde.mbt/json",
 }
 ```
 
@@ -100,7 +102,7 @@ pub(all) struct User {
 } derive(Eq, Debug)
 
 ///|
-pub impl @data.Serialize for User with fn serialize(self, s) {
+pub impl @serde.Serialize for User with fn serialize(self, s) {
   s.serialize_struct_begin("User", 3)
   s.serialize_field("name", self.name)
   s.serialize_field("age", self.age)
@@ -112,7 +114,7 @@ pub impl @data.Serialize for User with fn serialize(self, s) {
 let user_fields : ReadOnlyArray[String] = ["name", "age", "nickname"]
 
 ///|
-pub impl @data.Deserialize for User with fn deserialize(d) {
+pub impl @serde.Deserialize for User with fn deserialize(d) {
   d.deserialize_struct_begin("User", user_fields)
   let mut name = None
   let mut age = None
@@ -127,8 +129,8 @@ pub impl @data.Deserialize for User with fn deserialize(d) {
     }
   }
   {
-    name: @data.required(name, name="name", path=d.path()),
-    age: @data.required(age, name="age", path=d.path()),
+    name: @serde.required(name, name="name", path=d.path()),
+    age: @serde.required(age, name="age", path=d.path()),
     nickname,
   }
 }
@@ -157,10 +159,10 @@ test "one implementation, every format" {
 
   // The same value in memory, with no encoding step.
   inspect(
-    @data.to_value(user),
+    @serde.to_value(user),
     content="{\"name\": \"ada\", \"age\": 36, \"nickname\": null}",
   )
-  assert_eq((@data.from_value(@data.to_value(user)) : User), user)
+  assert_eq((@serde.from_value(@serde.to_value(user)) : User), user)
 }
 ```
 
@@ -178,7 +180,7 @@ pub(all) enum Role {
 } derive(Eq, Debug)
 
 ///|
-pub impl @data.Serialize for Role with fn serialize(self, s) {
+pub impl @serde.Serialize for Role with fn serialize(self, s) {
   let name = "Role"
   match self {
     Guest =>
@@ -232,7 +234,7 @@ Then run the generator, which writes a `*_derive.mbt` companion next to each
 source file:
 
 ```bash
-moonx Yu-zh/data/derive [path ...]
+moonx moonbit-community/serde.mbt/derive [path ...]
 ```
 
 | Attribute | On | Effect |
@@ -302,7 +304,7 @@ and it round-trips like any other type:
 ///|
 test "Value carries any document" {
   let text = "{\"tags\":[1,-2.5,true,null],\"name\":\"ada\",\"meta\":{}}"
-  let value : @data.Value = @json.from_string(text)
+  let value : @serde.Value = @json.from_string(text)
   guard value.get("tags") is Some(tags) else { fail("expected a tags field") }
   inspect(tags, content="[1, -2.5, true, null]")
   inspect(@json.to_string(value), content=text)
@@ -424,7 +426,7 @@ its parent.
 ```mbt check
 ///|
 test "scalars come out before sub-tables" {
-  let doc : Map[String, @data.Value] = {
+  let doc : Map[String, @serde.Value] = {
     "name": Str(b"prod"),
     "server": Map([(Str(b"port"), Int(8080L))]),
   }

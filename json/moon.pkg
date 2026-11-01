@@ -1,5 +1,5 @@
 import {
-  "Yu-zh/data",
+  "moonbit-community/serde.mbt" @serde,
   "moonbitlang/core/buffer",
   "moonbitlang/core/string",
   "moonbitlang/core/encoding/utf8",

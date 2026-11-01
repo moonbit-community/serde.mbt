@@ -73,12 +73,12 @@ impl @quickcheck.Arbitrary for AnyDouble with fn arbitrary(size, rs) {
 impl @shrink.Shrink for AnyDouble
 
 ///|
-pub impl @data.Serialize for AnyDouble with fn serialize(self, s) {
+pub impl @serde.Serialize for AnyDouble with fn serialize(self, s) {
   s.serialize_double(self.0)
 }
 
 ///|
-pub impl @data.Deserialize for AnyDouble with fn deserialize(d) {
+pub impl @serde.Deserialize for AnyDouble with fn deserialize(d) {
   AnyDouble(d.deserialize_double())
 }
 
@@ -127,50 +127,50 @@ impl @shrink.Shrink for Shape
 
 ///|
 test "P1: primitives round-trip through Value" {
-  @quickcheck.check((x : Unit) => @data.from_value(@data.to_value(x)) == x)
-  @quickcheck.check((x : Bool) => @data.from_value(@data.to_value(x)) == x)
-  @quickcheck.check((x : Byte) => @data.from_value(@data.to_value(x)) == x)
-  @quickcheck.check((x : Int32) => @data.from_value(@data.to_value(x)) == x)
-  @quickcheck.check((x : UInt32) => @data.from_value(@data.to_value(x)) == x)
-  @quickcheck.check((x : Int64) => @data.from_value(@data.to_value(x)) == x)
-  @quickcheck.check((x : UInt64) => @data.from_value(@data.to_value(x)) == x)
-  @quickcheck.check((x : Char) => @data.from_value(@data.to_value(x)) == x)
-  @quickcheck.check((x : String) => @data.from_value(@data.to_value(x)) == x)
-  @quickcheck.check((x : Bytes) => @data.from_value(@data.to_value(x)) == x)
+  @quickcheck.check((x : Unit) => @serde.from_value(@serde.to_value(x)) == x)
+  @quickcheck.check((x : Bool) => @serde.from_value(@serde.to_value(x)) == x)
+  @quickcheck.check((x : Byte) => @serde.from_value(@serde.to_value(x)) == x)
+  @quickcheck.check((x : Int32) => @serde.from_value(@serde.to_value(x)) == x)
+  @quickcheck.check((x : UInt32) => @serde.from_value(@serde.to_value(x)) == x)
+  @quickcheck.check((x : Int64) => @serde.from_value(@serde.to_value(x)) == x)
+  @quickcheck.check((x : UInt64) => @serde.from_value(@serde.to_value(x)) == x)
+  @quickcheck.check((x : Char) => @serde.from_value(@serde.to_value(x)) == x)
+  @quickcheck.check((x : String) => @serde.from_value(@serde.to_value(x)) == x)
+  @quickcheck.check((x : Bytes) => @serde.from_value(@serde.to_value(x)) == x)
 }
 
 ///|
 test "P1: doubles round-trip through Value across the whole bit space" {
   @quickcheck.check(
-    (x : AnyDouble) => @data.from_value(@data.to_value(x)) == x,
+    (x : AnyDouble) => @serde.from_value(@serde.to_value(x)) == x,
     filter=is_finite,
   )
 }
 
 ///|
 test "P1: containers round-trip through Value" {
-  @quickcheck.check((x : Int32?) => @data.from_value(@data.to_value(x)) == x)
+  @quickcheck.check((x : Int32?) => @serde.from_value(@serde.to_value(x)) == x)
   @quickcheck.check((x : Array[Int32]) => {
-    @data.from_value(@data.to_value(x)) == x
+    @serde.from_value(@serde.to_value(x)) == x
   })
   @quickcheck.check((x : Array[String]) => {
-    @data.from_value(@data.to_value(x)) == x
+    @serde.from_value(@serde.to_value(x)) == x
   })
   @quickcheck.check((x : Array[Array[Int32]]) => {
-    @data.from_value(@data.to_value(x)) == x
+    @serde.from_value(@serde.to_value(x)) == x
   })
   @quickcheck.check((x : (Int32, String)) => {
-    @data.from_value(@data.to_value(x)) == x
+    @serde.from_value(@serde.to_value(x)) == x
   })
   @quickcheck.check((x : (Bool, Int32, String)) => {
-    @data.from_value(@data.to_value(x)) == x
+    @serde.from_value(@serde.to_value(x)) == x
   })
 }
 
 ///|
 test "P1: structs and every enum variant shape round-trip through Value" {
-  @quickcheck.check((x : Point) => @data.from_value(@data.to_value(x)) == x)
-  @quickcheck.check((x : Shape) => @data.from_value(@data.to_value(x)) == x)
+  @quickcheck.check((x : Point) => @serde.from_value(@serde.to_value(x)) == x)
+  @quickcheck.check((x : Shape) => @serde.from_value(@serde.to_value(x)) == x)
 }
 
 // ---- P2: JSON round-trips ----
@@ -234,9 +234,9 @@ test "P2: structs and every enum variant shape round-trip through JSON" {
 /// generic in their return type, so comparing the two calls directly leaves the
 /// type unconstrained and it defaults to `Unit` — which compares equal every
 /// time and quietly turns the property into a tautology.
-fn[T : @data.Serialize + @data.Deserialize + Eq] agree(x : T) -> Bool raise {
+fn[T : @serde.Serialize + @serde.Deserialize + Eq] agree(x : T) -> Bool raise {
   let through_json : T = @json.from_bytes(@json.to_bytes(x))
-  let through_value : T = @data.from_value(@data.to_value(x))
+  let through_value : T = @serde.from_value(@serde.to_value(x))
   through_json == through_value
 }
 
@@ -245,7 +245,7 @@ fn[T : @data.Serialize + @data.Deserialize + Eq] agree(x : T) -> Bool raise {
 ///
 /// Separate from `agree` for the same reason `agree` has annotations: both
 /// entry points are generic in their return type.
-fn[T : @data.Serialize + @data.Deserialize + Eq] bin_agrees(
+fn[T : @serde.Serialize + @serde.Deserialize + Eq] bin_agrees(
   x : T,
 ) -> Bool raise {
   let through_bin : T = bin_from_bytes(bin_to_bytes(x))

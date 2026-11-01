@@ -169,14 +169,14 @@ test "single precision decodes as itself" {
 /// to accept them or it cannot read what it is meant to interoperate with.
 test "indefinite-length containers decode" {
   assert_eq(
-    (@cbor.from_bytes(unhex("9f018202039f0405ffff")) : @data.Value),
+    (@cbor.from_bytes(unhex("9f018202039f0405ffff")) : @serde.Value),
     Seq([UInt(1), Seq([UInt(2), UInt(3)]), Seq([UInt(4), UInt(5)])]),
   )
   assert_eq((@cbor.from_bytes(unhex("9f010203ff")) : Array[Int32]), [1, 2, 3])
   assert_eq(
     (
       @cbor.from_bytes(unhex("bf61610161628202 03ff".replace(old=" ", new=""))) :
-      @data.Value),
+      @serde.Value),
     Map([(Str(b"a"), UInt(1)), (Str(b"b"), Seq([UInt(2), UInt(3)]))]),
   )
 }
@@ -223,7 +223,7 @@ pub(all) struct Point {
 let point_fields : ReadOnlyArray[String] = ["x", "y", "label"]
 
 ///|
-pub impl @data.Serialize for Point with fn serialize(self, s) {
+pub impl @serde.Serialize for Point with fn serialize(self, s) {
   s.serialize_struct_begin("Point", 3)
   s.serialize_field("x", self.x)
   s.serialize_field("y", self.y)
@@ -232,7 +232,7 @@ pub impl @data.Serialize for Point with fn serialize(self, s) {
 }
 
 ///|
-pub impl @data.Deserialize for Point with fn deserialize(d) {
+pub impl @serde.Deserialize for Point with fn deserialize(d) {
   d.deserialize_struct_begin("Point", point_fields)
   let mut x : Int32? = None
   let mut y : Int32? = None
@@ -246,8 +246,8 @@ pub impl @data.Deserialize for Point with fn deserialize(d) {
     }
   }
   {
-    x: @data.required(x, name="x", path=d.path()),
-    y: @data.required(y, name="y", path=d.path()),
+    x: @serde.required(x, name="x", path=d.path()),
+    y: @serde.required(y, name="y", path=d.path()),
     label,
   }
 }
@@ -261,7 +261,7 @@ pub(all) enum Shape {
 } derive(Eq, Debug)
 
 ///|
-pub impl @data.Serialize for Shape with fn serialize(self, s) {
+pub impl @serde.Serialize for Shape with fn serialize(self, s) {
   let enum_name = "Shape"
   match self {
     Empty => s.serialize_unit_variant({ enum_name, index: 0, name: "Empty", })
@@ -286,7 +286,7 @@ pub impl @data.Serialize for Shape with fn serialize(self, s) {
 }
 
 ///|
-pub impl @data.Deserialize for Shape with fn deserialize(d) {
+pub impl @serde.Deserialize for Shape with fn deserialize(d) {
   let variants : ReadOnlyArray[String] = ["Empty", "Circle", "Rect", "Tagged"]
   let shape = match d.deserialize_enum_begin("Shape", variants) {
     0 => {
@@ -313,12 +313,12 @@ pub impl @data.Deserialize for Shape with fn deserialize(d) {
         }
       }
       Tagged(
-        name=@data.required(name, name="name", path=d.path()),
-        size=@data.required(size, name="size", path=d.path()),
+        name=@serde.required(name, name="name", path=d.path()),
+        size=@serde.required(size, name="size", path=d.path()),
       )
     }
     index =>
-      raise @data.UnknownVariant(
+      raise @serde.UnknownVariant(
         path=d.path(),
         variant=index.to_string(),
         expected=variants,
@@ -419,8 +419,10 @@ test "a length longer than the input is refused rather than allocated" {
 
 ///|
 test "the format declares itself unreadable by people" {
-  assert_false(@data.Serializer::is_human_readable(@cbor.CborSerializer::new()))
   assert_false(
-    @data.Deserializer::is_human_readable(@cbor.CborDeserializer::new(b"")),
+    @serde.Serializer::is_human_readable(@cbor.CborSerializer::new()),
+  )
+  assert_false(
+    @serde.Deserializer::is_human_readable(@cbor.CborDeserializer::new(b"")),
   )
 }

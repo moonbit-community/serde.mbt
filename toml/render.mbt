@@ -12,11 +12,11 @@
 // is built for a value or a key.
 
 ///|
-fn render(root : @data.Value) -> Bytes raise @data.SerError {
+fn render(root : @serde.Value) -> Bytes raise @serde.SerError {
   let entries = match root {
     Map(entries) => entries
     other =>
-      raise @data.UnsupportedType(
+      raise @serde.UnsupportedType(
         format="TOML",
         kind="a top-level \{other.type_name()}; a TOML document is a table",
       )
@@ -35,7 +35,7 @@ fn put(out : @buffer.Buffer, ascii : String) -> Unit {
 
 ///|
 /// Whether a value becomes a `[header]` rather than a `key = value` line.
-fn is_table(value : @data.Value) -> Bool {
+fn is_table(value : @serde.Value) -> Bool {
   value is Map(_)
 }
 
@@ -43,7 +43,7 @@ fn is_table(value : @data.Value) -> Bool {
 /// Whether a value becomes `[[header]]` blocks: a non-empty sequence whose
 /// every element is a table. An empty one stays an inline `[]`, since there is
 /// no header form that means "no elements".
-fn is_table_array(value : @data.Value) -> Bool {
+fn is_table_array(value : @serde.Value) -> Bool {
   match value {
     Seq(items) => items.length() > 0 && items.iter().all(is_table)
     _ => false
@@ -54,8 +54,8 @@ fn is_table_array(value : @data.Value) -> Bool {
 fn render_table(
   out : @buffer.Buffer,
   prefix : Array[BytesView],
-  entries : ReadOnlyArray[(@data.Value, @data.Value)],
-) -> Unit raise @data.SerError {
+  entries : ReadOnlyArray[(@serde.Value, @serde.Value)],
+) -> Unit raise @serde.SerError {
   // Pass one: the scalars, which have to precede any header.
   for entry in entries {
     let key = table_key(entry.0)
@@ -102,11 +102,11 @@ fn render_table(
 ///|
 /// A table key, which TOML requires to be text. Taken as the bytes the data
 /// model already holds rather than decoded and re-encoded.
-fn table_key(key : @data.Value) -> BytesView raise @data.SerError {
+fn table_key(key : @serde.Value) -> BytesView raise @serde.SerError {
   match key {
     Str(raw) => raw
     other =>
-      raise @data.UnsupportedType(
+      raise @serde.UnsupportedType(
         format="TOML",
         kind="a non-string table key (\{other.type_name()}); keys are strings",
       )
@@ -190,13 +190,13 @@ fn write_quoted(out : @buffer.Buffer, raw : BytesView) -> Unit {
 /// A value in the position where TOML expects one on a single line.
 fn write_inline(
   out : @buffer.Buffer,
-  value : @data.Value,
-) -> Unit raise @data.SerError {
+  value : @serde.Value,
+) -> Unit raise @serde.SerError {
   match value {
     Null =>
       // Reached only from inside an array or inline table; at table level the
       // key was dropped before getting here.
-      raise @data.UnsupportedType(
+      raise @serde.UnsupportedType(
         format="TOML",
         kind="a null inside an array or inline table",
       )
@@ -206,7 +206,7 @@ fn write_inline(
     Double(d) => put(out, double_text(d))
     Str(raw) => write_quoted(out, raw)
     Bytes(_) =>
-      raise @data.UnsupportedType(
+      raise @serde.UnsupportedType(
         format="TOML",
         kind="a byte string; TOML has no byte type",
       )

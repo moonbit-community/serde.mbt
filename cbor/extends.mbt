@@ -1,5 +1,5 @@
 ///|
-pub extend CborDeserializer with @data.Deserializer::{
+pub extend CborDeserializer with @serde.Deserializer::{
   deserialize_any,
   deserialize_bool,
   deserialize_byte,
@@ -42,7 +42,7 @@ pub extend CborDeserializer with @data.Deserializer::{
 }
 
 ///|
-pub extend CborSerializer with @data.Serializer::{
+pub extend CborSerializer with @serde.Serializer::{
   is_human_readable,
   serialize_bool,
   serialize_byte,

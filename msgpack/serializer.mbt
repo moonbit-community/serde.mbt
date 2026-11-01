@@ -136,10 +136,10 @@ fn MsgpackSerializer::open(
   m16 : Int32,
   m32 : Int32,
   kind : String,
-) -> Unit raise @data.SerError {
+) -> Unit raise @serde.SerError {
   match hint {
     None =>
-      raise @data.UnsupportedType(
+      raise @serde.UnsupportedType(
         format="MessagePack",
         kind="\{kind} of unknown length",
       )
@@ -157,27 +157,30 @@ fn MsgpackSerializer::open(
 }
 
 ///|
-pub impl @data.Serializer for MsgpackSerializer with fn serialize_unit(self) {
+pub impl @serde.Serializer for MsgpackSerializer with fn serialize_unit(self) {
   self.put(0xc0)
 }
 
 ///|
-pub impl @data.Serializer for MsgpackSerializer with fn serialize_bool(self, v) {
+pub impl @serde.Serializer for MsgpackSerializer with fn serialize_bool(self, v) {
   self.put(if v { 0xc3 } else { 0xc2 })
 }
 
 ///|
-pub impl @data.Serializer for MsgpackSerializer with fn serialize_byte(self, v) {
+pub impl @serde.Serializer for MsgpackSerializer with fn serialize_byte(self, v) {
   self.uint(v.to_uint64())
 }
 
 ///|
-pub impl @data.Serializer for MsgpackSerializer with fn serialize_int16(self, v) {
+pub impl @serde.Serializer for MsgpackSerializer with fn serialize_int16(
+  self,
+  v,
+) {
   self.int(v.to_int().to_int64())
 }
 
 ///|
-pub impl @data.Serializer for MsgpackSerializer with fn serialize_uint16(
+pub impl @serde.Serializer for MsgpackSerializer with fn serialize_uint16(
   self,
   v,
 ) {
@@ -185,22 +188,25 @@ pub impl @data.Serializer for MsgpackSerializer with fn serialize_uint16(
 }
 
 ///|
-pub impl @data.Serializer for MsgpackSerializer with fn serialize_int(self, v) {
+pub impl @serde.Serializer for MsgpackSerializer with fn serialize_int(self, v) {
   self.int(v.to_int64())
 }
 
 ///|
-pub impl @data.Serializer for MsgpackSerializer with fn serialize_uint(self, v) {
+pub impl @serde.Serializer for MsgpackSerializer with fn serialize_uint(self, v) {
   self.uint(v.to_uint64())
 }
 
 ///|
-pub impl @data.Serializer for MsgpackSerializer with fn serialize_int64(self, v) {
+pub impl @serde.Serializer for MsgpackSerializer with fn serialize_int64(
+  self,
+  v,
+) {
   self.int(v)
 }
 
 ///|
-pub impl @data.Serializer for MsgpackSerializer with fn serialize_uint64(
+pub impl @serde.Serializer for MsgpackSerializer with fn serialize_uint64(
   self,
   v,
 ) {
@@ -208,13 +214,16 @@ pub impl @data.Serializer for MsgpackSerializer with fn serialize_uint64(
 }
 
 ///|
-pub impl @data.Serializer for MsgpackSerializer with fn serialize_float(self, v) {
+pub impl @serde.Serializer for MsgpackSerializer with fn serialize_float(
+  self,
+  v,
+) {
   self.put(0xca)
   self.be(v.reinterpret_as_uint().to_uint64(), 4)
 }
 
 ///|
-pub impl @data.Serializer for MsgpackSerializer with fn serialize_double(
+pub impl @serde.Serializer for MsgpackSerializer with fn serialize_double(
   self,
   v,
 ) {
@@ -223,12 +232,12 @@ pub impl @data.Serializer for MsgpackSerializer with fn serialize_double(
 }
 
 ///|
-pub impl @data.Serializer for MsgpackSerializer with fn serialize_char(self, v) {
+pub impl @serde.Serializer for MsgpackSerializer with fn serialize_char(self, v) {
   self.text(@utf8.encode(v.to_string())[:])
 }
 
 ///|
-pub impl @data.Serializer for MsgpackSerializer with fn serialize_string(
+pub impl @serde.Serializer for MsgpackSerializer with fn serialize_string(
   self,
   v,
 ) {
@@ -237,7 +246,7 @@ pub impl @data.Serializer for MsgpackSerializer with fn serialize_string(
 
 ///|
 /// Overridden: the transport is bytes, so UTF-8 goes straight out.
-pub impl @data.Serializer for MsgpackSerializer with fn serialize_str_bytes(
+pub impl @serde.Serializer for MsgpackSerializer with fn serialize_str_bytes(
   self,
   v,
 ) {
@@ -247,22 +256,25 @@ pub impl @data.Serializer for MsgpackSerializer with fn serialize_str_bytes(
 ///|
 /// A `bin`, not an array of numbers. The distinction JSON cannot make and
 /// MessagePack gained in 2013 precisely because it mattered.
-pub impl @data.Serializer for MsgpackSerializer with fn serialize_bytes(self, v) {
+pub impl @serde.Serializer for MsgpackSerializer with fn serialize_bytes(
+  self,
+  v,
+) {
   self.blob(v[:], -1, 0, 0xc4, 0xc5, 0xc6)
 }
 
 ///|
-pub impl @data.Serializer for MsgpackSerializer with fn serialize_none(self) {
+pub impl @serde.Serializer for MsgpackSerializer with fn serialize_none(self) {
   self.put(0xc0)
 }
 
 ///|
-pub impl @data.Serializer for MsgpackSerializer with fn serialize_some(self, v) {
+pub impl @serde.Serializer for MsgpackSerializer with fn serialize_some(self, v) {
   v.serialize(self)
 }
 
 ///|
-pub impl @data.Serializer for MsgpackSerializer with fn serialize_unit_variant(
+pub impl @serde.Serializer for MsgpackSerializer with fn serialize_unit_variant(
   self,
   info,
 ) {
@@ -270,7 +282,7 @@ pub impl @data.Serializer for MsgpackSerializer with fn serialize_unit_variant(
 }
 
 ///|
-pub impl @data.Serializer for MsgpackSerializer with fn serialize_newtype_variant(
+pub impl @serde.Serializer for MsgpackSerializer with fn serialize_newtype_variant(
   self,
   info,
   v,
@@ -281,7 +293,7 @@ pub impl @data.Serializer for MsgpackSerializer with fn serialize_newtype_varian
 }
 
 ///|
-pub impl @data.Serializer for MsgpackSerializer with fn serialize_seq_begin(
+pub impl @serde.Serializer for MsgpackSerializer with fn serialize_seq_begin(
   self,
   hint,
 ) {
@@ -289,7 +301,7 @@ pub impl @data.Serializer for MsgpackSerializer with fn serialize_seq_begin(
 }
 
 ///|
-pub impl @data.Serializer for MsgpackSerializer with fn serialize_seq_element(
+pub impl @serde.Serializer for MsgpackSerializer with fn serialize_seq_element(
   self,
   v,
 ) {
@@ -297,12 +309,14 @@ pub impl @data.Serializer for MsgpackSerializer with fn serialize_seq_element(
 }
 
 ///|
-pub impl @data.Serializer for MsgpackSerializer with fn serialize_seq_end(_self) {
+pub impl @serde.Serializer for MsgpackSerializer with fn serialize_seq_end(
+  _self,
+) {
 
 }
 
 ///|
-pub impl @data.Serializer for MsgpackSerializer with fn serialize_map_begin(
+pub impl @serde.Serializer for MsgpackSerializer with fn serialize_map_begin(
   self,
   hint,
 ) {
@@ -310,7 +324,7 @@ pub impl @data.Serializer for MsgpackSerializer with fn serialize_map_begin(
 }
 
 ///|
-pub impl @data.Serializer for MsgpackSerializer with fn serialize_map_key(
+pub impl @serde.Serializer for MsgpackSerializer with fn serialize_map_key(
   self,
   k,
 ) {
@@ -318,7 +332,7 @@ pub impl @data.Serializer for MsgpackSerializer with fn serialize_map_key(
 }
 
 ///|
-pub impl @data.Serializer for MsgpackSerializer with fn serialize_map_value(
+pub impl @serde.Serializer for MsgpackSerializer with fn serialize_map_value(
   self,
   v,
 ) {
@@ -326,12 +340,14 @@ pub impl @data.Serializer for MsgpackSerializer with fn serialize_map_value(
 }
 
 ///|
-pub impl @data.Serializer for MsgpackSerializer with fn serialize_map_end(_self) {
+pub impl @serde.Serializer for MsgpackSerializer with fn serialize_map_end(
+  _self,
+) {
 
 }
 
 ///|
-pub impl @data.Serializer for MsgpackSerializer with fn serialize_struct_begin(
+pub impl @serde.Serializer for MsgpackSerializer with fn serialize_struct_begin(
   self,
   _name,
   len,
@@ -340,7 +356,7 @@ pub impl @data.Serializer for MsgpackSerializer with fn serialize_struct_begin(
 }
 
 ///|
-pub impl @data.Serializer for MsgpackSerializer with fn serialize_field(
+pub impl @serde.Serializer for MsgpackSerializer with fn serialize_field(
   self,
   name,
   v,
@@ -350,14 +366,14 @@ pub impl @data.Serializer for MsgpackSerializer with fn serialize_field(
 }
 
 ///|
-pub impl @data.Serializer for MsgpackSerializer with fn serialize_struct_end(
+pub impl @serde.Serializer for MsgpackSerializer with fn serialize_struct_end(
   _self,
 ) {
 
 }
 
 ///|
-pub impl @data.Serializer for MsgpackSerializer with fn serialize_tuple_variant_begin(
+pub impl @serde.Serializer for MsgpackSerializer with fn serialize_tuple_variant_begin(
   self,
   info,
   len,
@@ -368,14 +384,14 @@ pub impl @data.Serializer for MsgpackSerializer with fn serialize_tuple_variant_
 }
 
 ///|
-pub impl @data.Serializer for MsgpackSerializer with fn serialize_tuple_variant_end(
+pub impl @serde.Serializer for MsgpackSerializer with fn serialize_tuple_variant_end(
   _self,
 ) {
 
 }
 
 ///|
-pub impl @data.Serializer for MsgpackSerializer with fn serialize_struct_variant_begin(
+pub impl @serde.Serializer for MsgpackSerializer with fn serialize_struct_variant_begin(
   self,
   info,
   len,
@@ -386,13 +402,15 @@ pub impl @data.Serializer for MsgpackSerializer with fn serialize_struct_variant
 }
 
 ///|
-pub impl @data.Serializer for MsgpackSerializer with fn serialize_struct_variant_end(
+pub impl @serde.Serializer for MsgpackSerializer with fn serialize_struct_variant_end(
   _self,
 ) {
 
 }
 
 ///|
-pub impl @data.Serializer for MsgpackSerializer with fn is_human_readable(_self) {
+pub impl @serde.Serializer for MsgpackSerializer with fn is_human_readable(
+  _self,
+) {
   false
 }

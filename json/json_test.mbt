@@ -13,7 +13,7 @@ pub(all) struct Point {
 } derive(Eq, Debug)
 
 ///|
-pub impl @data.Serialize for Point with fn serialize(self, s) {
+pub impl @serde.Serialize for Point with fn serialize(self, s) {
   s.serialize_struct_begin("Point", 3)
   s.serialize_field("x", self.x)
   s.serialize_field("y", self.y)
@@ -22,7 +22,7 @@ pub impl @data.Serialize for Point with fn serialize(self, s) {
 }
 
 ///|
-pub impl @data.Deserialize for Point with fn deserialize(d) {
+pub impl @serde.Deserialize for Point with fn deserialize(d) {
   d.deserialize_struct_begin("Point", ["x", "y", "label"])
   let mut x : Int32? = None
   let mut y : Int32? = None
@@ -36,8 +36,8 @@ pub impl @data.Deserialize for Point with fn deserialize(d) {
     }
   }
   {
-    x: @data.required(x, name="x", path=d.path()),
-    y: @data.required(y, name="y", path=d.path()),
+    x: @serde.required(x, name="x", path=d.path()),
+    y: @serde.required(y, name="y", path=d.path()),
     label,
   }
 }
@@ -50,7 +50,7 @@ priv enum IndexedField {
 }
 
 ///|
-impl @data.FieldIdentifier for IndexedField with fn from_index(index) {
+impl @serde.FieldIdentifier for IndexedField with fn from_index(index) {
   match index {
     0 => Name
     1 => Naive
@@ -59,7 +59,10 @@ impl @data.FieldIdentifier for IndexedField with fn from_index(index) {
 }
 
 ///|
-impl @data.FieldIdentifier for IndexedField with fn from_bytes(key, _index_hint) {
+impl @serde.FieldIdentifier for IndexedField with fn from_bytes(
+  key,
+  _index_hint,
+) {
   if key.equal_to_bytes(b"name") {
     Name
   } else if key.equal_to_bytes(b"na\xc3\xafve") {
@@ -70,7 +73,7 @@ impl @data.FieldIdentifier for IndexedField with fn from_bytes(key, _index_hint)
 }
 
 ///|
-impl @data.FieldIdentifier for IndexedField with fn from_string(name) {
+impl @serde.FieldIdentifier for IndexedField with fn from_string(name) {
   match name {
     "name" => Name
     "naïve" => Naive
@@ -79,7 +82,7 @@ impl @data.FieldIdentifier for IndexedField with fn from_string(name) {
 }
 
 ///|
-impl @data.FieldIdentifier for IndexedField with fn name(self) {
+impl @serde.FieldIdentifier for IndexedField with fn name(self) {
   match self {
     Name => Some("name")
     Naive => Some("naïve")
@@ -117,12 +120,12 @@ pub(all) enum Shape {
 } derive(Eq, Debug)
 
 ///|
-fn shape_variant(index : Int32, name : String) -> @data.VariantInfo {
+fn shape_variant(index : Int32, name : String) -> @serde.VariantInfo {
   { enum_name: "Shape", index, name, }
 }
 
 ///|
-pub impl @data.Serialize for Shape with fn serialize(self, s) {
+pub impl @serde.Serialize for Shape with fn serialize(self, s) {
   match self {
     Empty => s.serialize_unit_variant(shape_variant(0, "Empty"))
     Circle(r) => s.serialize_newtype_variant(shape_variant(1, "Circle"), r)
@@ -142,7 +145,7 @@ pub impl @data.Serialize for Shape with fn serialize(self, s) {
 }
 
 ///|
-pub impl @data.Deserialize for Shape with fn deserialize(d) {
+pub impl @serde.Deserialize for Shape with fn deserialize(d) {
   let variants : ReadOnlyArray[String] = ["Empty", "Circle", "Rect", "Tagged"]
   let shape = match d.deserialize_enum_begin("Shape", variants) {
     0 => {
@@ -169,12 +172,12 @@ pub impl @data.Deserialize for Shape with fn deserialize(d) {
         }
       }
       Tagged(
-        name=@data.required(name, name="name", path=d.path()),
-        size=@data.required(size, name="size", path=d.path()),
+        name=@serde.required(name, name="name", path=d.path()),
+        size=@serde.required(size, name="size", path=d.path()),
       )
     }
     index =>
-      raise @data.UnknownVariant(
+      raise @serde.UnknownVariant(
         path=d.path(),
         variant=index.to_string(),
         expected=variants,
@@ -357,7 +360,7 @@ test "whitespace between tokens is ignored" {
 ///|
 test "Value carries any JSON document, untyped" {
   let text = "{\"a\":[1,-2.5,true,null,\"s\"],\"b\":{}}"
-  let value : @data.Value = @json.from_string(text)
+  let value : @serde.Value = @json.from_string(text)
   inspect(value, content="{\"a\": [1, -2.5, true, null, \"s\"], \"b\": {}}")
   inspect(@json.to_string(value), content=text)
 }
@@ -365,18 +368,18 @@ test "Value carries any JSON document, untyped" {
 ///|
 test "large integers widen to unsigned, and overflow is refused" {
   inspect(
-    (@json.from_string("18446744073709551615") : @data.Value),
+    (@json.from_string("18446744073709551615") : @serde.Value),
     content="18446744073709551615",
   )
   inspect(
-    (@json.from_string("1.7e308") : @data.Value),
+    (@json.from_string("1.7e308") : @serde.Value),
     content=(
       #|1.7e+308
     ),
   )
   // Symmetric with refusing to *write* infinity: a literal that overflows a
   // Double is an error rather than a silent Infinity.
-  try (@json.from_string("1e400") : @data.Value) catch {
+  try (@json.from_string("1e400") : @serde.Value) catch {
     e => inspect(e, content="$: invalid value: expected a number, found 1e400")
   } noraise {
     _ => fail("expected an overflow error")
@@ -388,9 +391,9 @@ test "large integers widen to unsigned, and overflow is refused" {
 /// two formats, no format-specific code in the type.
 test "the same implementation drives both formats" {
   let p = Point::{ x: 5, y: 6, label: None, }
-  inspect(@data.to_value(p), content="{\"x\": 5, \"y\": 6, \"label\": null}")
+  inspect(@serde.to_value(p), content="{\"x\": 5, \"y\": 6, \"label\": null}")
   inspect(@json.to_string(p), content="{\"x\":5,\"y\":6,\"label\":null}")
-  assert_eq((@data.from_value(@data.to_value(p)) : Point), p)
+  assert_eq((@serde.from_value(@serde.to_value(p)) : Point), p)
   assert_eq((@json.from_string(@json.to_string(p)) : Point), p)
 }
 
@@ -634,7 +637,7 @@ test "numbers that do not fit the requested type are rejected" {
 ///|
 test "an integer too large for any integer type widens to a float" {
   inspect(
-    (@json.from_string("999999999999999999999999999999") : @data.Value),
+    (@json.from_string("999999999999999999999999999999") : @serde.Value),
     content="1e+30",
   )
 }
@@ -647,7 +650,7 @@ test "an integer too large even for a float is refused" {
     huge.write_char('0')
   }
   let text = huge.to_string()
-  try (@json.from_string(text) : @data.Value) catch {
+  try (@json.from_string(text) : @serde.Value) catch {
     e =>
       inspect(e, content="$: invalid value: expected a number, found \{text}")
   } noraise {
@@ -699,10 +702,10 @@ test "a tuple with too few elements reports end of input" {
 
 ///|
 test "malformed literals say so instead of guessing a type" {
-  inspect((@json.from_string("false") : @data.Value), content="false")
+  inspect((@json.from_string("false") : @serde.Value), content="false")
   for text in ["tru", "fals", "nul"] {
-    try (@json.from_string(text) : @data.Value) catch {
-      e => inspect(e is @data.DeCustom(..), content="true")
+    try (@json.from_string(text) : @serde.Value) catch {
+      e => inspect(e is @serde.DeCustom(..), content="true")
     } noraise {
       _ => fail("expected a literal error")
     }
@@ -937,10 +940,10 @@ test "strings with and without escapes both round-trip" {
 test "text crosses the data model without a transcode" {
   let text = "{\"kéy\":\"vàlue ☃\",\"n\":[1,2]}"
   let bytes = @utf8.encode(text)
-  let value : @data.Value = @json.from_bytes(bytes)
+  let value : @serde.Value = @json.from_bytes(bytes)
   // The bytes in the value are the bytes from the input.
   guard value.get("kéy") is Some(v) else { fail("missing key") }
-  assert_eq(v, @data.Str(@utf8.encode("vàlue ☃")))
+  assert_eq(v, @serde.Str(@utf8.encode("vàlue ☃")))
   // And writing it back reproduces the input exactly.
   assert_eq(@json.to_bytes(value), bytes)
 }
@@ -950,8 +953,8 @@ test "the byte path and the String path agree" {
   let doc = @utf8.encode("\"héllo \\u2603 wörld\"")
   // Asking for a String decodes; asking for bytes does not.
   let as_text : String = @json.from_bytes(doc)
-  let as_value : @data.Value = @json.from_bytes(doc)
-  assert_eq(as_value, @data.Str(@utf8.encode(as_text)))
+  let as_value : @serde.Value = @json.from_bytes(doc)
+  assert_eq(as_value, @serde.Str(@utf8.encode(as_text)))
   assert_eq(as_value.text(), Some(as_text))
 }
 
@@ -962,8 +965,8 @@ test "the byte path and the String path agree" {
 test "invalid UTF-8 is rejected when text is requested, not before" {
   let bad = b"\x22a\xffb\x22"
   // As a Value: carried through untouched.
-  let value : @data.Value = @json.from_bytes(bad)
-  assert_eq(value, @data.Str(b"a\xffb"))
+  let value : @serde.Value = @json.from_bytes(bad)
+  assert_eq(value, @serde.Str(b"a\xffb"))
   assert_eq(value.text(), None)
   // As a String: the caller asked for text, so the caller gets the error.
   try (@json.from_bytes(bad) : String) catch {
@@ -1048,7 +1051,7 @@ test "the string reader is correct at every chunk boundary" {
 /// way out for a caller that keeps a few fields and wants the rest released.
 test "values borrow from the document, and detach copies out" {
   let doc = @utf8.encode("{\"name\":\"ada\",\"note\":\"hi\"}")
-  let value : @data.Value = @json.from_bytes(doc)
+  let value : @serde.Value = @json.from_bytes(doc)
   guard value.get("name") is Some(name) else { fail("missing name") }
   // Borrowed and detached compare equal — detaching changes provenance, not
   // content, so nothing downstream can tell them apart.
@@ -1056,7 +1059,7 @@ test "values borrow from the document, and detach copies out" {
   assert_eq(copied, name)
   assert_eq(copied.text(), Some("ada"))
   // detach is deep: it reaches inside sequences and maps.
-  let nested : @data.Value = @json.from_bytes(
+  let nested : @serde.Value = @json.from_bytes(
     @utf8.encode("{\"xs\":[\"a\",{\"b\":\"c\"}]}"),
   )
   assert_eq(nested.detach(), nested)

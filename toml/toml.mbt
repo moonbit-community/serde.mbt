@@ -1,4 +1,4 @@
-// TOML, as a format for the `Yu-zh/data` data model.
+// TOML, as a format for the `moonbit-community/serde.mbt` data model.
 //
 // The transport is UTF-8 `Bytes`, as it is for JSON: that is what a TOML file
 // is on disk. `to_string` / `from_string` are thin conveniences over that.
@@ -51,7 +51,7 @@
 ///
 /// The value must be a struct or map at the top level, because a TOML document
 /// is a table.
-pub fn[T : @data.Serialize] to_bytes(value : T) -> Bytes raise @data.SerError {
+pub fn[T : @serde.Serialize] to_bytes(value : T) -> Bytes raise @serde.SerError {
   let serializer = TomlSerializer::new()
   value.serialize(serializer)
   serializer.finish()
@@ -59,11 +59,11 @@ pub fn[T : @data.Serialize] to_bytes(value : T) -> Bytes raise @data.SerError {
 
 ///|
 /// Parses UTF-8 TOML bytes into any deserializable type.
-pub fn[T : @data.Deserialize] from_bytes(
+pub fn[T : @serde.Deserialize] from_bytes(
   input : Bytes,
-) -> T raise @data.DeError {
+) -> T raise @serde.DeError {
   let deserializer = TomlDeserializer::new(input)
-  let value = @data.Deserialize::deserialize(deserializer)
+  let value = @serde.Deserialize::deserialize(deserializer)
   deserializer.finish()
   value
 }
@@ -71,15 +71,17 @@ pub fn[T : @data.Deserialize] from_bytes(
 ///|
 /// `to_bytes`, decoded. Convenient for tests and anywhere a `String` is
 /// wanted; it costs one UTF-8 decode of the whole document.
-pub fn[T : @data.Serialize] to_string(value : T) -> String raise @data.SerError {
+pub fn[T : @serde.Serialize] to_string(
+  value : T,
+) -> String raise @serde.SerError {
   // Decoding cannot fail: these are bytes this package just produced.
   @utf8.decode_lossy(to_bytes(value))
 }
 
 ///|
 /// `from_bytes`, encoded. Costs one UTF-8 encode of the whole document.
-pub fn[T : @data.Deserialize] from_string(
+pub fn[T : @serde.Deserialize] from_string(
   text : String,
-) -> T raise @data.DeError {
+) -> T raise @serde.DeError {
   from_bytes(@utf8.encode(text))
 }

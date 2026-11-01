@@ -159,7 +159,7 @@ test "str8, str16 and the fix form all decode as strings" {
 test "an extension type is refused rather than guessed at" {
   // fixext1: type 5, one byte of payload.
   let ext = unhex("d40501")
-  try (@msgpack.from_bytes(ext) : @data.Value) catch {
+  try (@msgpack.from_bytes(ext) : @serde.Value) catch {
     e =>
       inspect(
         e,
@@ -178,7 +178,7 @@ test "an extension type is refused rather than guessed at" {
 /// so this is reached only by asking directly.
 test "a sequence of unknown length cannot be written" {
   let s = @msgpack.MsgpackSerializer::new()
-  try @data.Serializer::serialize_seq_begin(s, None) catch {
+  try @serde.Serializer::serialize_seq_begin(s, None) catch {
     e =>
       inspect(
         e,
@@ -235,7 +235,7 @@ pub(all) struct Point {
 let point_fields : ReadOnlyArray[String] = ["x", "y", "label"]
 
 ///|
-pub impl @data.Serialize for Point with fn serialize(self, s) {
+pub impl @serde.Serialize for Point with fn serialize(self, s) {
   s.serialize_struct_begin("Point", 3)
   s.serialize_field("x", self.x)
   s.serialize_field("y", self.y)
@@ -244,7 +244,7 @@ pub impl @data.Serialize for Point with fn serialize(self, s) {
 }
 
 ///|
-pub impl @data.Deserialize for Point with fn deserialize(d) {
+pub impl @serde.Deserialize for Point with fn deserialize(d) {
   d.deserialize_struct_begin("Point", point_fields)
   let mut x : Int32? = None
   let mut y : Int32? = None
@@ -258,8 +258,8 @@ pub impl @data.Deserialize for Point with fn deserialize(d) {
     }
   }
   {
-    x: @data.required(x, name="x", path=d.path()),
-    y: @data.required(y, name="y", path=d.path()),
+    x: @serde.required(x, name="x", path=d.path()),
+    y: @serde.required(y, name="y", path=d.path()),
     label,
   }
 }
@@ -273,7 +273,7 @@ pub(all) enum Shape {
 } derive(Eq, Debug)
 
 ///|
-pub impl @data.Serialize for Shape with fn serialize(self, s) {
+pub impl @serde.Serialize for Shape with fn serialize(self, s) {
   let enum_name = "Shape"
   match self {
     Empty => s.serialize_unit_variant({ enum_name, index: 0, name: "Empty", })
@@ -298,7 +298,7 @@ pub impl @data.Serialize for Shape with fn serialize(self, s) {
 }
 
 ///|
-pub impl @data.Deserialize for Shape with fn deserialize(d) {
+pub impl @serde.Deserialize for Shape with fn deserialize(d) {
   let variants : ReadOnlyArray[String] = ["Empty", "Circle", "Rect", "Tagged"]
   let shape = match d.deserialize_enum_begin("Shape", variants) {
     0 => {
@@ -325,12 +325,12 @@ pub impl @data.Deserialize for Shape with fn deserialize(d) {
         }
       }
       Tagged(
-        name=@data.required(name, name="name", path=d.path()),
-        size=@data.required(size, name="size", path=d.path()),
+        name=@serde.required(name, name="name", path=d.path()),
+        size=@serde.required(size, name="size", path=d.path()),
       )
     }
     index =>
-      raise @data.UnknownVariant(
+      raise @serde.UnknownVariant(
         path=d.path(),
         variant=index.to_string(),
         expected=variants,
@@ -377,10 +377,10 @@ test "unknown fields are skipped, which a self-describing format can do" {
 ///|
 test "the format declares itself unreadable by people" {
   assert_false(
-    @data.Serializer::is_human_readable(@msgpack.MsgpackSerializer::new()),
+    @serde.Serializer::is_human_readable(@msgpack.MsgpackSerializer::new()),
   )
   assert_false(
-    @data.Deserializer::is_human_readable(
+    @serde.Deserializer::is_human_readable(
       @msgpack.MsgpackDeserializer::new(b""),
     ),
   )
