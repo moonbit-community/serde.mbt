@@ -3,7 +3,7 @@
 //   moonx moonbit-community/serde.mbt/derive [path ...]
 //
 // Each path is a file or a directory to walk. For every source file holding at
-// least one `#data.derive(...)` type, a sibling `*_derive*.mbt` is written; if
+// least one `#serde.derive(...)` type, a sibling `*_derive*.mbt` is written; if
 // a file stops having any, its stale companion is removed.
 //
 // There is no way to hook this into `moon build` — the current `moon.pkg`
@@ -18,7 +18,7 @@
 ///|
 const USAGE : String =
   #|Generate Serialize / Deserialize implementations for types marked
-  #|`#data.derive(...)`.
+  #|`#serde.derive(...)`.
   #|
   #|    moonx moonbit-community/serde.mbt/derive [path ...]
   #|
@@ -26,9 +26,9 @@ const USAGE : String =
   #|Defaults to the current directory.
   #|
   #|Attributes:
-  #|    #data.derive(Serialize, Deserialize)   on a struct or enum
-  #|    #data.rename("name")                   on a field or variant
-  #|    #data.skip                             on a field
+  #|    #serde.derive(Serialize, Deserialize)   on a struct or enum
+  #|    #serde.rename("name")                   on a field or variant
+  #|    #serde.skip                             on a field
 
 ///|
 /// Directories that never contain hand-written sources.

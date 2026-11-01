@@ -6,7 +6,7 @@
 // variant payload, so the generator never has to render one.
 
 ///|
-/// A type marked with `#data.derive(...)`.
+/// A type marked with `#serde.derive(...)`.
 struct Target {
   name : String
   /// Type parameters, e.g. `["T"]` for `Foo[T]`. Each gets a trait bound on
@@ -30,7 +30,7 @@ struct Target {
 /// still writes what `TupleStruct` and `Record` would have written.
 enum Shape {
   /// `struct Foo {}` — no fields at all. Not the same as a record whose
-  /// fields are all `#data.skip`ed: that one still has a shape, and stays a
+  /// fields are all `#serde.skip`ed: that one still has a shape, and stays a
   /// `Record` with nothing left to write.
   UnitStruct
   /// `struct Foo(Int)` — exactly one positional field, written as the value
@@ -48,12 +48,12 @@ enum Shape {
 struct Field {
   /// The MoonBit field name.
   ident : String
-  /// The name it is serialized under, after `#data.rename`.
+  /// The name it is serialized under, after `#serde.rename`.
   name : String
   /// True when the declared type is `T?`, in which case an absent field
   /// deserializes to `None` instead of being an error.
   optional : Bool
-  /// `#data.skip`: left out of the output entirely, and filled from
+  /// `#serde.skip`: left out of the output entirely, and filled from
   /// `Default::default()` on the way back in.
   skip : Bool
 }

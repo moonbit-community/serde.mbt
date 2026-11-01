@@ -27,7 +27,7 @@ test "a record derives both directions" {
   inspect(
     generate(
       (
-        #|#data.derive(Serialize, Deserialize)
+        #|#serde.derive(Serialize, Deserialize)
         #|pub(all) struct Point {
         #|  x : Int
         #|  label : String?
@@ -143,11 +143,11 @@ test "rename and skip change the wire form, not the type" {
   inspect(
     generate(
       (
-        #|#data.derive(Serialize, Deserialize)
+        #|#serde.derive(Serialize, Deserialize)
         #|pub(all) struct Config {
-        #|  #data.rename("max-retries")
+        #|  #serde.rename("max-retries")
         #|  max_retries : Int
-        #|  #data.skip
+        #|  #serde.skip
         #|  cached : Int
         #|}
       ),
@@ -257,7 +257,7 @@ test "all four variant shapes" {
   inspect(
     generate(
       (
-        #|#data.derive(Serialize, Deserialize)
+        #|#serde.derive(Serialize, Deserialize)
         #|pub(all) enum Shape {
         #|  Empty
         #|  Circle(Double)
@@ -442,7 +442,7 @@ test "generic types get a bound per parameter" {
   inspect(
     generate(
       (
-        #|#data.derive(Serialize, Deserialize)
+        #|#serde.derive(Serialize, Deserialize)
         #|pub(all) struct Pair[A, B] {
         #|  first : A
         #|  second : B
@@ -565,7 +565,7 @@ test "a tuple struct rides the tuple-struct protocol" {
   inspect(
     generate(
       (
-        #|#data.derive(Serialize, Deserialize)
+        #|#serde.derive(Serialize, Deserialize)
         #|pub(all) struct Rgb(Int, Int, Int)
       ),
     ),
@@ -613,7 +613,7 @@ test "a one-field tuple struct rides the newtype protocol" {
   inspect(
     generate(
       (
-        #|#data.derive(Serialize, Deserialize)
+        #|#serde.derive(Serialize, Deserialize)
         #|pub(all) struct Meters(Double)
       ),
     ),
@@ -652,7 +652,7 @@ test "a fieldless struct rides the unit-struct protocol" {
   inspect(
     generate(
       (
-        #|#data.derive(Serialize, Deserialize)
+        #|#serde.derive(Serialize, Deserialize)
         #|pub(all) struct Marker {}
       ),
     ),
@@ -692,9 +692,9 @@ test "a record whose fields are all skipped is still a record" {
   inspect(
     generate(
       (
-        #|#data.derive(Serialize, Deserialize)
+        #|#serde.derive(Serialize, Deserialize)
         #|pub(all) struct Opaque {
-        #|  #data.skip
+        #|  #serde.skip
         #|  cached : Int
         #|}
       ),
@@ -774,7 +774,7 @@ test "deriving only one direction emits only that impl" {
   inspect(
     generate(
       (
-        #|#data.derive(Serialize)
+        #|#serde.derive(Serialize)
         #|pub(all) struct Only {
         #|  a : Int
         #|}
@@ -805,7 +805,7 @@ test "a private type gets a private impl" {
   inspect(
     generate(
       (
-        #|#data.derive(Serialize)
+        #|#serde.derive(Serialize)
         #|struct Hidden {
         #|  a : Int
         #|}
@@ -867,20 +867,20 @@ fn generate_error(src : String) -> String {
 }
 
 ///|
-test "malformed #data.derive is rejected with a useful message" {
+test "malformed #serde.derive is rejected with a useful message" {
   inspect(
     generate_error(
       (
-        #|#data.derive()
+        #|#serde.derive()
         #|pub(all) struct A { a : Int }
       ),
     ),
-    content="<test>: #data.derive on `A` names no traits",
+    content="<test>: #serde.derive on `A` names no traits",
   )
   inspect(
     generate_error(
       (
-        #|#data.derive(Show)
+        #|#serde.derive(Show)
         #|pub(all) struct A { a : Int }
       ),
     ),
@@ -889,20 +889,20 @@ test "malformed #data.derive is rejected with a useful message" {
   inspect(
     generate_error(
       (
-        #|#data.derive("Serialize")
+        #|#serde.derive("Serialize")
         #|pub(all) struct A { a : Int }
       ),
     ),
-    content="<test>: #data.derive on `A` takes trait names, not literals",
+    content="<test>: #serde.derive on `A` takes trait names, not literals",
   )
   inspect(
     generate_error(
       (
-        #|#data.serialize(A)
+        #|#serde.serialize(A)
         #|pub(all) struct A { a : Int }
       ),
     ),
-    content="<test>: unknown attribute `#data.serialize` on type `A`",
+    content="<test>: unknown attribute `#serde.serialize` on type `A`",
   )
 }
 
@@ -911,50 +911,50 @@ test "malformed member attributes are rejected" {
   inspect(
     generate_error(
       (
-        #|#data.derive(Serialize)
+        #|#serde.derive(Serialize)
         #|pub(all) struct A {
-        #|  #data.rename
+        #|  #serde.rename
         #|  a : Int
         #|}
       ),
     ),
-    content="<test>: type `A`: #data.rename on `a` takes exactly one string",
+    content="<test>: type `A`: #serde.rename on `a` takes exactly one string",
   )
   inspect(
     generate_error(
       (
-        #|#data.derive(Serialize)
+        #|#serde.derive(Serialize)
         #|pub(all) struct A {
-        #|  #data.skip(1)
+        #|  #serde.skip(1)
         #|  a : Int
         #|}
       ),
     ),
-    content="<test>: type `A`: cannot make sense of attribute `#data.skip(1)`",
+    content="<test>: type `A`: cannot make sense of attribute `#serde.skip(1)`",
   )
   inspect(
     generate_error(
       (
-        #|#data.derive(Serialize)
+        #|#serde.derive(Serialize)
         #|pub(all) struct A {
-        #|  #data.skip(always)
+        #|  #serde.skip(always)
         #|  a : Int
         #|}
       ),
     ),
-    content="<test>: type `A`: #data.skip on `a` takes no arguments",
+    content="<test>: type `A`: #serde.skip on `a` takes no arguments",
   )
   inspect(
     generate_error(
       (
-        #|#data.derive(Serialize)
+        #|#serde.derive(Serialize)
         #|pub(all) struct A {
-        #|  #data.flatten
+        #|  #serde.flatten
         #|  a : Int
         #|}
       ),
     ),
-    content="<test>: type `A`: unknown attribute `#data.flatten` on `a`",
+    content="<test>: type `A`: unknown attribute `#serde.flatten` on `a`",
   )
 }
 
@@ -963,10 +963,10 @@ test "duplicate serialized field names are rejected" {
   inspect(
     generate_error(
       (
-        #|#data.derive(Deserialize)
+        #|#serde.derive(Deserialize)
         #|pub(all) struct A {
         #|  first : Int
-        #|  #data.rename("first")
+        #|  #serde.rename("first")
         #|  second : Int
         #|}
       ),
@@ -980,19 +980,19 @@ test "shapes with no data model equivalent are rejected" {
   inspect(
     generate_error(
       (
-        #|#data.derive(Serialize)
+        #|#serde.derive(Serialize)
         #|pub(all) enum E {
-        #|  #data.skip
+        #|  #serde.skip
         #|  A
         #|}
       ),
     ),
-    content="<test>: type `E`: #data.skip is not supported on enum variants (`A`)",
+    content="<test>: type `E`: #serde.skip is not supported on enum variants (`A`)",
   )
   inspect(
     generate_error(
       (
-        #|#data.derive(Serialize)
+        #|#serde.derive(Serialize)
         #|pub type A
       ),
     ),
@@ -1063,7 +1063,7 @@ test "attributes in other namespaces pass straight through" {
   inspect(
     generate(
       (
-        #|#data.derive(Serialize)
+        #|#serde.derive(Serialize)
         #|pub(all) struct A {
         #|  #other.skip
         #|  a : Int
@@ -1079,9 +1079,9 @@ test "a labelled attribute argument is accepted" {
   inspect(
     generate(
       (
-        #|#data.derive(Serialize)
+        #|#serde.derive(Serialize)
         #|pub(all) struct A {
-        #|  #data.rename(to="b")
+        #|  #serde.rename(to="b")
         #|  a : Int
         #|}
       ),
@@ -1095,14 +1095,14 @@ test "rename rejects a non-string argument" {
   inspect(
     generate_error(
       (
-        #|#data.derive(Serialize)
+        #|#serde.derive(Serialize)
         #|pub(all) struct A {
-        #|  #data.rename(b)
+        #|  #serde.rename(b)
         #|  a : Int
         #|}
       ),
     ),
-    content="<test>: type `A`: #data.rename on `a` takes exactly one string",
+    content="<test>: type `A`: #serde.rename on `a` takes exactly one string",
   )
 }
 
@@ -1111,11 +1111,11 @@ test "an unparseable attribute on a type is reported, not ignored" {
   inspect(
     generate_error(
       (
-        #|#data.derive(1)
+        #|#serde.derive(1)
         #|pub(all) struct A { a : Int }
       ),
     ),
-    content="<test>: cannot make sense of attribute `#data.derive(1)`",
+    content="<test>: cannot make sense of attribute `#serde.derive(1)`",
   )
 }
 
@@ -1124,7 +1124,7 @@ test "a variant mixing labelled and positional payloads is rejected" {
   inspect(
     generate_error(
       (
-        #|#data.derive(Serialize)
+        #|#serde.derive(Serialize)
         #|pub(all) enum E {
         #|  Mixed(Int, name~ : String)
         #|}

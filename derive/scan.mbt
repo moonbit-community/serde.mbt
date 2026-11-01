@@ -1,16 +1,16 @@
 // Turning parsed MoonBit source into `Target`s.
 //
-// Only attributes qualified with `data.` are considered. The compiler ignores
+// Only attributes qualified with `serde.` are considered. The compiler ignores
 // unknown namespaced attributes, so an unqualified `#derive(...)` or another
 // tool's `#gobject.subclass` passes straight through untouched.
 
 ///|
-const NAMESPACE : String = "data"
+const NAMESPACE : String = "serde"
 
 ///|
-/// Splits a `data.`-qualified attribute into its name and arguments.
+/// Splits a `serde.`-qualified attribute into its name and arguments.
 ///
-/// `#data.skip` is `("skip", [])` and `#data.rename("why")` is
+/// `#serde.skip` is `("skip", [])` and `#serde.rename("why")` is
 /// `("rename", [String("why")])`. Anything in another namespace is `None`.
 fn attribute_call(
   attr : @attribute.Attribute,
@@ -43,9 +43,9 @@ fn attribute_call(
 /// Whether an attribute is in our namespace at all, judged from the raw text.
 ///
 /// `attribute_call` only recognises the forms this tool understands, so
-/// something like `#data.skip(1)` — whose argument the attribute grammar has
+/// something like `#serde.skip(1)` — whose argument the attribute grammar has
 /// no representation for — would otherwise parse to nothing and be silently
-/// ignored. Anything spelled `#data.*` has to be accounted for.
+/// ignored. Anything spelled `#serde.*` has to be accounted for.
 fn is_ours(attr : @attribute.Attribute) -> Bool {
   attr.raw.has_prefix("#" + NAMESPACE + ".")
 }
@@ -78,7 +78,7 @@ fn expr_string(expr : @attribute.Expr) -> String? {
 }
 
 ///|
-/// Reads `#data.rename("...")` and `#data.skip` off a field or variant.
+/// Reads `#serde.rename("...")` and `#serde.skip` off a field or variant.
 fn read_member_attributes(
   attrs : @list.List[@attribute.Attribute],
   where_ : String,
@@ -98,7 +98,7 @@ fn read_member_attributes(
         guard args.length() == 1 && expr_string(args[0]) is Some(text) else {
           raise DeriveError(
             where_~,
-            message="#data.rename on `\{ident}` takes exactly one string",
+            message="#serde.rename on `\{ident}` takes exactly one string",
           )
         }
         name = text
@@ -107,7 +107,7 @@ fn read_member_attributes(
         guard args.is_empty() else {
           raise DeriveError(
             where_~,
-            message="#data.skip on `\{ident}` takes no arguments",
+            message="#serde.skip on `\{ident}` takes no arguments",
           )
         }
         skip = true
@@ -115,7 +115,7 @@ fn read_member_attributes(
       other =>
         raise DeriveError(
           where_~,
-          message="unknown attribute `#data.\{other}` on `\{ident}`",
+          message="unknown attribute `#serde.\{other}` on `\{ident}`",
         )
     }
   }
@@ -160,7 +160,7 @@ fn scan_case(
   guard !skip else {
     raise DeriveError(
       where_~,
-      message="#data.skip is not supported on enum variants (`\{ident}`)",
+      message="#serde.skip is not supported on enum variants (`\{ident}`)",
     )
   }
   let args = match constr.args {
@@ -199,7 +199,7 @@ fn scan_case(
 }
 
 ///|
-/// Extracts every `#data.derive(...)` target from one parsed file.
+/// Extracts every `#serde.derive(...)` target from one parsed file.
 ///
 /// `where_` is used verbatim as the location prefix of any `DeriveError`.
 fn scan(
@@ -222,14 +222,14 @@ fn scan(
       guard call == "derive" else {
         raise DeriveError(
           where_~,
-          message="unknown attribute `#data.\{call}` on type `\{decl.tycon}`",
+          message="unknown attribute `#serde.\{call}` on type `\{decl.tycon}`",
         )
       }
       marked = true
       guard !args.is_empty() else {
         raise DeriveError(
           where_~,
-          message="#data.derive on `\{decl.tycon}` names no traits",
+          message="#serde.derive on `\{decl.tycon}` names no traits",
         )
       }
       for arg in args {
@@ -244,7 +244,7 @@ fn scan(
           None =>
             raise DeriveError(
               where_~,
-              message="#data.derive on `\{decl.tycon}` takes trait names, not literals",
+              message="#serde.derive on `\{decl.tycon}` takes trait names, not literals",
             )
         }
       }

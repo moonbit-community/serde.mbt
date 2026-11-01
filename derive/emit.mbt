@@ -36,7 +36,7 @@ fn Target::impl_head(self : Target, trait_ : String) -> String {
 /// Whether the generated `serialize` body reads the value at all.
 ///
 /// A type with nothing left to write — no fields, or none that survive
-/// `#data.skip` — hands its parameter to no one, and an unused binding named
+/// `#serde.skip` — hands its parameter to no one, and an unused binding named
 /// `self` would warn. Generated code lands in projects that have no way to
 /// annotate away a warning they did not write, so the binder is named for what
 /// the body does with it.

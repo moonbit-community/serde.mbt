@@ -8,7 +8,7 @@ and M formats cost N + M implementations instead of N × M.
 
 ```mbt nocheck
 ///|
-#data.derive(Serialize, Deserialize)
+#serde.derive(Serialize, Deserialize)
 pub(all) struct User {
   name : String
   age : Int32
@@ -221,11 +221,11 @@ ignores attributes it does not recognise:
 
 ```mbt nocheck
 ///|
-#data.derive(Serialize, Deserialize)
+#serde.derive(Serialize, Deserialize)
 pub(all) struct Config {
-  #data.rename("max-retries")
+  #serde.rename("max-retries")
   max_retries : Int32
-  #data.skip
+  #serde.skip
   cache_generation : Int32
 }
 ```
@@ -239,9 +239,9 @@ moonx moonbit-community/serde.mbt/derive [path ...]
 
 | Attribute | On | Effect |
 |---|---|---|
-| `#data.derive(Serialize, Deserialize)` | struct or enum | generates the named implementations |
-| `#data.rename("name")` | field or variant | changes the name on the wire, not in MoonBit |
-| `#data.skip` | field | never written; filled from `Default` when read |
+| `#serde.derive(Serialize, Deserialize)` | struct or enum | generates the named implementations |
+| `#serde.rename("name")` | field or variant | changes the name on the wire, not in MoonBit |
+| `#serde.skip` | field | never written; filled from `Default` when read |
 
 Generic types get one trait bound per parameter, so `Pair[A, B]` derives as
 `impl[A : Serialize, B : Serialize] Serialize for Pair[A, B]`.
