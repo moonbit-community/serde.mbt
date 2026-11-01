@@ -102,16 +102,23 @@ async fn collect(root : String, out : Array[String]) -> Unit {
 ///|
 /// A layout-insensitive fingerprint of generated source.
 ///
-/// The two formatters in play disagree: `moon fmt` breaks long calls where the
-/// one available inside this program does not, and adds a trailing comma when
-/// it wraps. Comparing raw text would make the generator and `moon fmt`
-/// rewrite each other forever, dirtying the tree on every run. Dropping
-/// whitespace and commas — the only things they disagree about — leaves a
+/// The two formatters in play disagree: they break long calls in different
+/// places, add trailing commas when they wrap, and the one available inside
+/// this program wraps a match arm's body in braces where `moon fmt` strips
+/// them. Comparing raw text would make the generator and `moon fmt` rewrite
+/// each other forever, dirtying the tree on every run. Dropping whitespace,
+/// commas and braces — the only things they disagree about — leaves a
 /// fingerprint that changes when the code does and not before.
 fn fingerprint(source : String) -> String {
   let out = StringBuilder()
   for c in source {
-    let noise = c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == ','
+    let noise = c == ' ' ||
+      c == '\t' ||
+      c == '\n' ||
+      c == '\r' ||
+      c == ',' ||
+      c == '{' ||
+      c == '}'
     if !noise {
       out.write_char(c)
     }

@@ -1029,7 +1029,8 @@ test "build and vendor directories are skipped" {
 
 ///|
 /// The fingerprint has to see through exactly what `moon fmt` changes — line
-/// breaks and the trailing comma it adds when it wraps — and nothing more.
+/// breaks, the trailing comma it adds when it wraps, and the braces it strips
+/// from a match arm's body — and nothing more.
 test "the fingerprint ignores layout but not content" {
   let flat = "f(a, b)"
   let wrapped =
@@ -1038,6 +1039,18 @@ test "the fingerprint ignores layout but not content" {
     #|  b,
     #|)
   assert_eq(fingerprint(flat), fingerprint(wrapped))
+  let bare =
+    #|_ =>
+    #|  match key {
+    #|    _ => Unknown
+    #|  }
+  let braced =
+    #|_ => {
+    #|  match key {
+    #|    _ => Unknown
+    #|  }
+    #|}
+  assert_eq(fingerprint(bare), fingerprint(braced))
   assert_not_eq(fingerprint("f(a, b)"), fingerprint("f(a, c)"))
   assert_not_eq(fingerprint("f(a)"), fingerprint("f(a, b)"))
 }
