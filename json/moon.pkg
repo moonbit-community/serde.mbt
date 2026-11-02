@@ -12,6 +12,7 @@ import {
   "moonbitlang/core/double",
   "moonbitlang/core/bench",
   "moonbitlang/core/json" @corejson,
+  "moonbit-community/serde.mbt/internal/corpus",
 } for "test"
 
 // `moonbitlang/core/v128` and the `v128le` bitstring pattern are both marked

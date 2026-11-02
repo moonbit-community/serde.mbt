@@ -1,0 +1,15 @@
+// Test-only: typed reads through derived `Deserialize`, against core's
+// `derive(FromJson)`.
+//
+// This lives in its own package because the code `derive(FromJson)` expands to
+// names `@json.JsonPath`, so `@json` has to mean core's json here. That is why
+// this library's json package goes by `@sjson` instead.
+
+import {
+  "moonbit-community/serde.mbt" @serde,
+  "moonbit-community/serde.mbt/json" @sjson,
+  "moonbit-community/serde.mbt/internal/corpus",
+  "moonbitlang/core/json",
+  "moonbitlang/core/bench",
+  "moonbitlang/core/encoding/utf8",
+} for "test"

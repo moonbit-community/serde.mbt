@@ -1,0 +1,19 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbit-community/serde.mbt/internal/corpus"
+
+// Values
+pub fn escapes(Int32) -> Bytes
+
+pub fn keys(Int32) -> Bytes
+
+pub fn numbers(Int32) -> Bytes
+
+pub fn text(Int32, Int32) -> Bytes
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
