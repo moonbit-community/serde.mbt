@@ -94,12 +94,13 @@ Written by hand they look like this:
 
 ```mbt check
 ///|
+#derive(Eq, Debug)
 pub(all) struct User {
   name : String
   age : Int32
   /// An `Option` field: absent and explicitly null both read back as `None`.
   nickname : String?
-} derive(Eq, Debug)
+}
 
 ///|
 pub impl @serde.Serialize for User with fn serialize(self, s) {
@@ -173,11 +174,12 @@ bare string, and anything else is a one-entry object.
 
 ```mbt check
 ///|
+#derive(Eq, Debug)
 pub(all) enum Role {
   Guest
   Member(String)
   Admin(level~ : Int32, since~ : String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub impl @serde.Serialize for Role with fn serialize(self, s) {

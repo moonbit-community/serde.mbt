@@ -1,12 +1,13 @@
 // Tests for the TOML codec.
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Server {
   host : String
   port : Int32
   tags : Array[String]
   timeout : Double?
-} derive(Eq, Debug)
+}
 
 ///|
 pub impl @serde.Serialize for Server with fn serialize(self, s) {
@@ -43,10 +44,11 @@ pub impl @serde.Deserialize for Server with fn deserialize(d) {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Config {
   name : String
   server : Server
-} derive(Eq, Debug)
+}
 
 ///|
 pub impl @serde.Serialize for Config with fn serialize(self, s) {

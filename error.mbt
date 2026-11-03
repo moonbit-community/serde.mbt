@@ -4,11 +4,12 @@
 /// Deserializers thread a `Path` through nested values so that a failure deep
 /// inside a document reports *where* it happened, not just what happened.
 /// Rendered as a JSONPath-like string: `$.users[0].name`.
+#derive(Eq, Debug)
 pub(all) enum Path {
   Root
   Key(Path, String)
   Index(Path, Int32)
-} derive(Eq, Debug)
+}
 
 ///|
 /// Extends the path with a struct field or map key.

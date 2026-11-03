@@ -61,7 +61,8 @@ fn finite(d : Double) -> Double {
 /// and a float parser are most likely to disagree, and precisely what the
 /// Eisel-Lemire path in `json/eisel_lemire.mbt` exists to get right.
 /// Reinterpreting arbitrary bits reaches all of them.
-struct AnyDouble(Double) derive(Eq, Debug)
+#derive(Eq, Debug)
+struct AnyDouble(Double)
 
 ///|
 impl @quickcheck.Arbitrary for AnyDouble with fn arbitrary(size, rs) {
@@ -481,7 +482,8 @@ test "MessagePack integers survive the narrowing ladder" {
 /// `Map` has no `Arbitrary` in core, and TOML cannot round-trip an arbitrary
 /// *value* anyway — it has no null, no byte string and no non-table root — so
 /// the property is stated over documents rather than over values.
-struct IntDoc(Map[String, Int32]) derive(Eq, Debug)
+#derive(Eq, Debug)
+struct IntDoc(Map[String, Int32])
 
 ///|
 impl @quickcheck.Arbitrary for IntDoc with fn arbitrary(size, rs) {
@@ -501,7 +503,8 @@ impl @shrink.Shrink for IntDoc
 ///|
 /// The same, with text values, so escaping is exercised on both sides of the
 /// `=` rather than only in the keys.
-struct TextDoc(Map[String, String]) derive(Eq, Debug)
+#derive(Eq, Debug)
+struct TextDoc(Map[String, String])
 
 ///|
 impl @quickcheck.Arbitrary for TextDoc with fn arbitrary(size, rs) {

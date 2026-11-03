@@ -2,7 +2,7 @@
 //
 // This is the comparison derive exists for. A derived `Deserialize` reads
 // fields straight out of the bytes and never builds a document tree, while
-// core's `derive(FromJson)` has to decode to a `String`, parse that into a
+// core's `#derive(FromJson)` has to decode to a `String`, parse that into a
 // `Json`, and only then walk the tree into the struct. Each type carries both
 // derives so the two paths fill the identical shape.
 //
@@ -13,50 +13,57 @@
 // rejects.
 
 ///|
+#derive(FromJson, Eq, Debug)
 #serde.derive(Deserialize)
 pub(all) struct NumbersDoc {
   coordinates : Array[Array[Double]]
-} derive(FromJson, Eq, Debug)
+}
 
 ///|
+#derive(FromJson, Eq, Debug)
 #serde.derive(Deserialize)
 pub(all) struct KeyRow {
   id : Int32
   kind : Int32
   count : Int32
   flag : Bool
-} derive(FromJson, Eq, Debug)
+}
 
 ///|
+#derive(FromJson, Eq, Debug)
 #serde.derive(Deserialize)
 pub(all) struct KeysDoc {
   rows : Array[KeyRow]
-} derive(FromJson, Eq, Debug)
+}
 
 ///|
+#derive(FromJson, Eq, Debug)
 #serde.derive(Deserialize)
 pub(all) struct TextRow {
   title : String
   body : String
-} derive(FromJson, Eq, Debug)
+}
 
 ///|
+#derive(FromJson, Eq, Debug)
 #serde.derive(Deserialize)
 pub(all) struct TextDoc {
   rows : Array[TextRow]
-} derive(FromJson, Eq, Debug)
+}
 
 ///|
+#derive(FromJson, Eq, Debug)
 #serde.derive(Deserialize)
 pub(all) struct EscapeRow {
   v : String
-} derive(FromJson, Eq, Debug)
+}
 
 ///|
+#derive(FromJson, Eq, Debug)
 #serde.derive(Deserialize)
 pub(all) struct EscapesDoc {
   rows : Array[EscapeRow]
-} derive(FromJson, Eq, Debug)
+}
 
 ///|
 /// As with `parse`, the corpora are valid by construction and the parity test

@@ -213,11 +213,12 @@ test "semantic tags are stepped over" {
 // ---- the data model ----
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Point {
   x : Int32
   y : Int32
   label : String?
-} derive(Eq, Debug)
+}
 
 ///|
 let point_fields : ReadOnlyArray[String] = ["x", "y", "label"]
@@ -253,12 +254,13 @@ pub impl @serde.Deserialize for Point with fn deserialize(d) {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum Shape {
   Empty
   Circle(Double)
   Rect(Double, Double)
   Tagged(name~ : String, size~ : Int32)
-} derive(Eq, Debug)
+}
 
 ///|
 pub impl @serde.Serialize for Shape with fn serialize(self, s) {

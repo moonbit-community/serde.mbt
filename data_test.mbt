@@ -5,11 +5,12 @@
 // MoonBit had user-defined derives.
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Point {
   x : Int32
   y : Int32
   label : String?
-} derive(Eq, Debug)
+}
 
 ///|
 pub impl @serde.Serialize for Point with fn serialize(self, s) {
@@ -46,12 +47,13 @@ pub impl @serde.Deserialize for Point with fn deserialize(d) {
 
 ///|
 /// Exercises all four payload shapes an enum variant can take.
+#derive(Eq, Debug)
 pub(all) enum Shape {
   Empty
   Circle(Double)
   Rect(Double, Double)
   Tagged(name~ : String, size~ : Int32)
-} derive(Eq, Debug)
+}
 
 ///|
 fn shape_variant(index : Int32, name : String) -> @serde.VariantInfo {
@@ -304,7 +306,8 @@ test "integers that do not fit the target width are rejected" {
 ///|
 /// A unit struct and a newtype struct, to exercise the two `Serializer`
 /// defaults that widen to unit and to the inner value.
-pub(all) struct Marker {} derive(Eq, Debug)
+#derive(Eq, Debug)
+pub(all) struct Marker {}
 
 ///|
 pub impl @serde.Serialize for Marker with fn serialize(_self, s) {
@@ -318,7 +321,8 @@ pub impl @serde.Deserialize for Marker with fn deserialize(d) {
 }
 
 ///|
-pub(all) struct Meters(Double) derive(Eq, Debug)
+#derive(Eq, Debug)
+pub(all) struct Meters(Double)
 
 ///|
 pub impl @serde.Serialize for Meters with fn serialize(self, s) {
@@ -428,7 +432,8 @@ test "a struct with a non-string key is rejected" {
 ///|
 /// A tuple struct, exercising the defaults that route tuple structs through
 /// the tuple protocol and on to sequences.
-pub(all) struct Rgb(Int32, Int32, Int32) derive(Eq, Debug)
+#derive(Eq, Debug)
+pub(all) struct Rgb(Int32, Int32, Int32)
 
 ///|
 pub impl @serde.Serialize for Rgb with fn serialize(self, s) {

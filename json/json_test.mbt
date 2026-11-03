@@ -6,11 +6,12 @@
 // bottom checks the identical impls drive both formats.
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Point {
   x : Int32
   y : Int32
   label : String?
-} derive(Eq, Debug)
+}
 
 ///|
 pub impl @serde.Serialize for Point with fn serialize(self, s) {
@@ -112,12 +113,13 @@ test "semantic field dispatch handles reorder, escapes, and unknown keys" {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum Shape {
   Empty
   Circle(Double)
   Rect(Double, Double)
   Tagged(name~ : String, size~ : Int32)
-} derive(Eq, Debug)
+}
 
 ///|
 fn shape_variant(index : Int32, name : String) -> @serde.VariantInfo {

@@ -24,6 +24,7 @@
 /// native and LLVM backends are reference-counted, so a cycle would be a leak
 /// that no collector ever comes to clear. It also means a value never aliases
 /// the array it was built from.
+#derive(Eq, Debug)
 pub(all) enum Value {
   Null
   Boolean(Bool)
@@ -37,7 +38,7 @@ pub(all) enum Value {
   Seq(ReadOnlyArray[Value])
   /// Order-preserving, and keys need not be strings.
   Map(ReadOnlyArray[(Value, Value)])
-} derive(Eq, Debug)
+}
 
 ///|
 /// A short name for this value's shape, used in `InvalidType` messages.
