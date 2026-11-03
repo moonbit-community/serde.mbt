@@ -254,10 +254,27 @@ written as the value it wraps rather than as a sequence of one, and
 distinction still receive what the general form would have written, since the
 `Serializer` defaults widen back to it.
 
-There is no build-system hook — the current `moon.pkg` format has no pre-build
-step — so generated files are committed alongside their sources and the
-generator is re-run by hand. It is idempotent, and CI can check nothing is
-stale with `moon run derive && git diff --exit-code`.
+The generator can also run itself. `moon.pkg` declares pre-build steps with
+`rule` and `dev_build`, which `moon check` and `moon test` run before compiling
+the package — one `dev_build` per source file holding derived types, with paths
+relative to the package:
+
+```
+rule(name: "serde-derive", command: "moonx moonbit-community/serde.mbt@0.3.0/derive $input")
+
+dev_build(rule: "serde-derive", input: "types.mbt", output: "types_derive.mbt")
+```
+
+Pin the version to the one you depend on, so the generated code matches the
+library it calls. A step runs only when `moon` checks or builds its package, so
+a `moon build` that never reaches the package leaves the companion as it was.
+`moon.pkg.json` has neither `rule` nor `dev_build`; there, run the generator by
+hand.
+
+Either way, generated files are committed alongside their sources: pre-build
+steps never run when a package is used as a dependency, so downstream users
+build against what you committed. The generator is idempotent, and CI can check
+nothing is stale with `moon run derive && git diff --exit-code`.
 
 A trait impl also installs its methods as regular methods on the type, so a
 derived `Serialize` would otherwise add `value.serialize(s)` to your package's

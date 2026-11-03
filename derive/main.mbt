@@ -6,9 +6,10 @@
 // least one `#serde.derive(...)` type, a sibling `*_derive*.mbt` is written; if
 // a file stops having any, its stale companion is removed.
 //
-// There is no way to hook this into `moon build` — the current `moon.pkg`
-// format has no pre-build step — so generated files are committed alongside
-// the sources they came from and the generator is re-run by hand.
+// A package can run this before every `moon check` and `moon test` by naming it
+// in a `dev_build` step of its `moon.pkg`; see the README. Generated files are
+// committed alongside the sources they came from either way, since pre-build
+// steps never run when a package is used as a dependency.
 //
 // File access goes through `moonbitlang/async/fs`, which works on both the
 // native and wasm backends. That matters because `moonx` runs the published
@@ -29,6 +30,10 @@ const USAGE : String =
   #|    #serde.derive(Serialize, Deserialize)   on a struct or enum
   #|    #serde.rename("name")                   on a field or variant
   #|    #serde.skip                             on a field
+  #|
+  #|To run on every `moon check` and `moon test`, add to the package's moon.pkg:
+  #|    rule(name: "serde-derive", command: "moonx moonbit-community/serde.mbt@<version>/derive $input")
+  #|    dev_build(rule: "serde-derive", input: "types.mbt", output: "types_derive.mbt")
 
 ///|
 /// Directories that never contain hand-written sources.
