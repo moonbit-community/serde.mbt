@@ -25,17 +25,17 @@ pub fn Path::index(self : Path, i : Int32) -> Path {
 ///|
 pub impl Show for Path with fn output(self, logger) {
   match self {
-    Root => logger.write_string("$")
+    Root => logger <+ "$"
     Key(parent, name) => {
       Show::output(parent, logger)
-      logger.write_string(".")
+      logger <+ "."
       logger.write_string(name)
     }
     Index(parent, i) => {
       Show::output(parent, logger)
-      logger.write_string("[")
+      logger <+ "["
       logger.write_string(i.to_string())
-      logger.write_string("]")
+      logger <+ "]"
     }
   }
 }
@@ -58,7 +58,7 @@ pub(all) suberror SerError {
 pub impl Show for SerError with fn output(self, logger) {
   match self {
     UnsupportedType(format~, kind~) =>
-      logger.write_string("\{format} cannot serialize \{kind}")
+      logger <+ "\{format} cannot serialize \{kind}"
     SerCustom(message~) => logger.write_string(message)
   }
 }
@@ -130,5 +130,5 @@ pub impl Show for DeError with fn output(self, logger) {
     Eof(..) => "unexpected end of input"
     DeCustom(message~, ..) => message
   }
-  logger.write_string("\{self.path()}: \{body}")
+  logger <+ "\{self.path()}: \{body}"
 }

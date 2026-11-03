@@ -102,44 +102,44 @@ pub fn Value::detach(self : Value) -> Value {
 ///|
 pub impl Show for Value with fn output(self, logger) {
   match self {
-    Null => logger.write_string("null")
+    Null => logger <+ "null"
     Boolean(b) => logger.write_string(b.to_string())
     Int(i) => logger.write_string(i.to_string())
     UInt(u) => logger.write_string(u.to_string())
     Double(d) => logger.write_string(d.to_string())
     Str(s) => {
-      logger.write_string("\"")
+      logger <+ "\""
       logger.write_string(@utf8.decode_lossy(s))
-      logger.write_string("\"")
+      logger <+ "\""
     }
     Bytes(b) => {
-      logger.write_string("b\"")
+      logger <+ "b\""
       for byte in b {
         logger.write_string(byte.to_hex())
       }
-      logger.write_string("\"")
+      logger <+ "\""
     }
     Seq(items) => {
-      logger.write_string("[")
+      logger <+ "["
       for i, item in items {
         if i > 0 {
-          logger.write_string(", ")
+          logger <+ ", "
         }
         Show::output(item, logger)
       }
-      logger.write_string("]")
+      logger <+ "]"
     }
     Map(entries) => {
-      logger.write_string("{")
+      logger <+ "{"
       for i, entry in entries {
         if i > 0 {
-          logger.write_string(", ")
+          logger <+ ", "
         }
         Show::output(entry.0, logger)
-        logger.write_string(": ")
+        logger <+ ": "
         Show::output(entry.1, logger)
       }
-      logger.write_string("}")
+      logger <+ "}"
     }
   }
 }

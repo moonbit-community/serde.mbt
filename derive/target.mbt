@@ -88,5 +88,5 @@ suberror DeriveError {
 ///|
 impl Show for DeriveError with fn output(self, logger) {
   let DeriveError(where_~, message~) = self
-  logger.write_string("\{where_}: \{message}")
+  logger <+ "\{where_}: \{message}"
 }

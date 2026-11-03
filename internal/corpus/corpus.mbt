@@ -49,16 +49,16 @@ fn Seed::word(self : Seed, len : Int32) -> String {
 pub fn numbers(pairs : Int32) -> Bytes {
   let seed = Seed::{ state: 0x9E3779B97F4A7C15UL, }
   let out = StringBuilder()
-  out.write_string("{\"type\":\"numbers\",\"coordinates\":[")
+  out <+ "{\"type\":\"numbers\",\"coordinates\":["
   for i in 0..<pairs {
     if i > 0 {
-      out.write_string(",")
+      out <+ ","
     }
     let lon = -180.0 + seed.below(360000000).to_double() / 1000000.0
     let lat = -90.0 + seed.below(180000000).to_double() / 1000000.0
-    out.write_string("[\{lon},\{lat}]")
+    out <+ "[\{lon},\{lat}]"
   }
-  out.write_string("]}")
+  out <+ "]}"
   @utf8.encode(out.to_string())
 }
 
@@ -68,16 +68,15 @@ pub fn numbers(pairs : Int32) -> Bytes {
 pub fn keys(rows : Int32) -> Bytes {
   let seed = Seed::{ state: 0x123456789ABCDEFUL, }
   let out = StringBuilder()
-  out.write_string("{\"type\":\"keys\",\"rows\":[")
+  out <+ "{\"type\":\"keys\",\"rows\":["
   for i in 0..<rows {
     if i > 0 {
-      out.write_string(",")
+      out <+ ","
     }
-    out.write_string(
-      "{\"id\":\{seed.below(1000000)},\"kind\":\{seed.below(64)},\"count\":\{seed.below(4096)},\"flag\":\{seed.below(2) == 0}}",
-    )
+    out <+
+      "{\"id\":\{seed.below(1000000)},\"kind\":\{seed.below(64)},\"count\":\{seed.below(4096)},\"flag\":\{seed.below(2) == 0}}"
   }
-  out.write_string("]}")
+  out <+ "]}"
   @utf8.encode(out.to_string())
 }
 
@@ -88,16 +87,15 @@ pub fn keys(rows : Int32) -> Bytes {
 pub fn text(rows : Int32, len : Int32) -> Bytes {
   let seed = Seed::{ state: 0xFEEDFACECAFEBEEFUL, }
   let out = StringBuilder()
-  out.write_string("{\"type\":\"text\",\"rows\":[")
+  out <+ "{\"type\":\"text\",\"rows\":["
   for i in 0..<rows {
     if i > 0 {
-      out.write_string(",")
+      out <+ ","
     }
-    out.write_string(
-      "{\"title\":\"\{seed.word(len)}\",\"body\":\"\{seed.word(len * 4)}\"}",
-    )
+    out <+
+      "{\"title\":\"\{seed.word(len)}\",\"body\":\"\{seed.word(len * 4)}\"}"
   }
-  out.write_string("]}")
+  out <+ "]}"
   @utf8.encode(out.to_string())
 }
 
@@ -107,10 +105,10 @@ pub fn text(rows : Int32, len : Int32) -> Bytes {
 pub fn escapes(rows : Int32) -> Bytes {
   let seed = Seed::{ state: 0x0BADC0DEDEADBEEFUL, }
   let out = StringBuilder()
-  out.write_string("{\"type\":\"escapes\",\"rows\":[")
+  out <+ "{\"type\":\"escapes\",\"rows\":["
   for i in 0..<rows {
     if i > 0 {
-      out.write_string(",")
+      out <+ ","
     }
     let text = StringBuilder()
     for _ in 0..<8 {
@@ -119,8 +117,8 @@ pub fn escapes(rows : Int32) -> Bytes {
         ["\\n", "\\t", "\\\"", "\\\\", "\\u0001"][seed.below(5)],
       )
     }
-    out.write_string("{\"v\":\"\{text.to_string()}\"}")
+    out <+ "{\"v\":\"\{text.to_string()}\"}"
   }
-  out.write_string("]}")
+  out <+ "]}"
   @utf8.encode(out.to_string())
 }

@@ -55,9 +55,9 @@ fn quote(text : String) -> String {
   out.write_char('"')
   for c in text {
     match c {
-      '"' => out.write_string("\\\"")
-      '\\' => out.write_string("\\\\")
-      '\n' => out.write_string("\\n")
+      '"' => out <+ "\\\""
+      '\\' => out <+ "\\\\"
+      '\n' => out <+ "\\n"
       _ => out.write_char(c)
     }
   }
@@ -79,17 +79,17 @@ fn hex_digit(n : Int32) -> Char {
 /// text encoding. Printable ASCII stays readable; everything else uses `\xNN`.
 fn byte_quote(text : String) -> String {
   let out = StringBuilder()
-  out.write_string("b\"")
+  out <+ "b\""
   for byte in @utf8.encode(text) {
     let n = byte.to_int()
     match n {
-      0x22 => out.write_string("\\\"")
-      0x5C => out.write_string("\\\\")
+      0x22 => out <+ "\\\""
+      0x5C => out <+ "\\\\"
       _ =>
         if n >= 0x20 && n <= 0x7E {
           out.write_char(n.unsafe_to_char())
         } else {
-          out.write_string("\\x")
+          out <+ "\\x"
           out.write_char(hex_digit(n >> 4))
           out.write_char(hex_digit(n & 0x0F))
         }
@@ -105,10 +105,10 @@ fn byte_pattern(text : String) -> String {
   out.write_char('[')
   for index, byte in @utf8.encode(text) {
     if index > 0 {
-      out.write_string(", ")
+      out <+ ", "
     }
     let n = byte.to_int()
-    out.write_string("0x")
+    out <+ "0x"
     out.write_char(hex_digit(n >> 4))
     out.write_char(hex_digit(n & 0x0F))
   }
@@ -169,67 +169,57 @@ fn write_field_identifier(
 ) -> Unit {
   let kept = fields.filter(field => !field.skip)
   let unknown = unknown_field_case()
-  out.write_string("\n///|\n")
-  out.write_string("priv enum \{identifier} {\n")
+  out <+ "\n///|\n"
+  out <+ "priv enum \{identifier} {\n"
   for field in kept {
-    out.write_string("  \{field_case(field)}\n")
+    out <+ "  \{field_case(field)}\n"
   }
-  out.write_string("  Unknown\n")
-  out.write_string("}\n")
-  out.write_string("\n///|\n")
+  out <+ "  Unknown\n"
+  out <+ "}\n"
+  out <+ "\n///|\n"
   if kept.is_empty() {
-    out.write_string(
-      "impl @serde.FieldIdentifier for \{identifier} with fn from_index(_index) {\n  \{unknown}\n}\n",
-    )
-    out.write_string("\n///|\n")
-    out.write_string(
-      "impl @serde.FieldIdentifier for \{identifier} with fn from_bytes(_key, _index_hint) {\n  \{unknown}\n}\n",
-    )
-    out.write_string("\n///|\n")
-    out.write_string(
-      "impl @serde.FieldIdentifier for \{identifier} with fn from_string(_name) {\n  \{unknown}\n}\n",
-    )
+    out <+
+      "impl @serde.FieldIdentifier for \{identifier} with fn from_index(_index) {\n  \{unknown}\n}\n"
+    out <+ "\n///|\n"
+    out <+
+      "impl @serde.FieldIdentifier for \{identifier} with fn from_bytes(_key, _index_hint) {\n  \{unknown}\n}\n"
+    out <+ "\n///|\n"
+    out <+
+      "impl @serde.FieldIdentifier for \{identifier} with fn from_string(_name) {\n  \{unknown}\n}\n"
   } else {
-    out.write_string(
-      "impl @serde.FieldIdentifier for \{identifier} with fn from_index(index) {\n  match index {\n",
-    )
+    out <+
+      "impl @serde.FieldIdentifier for \{identifier} with fn from_index(index) {\n  match index {\n"
     for index, field in kept {
-      out.write_string("    \{index} => \{field_case(field)}\n")
+      out <+ "    \{index} => \{field_case(field)}\n"
     }
-    out.write_string("    _ => \{unknown}\n  }\n}\n")
-    out.write_string("\n///|\n")
-    out.write_string(
-      "impl @serde.FieldIdentifier for \{identifier} with fn from_bytes(key, index_hint) {\n  match index_hint {\n",
-    )
+    out <+ "    _ => \{unknown}\n  }\n}\n"
+    out <+ "\n///|\n"
+    out <+
+      "impl @serde.FieldIdentifier for \{identifier} with fn from_bytes(key, index_hint) {\n  match index_hint {\n"
     for index, field in kept {
-      out.write_string(
-        "    \{index} if key.equal_to_bytes(\{byte_quote(field.name)}) => \{field_case(field)}\n",
-      )
+      out <+
+        "    \{index} if key.equal_to_bytes(\{byte_quote(field.name)}) => \{field_case(field)}\n"
     }
-    out.write_string("    _ =>\n      match key {\n")
+    out <+ "    _ =>\n      match key {\n"
     for field in kept {
-      out.write_string(
-        "        \{byte_pattern(field.name)} => \{field_case(field)}\n",
-      )
+      out <+ "        \{byte_pattern(field.name)} => \{field_case(field)}\n"
     }
-    out.write_string("        _ => \{unknown}\n      }\n  }\n}\n")
-    out.write_string("\n///|\n")
-    out.write_string(
-      "impl @serde.FieldIdentifier for \{identifier} with fn from_string(name) {\n  match name {\n",
-    )
+    out <+ "        _ => \{unknown}\n      }\n  }\n}\n"
+    out <+ "\n///|\n"
+    out <+
+      "impl @serde.FieldIdentifier for \{identifier} with fn from_string(name) {\n  match name {\n"
     for field in kept {
-      out.write_string("    \{quote(field.name)} => \{field_case(field)}\n")
+      out <+ "    \{quote(field.name)} => \{field_case(field)}\n"
     }
-    out.write_string("    _ => \{unknown}\n  }\n}\n")
+    out <+ "    _ => \{unknown}\n  }\n}\n"
   }
-  out.write_string("\n///|\n")
-  out.write_string(
-    "impl @serde.FieldIdentifier for \{identifier} with fn name(self) {\n  match self {\n",
-  )
+  out <+ "\n///|\n"
+  out <+
+    "impl @serde.FieldIdentifier for \{identifier} with fn name(self) {\n  match self {\n"
   for field in kept {
-    out.write_string("    \{field_case(field)} => Some(\{quote(field.name)})\n")
+    out <+ "    \{field_case(field)} => Some(\{quote(field.name)})\n"
   }
-  out.write_string("    \{unknown} => None\n  }\n}\n")
+  out <+ "    \{unknown} => None\n  }\n}\n"
 }
 
 ///|
@@ -239,10 +229,8 @@ fn write_field_metadata(
   identifier : String,
   fields : Array[Field],
 ) -> Unit {
-  out.write_string("\n///|\n")
-  out.write_string(
-    "let \{binding} : ReadOnlyArray[String] = \{name_list(fields)}\n",
-  )
+  out <+ "\n///|\n"
+  out <+ "let \{binding} : ReadOnlyArray[String] = \{name_list(fields)}\n"
   write_field_identifier(out, identifier, fields)
 }
 
@@ -258,10 +246,9 @@ fn write_all_field_metadata(out : StringBuilder, target : Target) -> Unit {
       )
     Variant(cases) => {
       let names = cases.map(c => quote(c.name))
-      out.write_string("\n///|\n")
-      out.write_string(
-        "let \{variant_names_name(target)} : ReadOnlyArray[String] = [\{names.join(", ")}]\n",
-      )
+      out <+ "\n///|\n"
+      out <+
+        "let \{variant_names_name(target)} : ReadOnlyArray[String] = [\{names.join(", ")}]\n"
       for index, case_ in cases {
         match case_.payload {
           Struct(fields) =>
@@ -297,13 +284,12 @@ fn write_field_loop(
 ) -> Unit {
   for field in fields {
     if !field.skip {
-      out.write_string("\{indent}let mut f_\{field.ident} = None\n")
+      out <+ "\{indent}let mut f_\{field.ident} = None\n"
     }
   }
-  out.write_string(
-    "\{indent}while (deserializer.deserialize_field() : \{field_identifier}?) is Some(field) {\n",
-  )
-  out.write_string("\{indent}  match field {\n")
+  out <+
+    "\{indent}while (deserializer.deserialize_field() : \{field_identifier}?) is Some(field) {\n"
+  out <+ "\{indent}  match field {\n"
   for field in fields {
     if field.skip {
       continue
@@ -316,15 +302,11 @@ fn write_field_loop(
     } else {
       "Some(deserializer.deserialize_field_value())"
     }
-    out.write_string(
-      "\{indent}    \{field_case(field)} => f_\{field.ident} = \{rhs}\n",
-    )
+    out <+ "\{indent}    \{field_case(field)} => f_\{field.ident} = \{rhs}\n"
   }
-  out.write_string(
-    "\{indent}    \{unknown_field_case()} => deserializer.skip_value()\n",
-  )
-  out.write_string("\{indent}  }\n")
-  out.write_string("\{indent}}\n")
+  out <+ "\{indent}    \{unknown_field_case()} => deserializer.skip_value()\n"
+  out <+ "\{indent}  }\n"
+  out <+ "\{indent}}\n"
 }
 
 ///|
@@ -354,199 +336,164 @@ fn write_extend(out : StringBuilder, target : Target, trait_ : String) -> Unit {
   } else {
     "deserialize"
   }
-  out.write_string("\n///|\n")
-  out.write_string(
-    "#deprecated(\"reach it through the `\{trait_}` bound\", skip_current_package=true)\n",
-  )
-  out.write_string("#doc(hidden)\n")
-  out.write_string(
-    "\{visibility}extend \{target.name} with @serde.\{trait_}::{\{method_name}}\n",
-  )
+  out <+ "\n///|\n"
+  out <+
+    "#deprecated(\"reach it through the `\{trait_}` bound\", skip_current_package=true)\n"
+  out <+ "#doc(hidden)\n"
+  out <+
+    "\{visibility}extend \{target.name} with @serde.\{trait_}::{\{method_name}}\n"
 }
 
 ///|
 fn write_serialize(out : StringBuilder, target : Target) -> Unit {
   let self_ = if target.reads_self() { "self" } else { "_self" }
-  out.write_string("\n///|\n")
-  out.write_string(
-    "\{target.impl_head("Serialize")} with fn serialize(\{self_}, serializer) {\n",
-  )
+  out <+ "\n///|\n"
+  out <+
+    "\{target.impl_head("Serialize")} with fn serialize(\{self_}, serializer) {\n"
   match target.shape {
     UnitStruct =>
-      out.write_string(
-        "  serializer.serialize_unit_struct(\{quote(target.name)})\n",
-      )
+      out <+ "  serializer.serialize_unit_struct(\{quote(target.name)})\n"
     NewtypeStruct =>
-      out.write_string(
-        "  serializer.serialize_newtype_struct(\{quote(target.name)}, self.0)\n",
-      )
+      out <+
+        "  serializer.serialize_newtype_struct(\{quote(target.name)}, self.0)\n"
     Record(fields) => {
       let kept = fields.filter(f => !f.skip)
-      out.write_string(
-        "  serializer.serialize_struct_begin(\{quote(target.name)}, \{kept.length()})\n",
-      )
+      out <+
+        "  serializer.serialize_struct_begin(\{quote(target.name)}, \{kept.length()})\n"
       for field in kept {
-        out.write_string(
-          "  serializer.serialize_field(\{quote(field.name)}, self.\{field.ident})\n",
-        )
+        out <+
+          "  serializer.serialize_field(\{quote(field.name)}, self.\{field.ident})\n"
       }
-      out.write_string("  serializer.serialize_struct_end()\n")
+      out <+ "  serializer.serialize_struct_end()\n"
     }
     TupleStruct(arity) => {
-      out.write_string(
-        "  serializer.serialize_tuple_struct_begin(\{quote(target.name)}, \{arity})\n",
-      )
+      out <+
+        "  serializer.serialize_tuple_struct_begin(\{quote(target.name)}, \{arity})\n"
       for i in 0..<arity {
-        out.write_string(
-          "  serializer.serialize_tuple_struct_field(self.\{i})\n",
-        )
+        out <+ "  serializer.serialize_tuple_struct_field(self.\{i})\n"
       }
-      out.write_string("  serializer.serialize_tuple_struct_end()\n")
+      out <+ "  serializer.serialize_tuple_struct_end()\n"
     }
     Variant(cases) => {
-      out.write_string("  match self {\n")
+      out <+ "  match self {\n"
       for index, case_ in cases {
         let info = variant_info(target, index, case_)
         match case_.payload {
           Unit =>
-            out.write_string(
-              "    \{case_.ident} => serializer.serialize_unit_variant(\{info})\n",
-            )
+            out <+
+              "    \{case_.ident} => serializer.serialize_unit_variant(\{info})\n"
           Newtype =>
-            out.write_string(
-              "    \{case_.ident}(v0) => serializer.serialize_newtype_variant(\{info}, v0)\n",
-            )
+            out <+
+              "    \{case_.ident}(v0) => serializer.serialize_newtype_variant(\{info}, v0)\n"
           Tuple(arity) => {
             let binds = Array::makei(arity, i => "v\{i}")
-            out.write_string("    \{case_.ident}(\{binds.join(", ")}) => {\n")
-            out.write_string(
-              "      serializer.serialize_tuple_variant_begin(\{info}, \{arity})\n",
-            )
+            out <+ "    \{case_.ident}(\{binds.join(", ")}) => {\n"
+            out <+
+              "      serializer.serialize_tuple_variant_begin(\{info}, \{arity})\n"
             for bind in binds {
-              out.write_string(
-                "      serializer.serialize_tuple_variant_element(\{bind})\n",
-              )
+              out <+
+                "      serializer.serialize_tuple_variant_element(\{bind})\n"
             }
-            out.write_string("      serializer.serialize_tuple_variant_end()\n")
-            out.write_string("    }\n")
+            out <+ "      serializer.serialize_tuple_variant_end()\n"
+            out <+ "    }\n"
           }
           Struct(fields) => {
             let binds = fields.mapi((i, f) => "\{f.ident}=v\{i}")
-            out.write_string("    \{case_.ident}(\{binds.join(", ")}) => {\n")
-            out.write_string(
-              "      serializer.serialize_struct_variant_begin(\{info}, \{fields.length()})\n",
-            )
+            out <+ "    \{case_.ident}(\{binds.join(", ")}) => {\n"
+            out <+
+              "      serializer.serialize_struct_variant_begin(\{info}, \{fields.length()})\n"
             for i, field in fields {
-              out.write_string(
-                "      serializer.serialize_struct_variant_field(\{quote(field.name)}, v\{i})\n",
-              )
+              out <+
+                "      serializer.serialize_struct_variant_field(\{quote(field.name)}, v\{i})\n"
             }
-            out.write_string(
-              "      serializer.serialize_struct_variant_end()\n",
-            )
-            out.write_string("    }\n")
+            out <+ "      serializer.serialize_struct_variant_end()\n"
+            out <+ "    }\n"
           }
         }
       }
-      out.write_string("  }\n")
+      out <+ "  }\n"
     }
   }
-  out.write_string("}\n")
+  out <+ "}\n"
 }
 
 ///|
 fn write_deserialize(out : StringBuilder, target : Target) -> Unit {
-  out.write_string("\n///|\n")
-  out.write_string(
-    "\{target.impl_head("Deserialize")} with fn deserialize(deserializer) {\n",
-  )
+  out <+ "\n///|\n"
+  out <+
+    "\{target.impl_head("Deserialize")} with fn deserialize(deserializer) {\n"
   match target.shape {
     UnitStruct => {
-      out.write_string(
-        "  deserializer.deserialize_unit_struct(\{quote(target.name)})\n",
-      )
+      out <+ "  deserializer.deserialize_unit_struct(\{quote(target.name)})\n"
       // Spelled with the type name rather than as a bare `{ }`, which has no
       // fields to infer the type from.
-      out.write_string("  \{target.name}::{  }\n")
+      out <+ "  \{target.name}::{  }\n"
     }
     NewtypeStruct =>
-      out.write_string(
-        "  \{target.name}(deserializer.deserialize_newtype_struct(\{quote(target.name)}))\n",
-      )
+      out <+
+        "  \{target.name}(deserializer.deserialize_newtype_struct(\{quote(target.name)}))\n"
     Record(fields) => {
       let field_names = record_field_names_name(target)
       let field_identifier = record_field_identifier_name(target)
-      out.write_string(
-        "  deserializer.deserialize_struct_begin(\{quote(target.name)}, \{field_names})\n",
-      )
+      out <+
+        "  deserializer.deserialize_struct_begin(\{quote(target.name)}, \{field_names})\n"
       write_field_loop(out, fields, field_identifier, "  ")
-      out.write_string("  {\n")
+      out <+ "  {\n"
       for field in fields {
-        out.write_string("    \{field.ident}: \{field_value(field, "    ")},\n")
+        out <+ "    \{field.ident}: \{field_value(field, "    ")},\n"
       }
-      out.write_string("  }\n")
+      out <+ "  }\n"
     }
     TupleStruct(arity) => {
-      out.write_string(
-        "  deserializer.deserialize_tuple_struct_begin(\{quote(target.name)}, \{arity})\n",
-      )
+      out <+
+        "  deserializer.deserialize_tuple_struct_begin(\{quote(target.name)}, \{arity})\n"
       for i in 0..<arity {
-        out.write_string(
-          "  let v\{i} = deserializer.deserialize_tuple_next()\n",
-        )
+        out <+ "  let v\{i} = deserializer.deserialize_tuple_next()\n"
       }
-      out.write_string("  deserializer.deserialize_tuple_end()\n")
+      out <+ "  deserializer.deserialize_tuple_end()\n"
       let binds = Array::makei(arity, i => "v\{i}")
-      out.write_string("  \{target.name}(\{binds.join(", ")})\n")
+      out <+ "  \{target.name}(\{binds.join(", ")})\n"
     }
     Variant(cases) => {
       let variants = variant_names_name(target)
-      out.write_string(
-        "  let value = match deserializer.deserialize_enum_begin(\{quote(target.name)}, \{variants}) {\n",
-      )
+      out <+
+        "  let value = match deserializer.deserialize_enum_begin(\{quote(target.name)}, \{variants}) {\n"
       for i, case_ in cases {
         match case_.payload {
           Unit => {
-            out.write_string("    \{i} => {\n")
-            out.write_string("      deserializer.deserialize_unit_variant()\n")
-            out.write_string("      \{case_.ident}\n")
-            out.write_string("    }\n")
+            out <+ "    \{i} => {\n"
+            out <+ "      deserializer.deserialize_unit_variant()\n"
+            out <+ "      \{case_.ident}\n"
+            out <+ "    }\n"
           }
           Newtype =>
-            out.write_string(
-              "    \{i} => \{case_.ident}(deserializer.deserialize_newtype_variant())\n",
-            )
+            out <+
+              "    \{i} => \{case_.ident}(deserializer.deserialize_newtype_variant())\n"
           Tuple(arity) => {
-            out.write_string("    \{i} => {\n")
-            out.write_string(
-              "      deserializer.deserialize_tuple_begin(\{arity})\n",
-            )
+            out <+ "    \{i} => {\n"
+            out <+ "      deserializer.deserialize_tuple_begin(\{arity})\n"
             for i in 0..<arity {
-              out.write_string(
-                "      let v\{i} = deserializer.deserialize_tuple_next()\n",
-              )
+              out <+ "      let v\{i} = deserializer.deserialize_tuple_next()\n"
             }
-            out.write_string("      deserializer.deserialize_tuple_end()\n")
+            out <+ "      deserializer.deserialize_tuple_end()\n"
             let binds = Array::makei(arity, i => "v\{i}")
-            out.write_string("      \{case_.ident}(\{binds.join(", ")})\n")
-            out.write_string("    }\n")
+            out <+ "      \{case_.ident}(\{binds.join(", ")})\n"
+            out <+ "    }\n"
           }
           Struct(fields) => {
             let field_names = variant_field_names_name(target, i)
             let field_identifier = variant_field_identifier_name(target, i)
-            out.write_string("    \{i} => {\n")
-            out.write_string(
-              "      deserializer.deserialize_struct_begin(\{quote(case_.name)}, \{field_names})\n",
-            )
+            out <+ "    \{i} => {\n"
+            out <+
+              "      deserializer.deserialize_struct_begin(\{quote(case_.name)}, \{field_names})\n"
             write_field_loop(out, fields, field_identifier, "      ")
-            out.write_string("      \{case_.ident}(\n")
+            out <+ "      \{case_.ident}(\n"
             for field in fields {
-              out.write_string(
-                "        \{field.ident}=\{field_value(field, "        ")},\n",
-              )
+              out <+
+                "        \{field.ident}=\{field_value(field, "        ")},\n"
             }
-            out.write_string("      )\n")
-            out.write_string("    }\n")
+            out <+ "      )\n"
+            out <+ "    }\n"
           }
         }
       }
@@ -554,15 +501,14 @@ fn write_deserialize(out : StringBuilder, target : Target) -> Unit {
       // raise rather than return an index outside `variants`. The arm exists
       // for exhaustiveness, and reports a format that broke that contract
       // rather than trusting it.
-      out.write_string(
-        "    index =>\n      raise @serde.UnknownVariant(path=deserializer.path(), variant=index.to_string(), expected=\{variants})\n",
-      )
-      out.write_string("  }\n")
-      out.write_string("  deserializer.deserialize_enum_end()\n")
-      out.write_string("  value\n")
+      out <+
+        "    index =>\n      raise @serde.UnknownVariant(path=deserializer.path(), variant=index.to_string(), expected=\{variants})\n"
+      out <+ "  }\n"
+      out <+ "  deserializer.deserialize_enum_end()\n"
+      out <+ "  value\n"
     }
   }
-  out.write_string("}\n")
+  out <+ "}\n"
 }
 
 ///|
@@ -575,7 +521,7 @@ fn emit(targets : Array[Target]) -> String? {
   }
   let out = StringBuilder()
   out.write_string(HEADER)
-  out.write_string("\n")
+  out <+ "\n"
   for target in wanted {
     if target.serialize {
       write_serialize(out, target)
