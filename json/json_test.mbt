@@ -1069,3 +1069,345 @@ test "values borrow from the document, and detach copies out" {
   // Round-tripping a detached value is byte-identical to the original.
   assert_eq(@json.to_bytes(value.detach()), @json.to_bytes(value))
 }
+
+///|
+fn int64_outcome(text : String) -> String {
+  try (@json.from_string(text) : Int64) catch {
+    e => "\{e}"
+  } noraise {
+    value => "\{value}"
+  }
+}
+
+///|
+fn uint64_outcome(text : String) -> String {
+  try (@json.from_string(text) : UInt64) catch {
+    e => "\{e}"
+  } noraise {
+    value => "\{value}"
+  }
+}
+
+///|
+fn int32_outcome(text : String) -> String {
+  try (@json.from_string(text) : Int32) catch {
+    e => "\{e}"
+  } noraise {
+    value => "\{value}"
+  }
+}
+
+///|
+fn value_outcome(text : String) -> String {
+  try (@json.from_string(text) : @serde.Value) catch {
+    e => "\{e}"
+  } noraise {
+    @serde.Int(value) => "Int \{value}"
+    @serde.UInt(value) => "UInt \{value}"
+    @serde.Double(value) => "Double \{value}"
+    value => "\{value}"
+  }
+}
+
+///|
+test "signed integers: spellings the number scanner accepts" {
+  inspect(
+    int64_outcome("0"),
+    content=(
+      #|0
+    ),
+  )
+  inspect(
+    int64_outcome("-0"),
+    content=(
+      #|0
+    ),
+  )
+  inspect(
+    int64_outcome("+5"),
+    content=(
+      #|5
+    ),
+  )
+  inspect(
+    int64_outcome("007"),
+    content=(
+      #|7
+    ),
+  )
+  inspect(
+    int64_outcome(" 12 "),
+    content=(
+      #|12
+    ),
+  )
+  inspect(
+    int64_outcome("-00000000000000000000000012"),
+    content=(
+      #|-12
+    ),
+  )
+  // More than 19 characters, but only 19 significant digits.
+  inspect(
+    int64_outcome("09223372036854775807"),
+    content=(
+      #|9223372036854775807
+    ),
+  )
+  inspect(
+    int64_outcome("-09223372036854775808"),
+    content=(
+      #|-9223372036854775808
+    ),
+  )
+}
+
+///|
+test "signed integers: the digits past Int64's range are refused" {
+  // 19 digits still fit the scanner's mantissa but not an `Int64`.
+  inspect(
+    int64_outcome("9223372036854775808"),
+    content=(
+      #|$: invalid value: expected an integer that fits in 64 bits, found 9223372036854775808
+    ),
+  )
+  inspect(
+    int64_outcome("-9223372036854775809"),
+    content=(
+      #|$: invalid value: expected an integer that fits in 64 bits, found -9223372036854775809
+    ),
+  )
+  inspect(
+    int64_outcome("9999999999999999999"),
+    content=(
+      #|$: invalid value: expected an integer that fits in 64 bits, found 9999999999999999999
+    ),
+  )
+  // 20 digits no longer fit the mantissa either.
+  inspect(
+    int64_outcome("10000000000000000000"),
+    content=(
+      #|$: invalid value: expected an integer that fits in 64 bits, found 10000000000000000000
+    ),
+  )
+}
+
+///|
+test "signed integers: tokens that are not integers" {
+  inspect(
+    int64_outcome("1.0"),
+    content=(
+      #|$: invalid value: expected an integer, found 1.0
+    ),
+  )
+  inspect(
+    int64_outcome("1."),
+    content=(
+      #|$: invalid value: expected an integer, found 1.
+    ),
+  )
+  inspect(
+    int64_outcome(".5"),
+    content=(
+      #|$: invalid value: expected an integer, found .5
+    ),
+  )
+  inspect(
+    int64_outcome("1e2"),
+    content=(
+      #|$: invalid value: expected an integer, found 1e2
+    ),
+  )
+  inspect(
+    int64_outcome("1e"),
+    content=(
+      #|$: trailing input after value
+    ),
+  )
+  inspect(
+    int64_outcome("-"),
+    content=(
+      #|$: invalid type: expected a number, found a number
+    ),
+  )
+  inspect(
+    int64_outcome("+"),
+    content=(
+      #|$: invalid type: expected a number, found a number
+    ),
+  )
+  inspect(
+    int64_outcome("x"),
+    content=(
+      #|$: invalid type: expected a number, found a number
+    ),
+  )
+  inspect(
+    int64_outcome(""),
+    content=(
+      #|$: invalid type: expected a number, found end of input
+    ),
+  )
+}
+
+///|
+test "unsigned integers keep their own range and refuse any minus sign" {
+  inspect(
+    uint64_outcome("0"),
+    content=(
+      #|0
+    ),
+  )
+  inspect(
+    uint64_outcome("+5"),
+    content=(
+      #|5
+    ),
+  )
+  inspect(
+    uint64_outcome("007"),
+    content=(
+      #|7
+    ),
+  )
+  inspect(
+    uint64_outcome("9999999999999999999"),
+    content=(
+      #|9999999999999999999
+    ),
+  )
+  inspect(
+    uint64_outcome("18446744073709551615"),
+    content=(
+      #|18446744073709551615
+    ),
+  )
+  inspect(
+    uint64_outcome("018446744073709551615"),
+    content=(
+      #|18446744073709551615
+    ),
+  )
+  inspect(
+    uint64_outcome("18446744073709551616"),
+    content=(
+      #|$: invalid value: expected an unsigned integer that fits in 64 bits, found 18446744073709551616
+    ),
+  )
+  inspect(
+    uint64_outcome("-0"),
+    content=(
+      #|$: invalid value: expected an unsigned integer, found -0
+    ),
+  )
+  inspect(
+    uint64_outcome("-1"),
+    content=(
+      #|$: invalid value: expected an unsigned integer, found -1
+    ),
+  )
+  inspect(
+    uint64_outcome("1.0"),
+    content=(
+      #|$: invalid value: expected an unsigned integer, found 1.0
+    ),
+  )
+  inspect(
+    uint64_outcome("1e2"),
+    content=(
+      #|$: invalid value: expected an unsigned integer, found 1e2
+    ),
+  )
+}
+
+///|
+test "narrower integers check their range after reading" {
+  inspect(
+    int32_outcome("2147483647"),
+    content=(
+      #|2147483647
+    ),
+  )
+  inspect(
+    int32_outcome("-2147483648"),
+    content=(
+      #|-2147483648
+    ),
+  )
+  inspect(
+    int32_outcome("2147483648"),
+    content=(
+      #|$: invalid value: expected an int, found 2147483648
+    ),
+  )
+  inspect(
+    int32_outcome("-2147483649"),
+    content=(
+      #|$: invalid value: expected an int, found -2147483649
+    ),
+  )
+}
+
+///|
+test "untyped numbers take the narrowest representation that holds them" {
+  inspect(
+    value_outcome("007"),
+    content=(
+      #|Int 7
+    ),
+  )
+  inspect(
+    value_outcome("-0"),
+    content=(
+      #|Int 0
+    ),
+  )
+  inspect(
+    value_outcome("9223372036854775807"),
+    content=(
+      #|Int 9223372036854775807
+    ),
+  )
+  inspect(
+    value_outcome("9223372036854775808"),
+    content=(
+      #|UInt 9223372036854775808
+    ),
+  )
+  inspect(
+    value_outcome("-9223372036854775808"),
+    content=(
+      #|Int -9223372036854775808
+    ),
+  )
+  inspect(
+    value_outcome("-9223372036854775809"),
+    content=(
+      #|Double -9223372036854776000
+    ),
+  )
+  inspect(
+    value_outcome("18446744073709551615"),
+    content=(
+      #|UInt 18446744073709551615
+    ),
+  )
+  inspect(
+    value_outcome("18446744073709551616"),
+    content=(
+      #|Double 18446744073709552000
+    ),
+  )
+  inspect(
+    value_outcome("1.5"),
+    content=(
+      #|Double 1.5
+    ),
+  )
+  inspect(
+    value_outcome("1e2"),
+    content=(
+      #|Double 100
+    ),
+  )
+}

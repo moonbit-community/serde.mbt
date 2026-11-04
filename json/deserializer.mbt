@@ -637,7 +637,11 @@ fn JsonDeserializer::identifier(
 ///|
 /// One scanned number token: its extent, and the mantissa and exponent that a
 /// float conversion needs, all from a single pass.
+#valtype
 priv struct NumberScan {
+  /// Bytes the token occupies. A number has at least one digit, so 0 means the
+  /// input does not begin with a number and the other fields mean nothing.
+  used : Int32
   integral : Bool
   negative : Bool
   mantissa : UInt64
@@ -658,9 +662,9 @@ const MANTISSA_DIGITS : Int32 = 19
 const EXPONENT_CLAMP : Int32 = 100000
 
 ///|
-/// Scans a JSON number at the start of `input`, returning the scan and how
-/// many bytes it consumed. `None` when `input` does not begin with a number.
-fn scan_number(input : BytesView) -> (NumberScan, Int32)? {
+/// Scans a JSON number at the start of `input`. This runs once per number in
+/// the document, so the result is a value type rather than anything on the heap.
+fn scan_number(input : BytesView) -> NumberScan {
   let len = input.length()
   let mut i = 0
   let negative = i < len && input[i].to_int() == 0x2D
@@ -708,7 +712,14 @@ fn scan_number(input : BytesView) -> (NumberScan, Int32)? {
     i = i + 1
   }
   if !any_digit {
-    return None
+    return {
+      used: 0,
+      integral: false,
+      negative: false,
+      mantissa: 0UL,
+      exponent: 0L,
+      truncated: false,
+    }
   }
   if i < len && (input[i].to_int() == 0x65 || input[i].to_int() == 0x45) {
     let mut j = i + 1
@@ -737,18 +748,14 @@ fn scan_number(input : BytesView) -> (NumberScan, Int32)? {
       i = j
     }
   }
-  Some(
-    (
-      {
-        integral,
-        negative,
-        mantissa,
-        exponent: exponent.to_int64(),
-        truncated,
-      },
-      i,
-    ),
-  )
+  {
+    used: i,
+    integral,
+    negative,
+    mantissa,
+    exponent: exponent.to_int64(),
+    truncated,
+  }
 }
 
 ///|
@@ -758,14 +765,16 @@ fn scan_number(input : BytesView) -> (NumberScan, Int32)? {
 /// it declines — truncated mantissas, subnormals, overflow, exact ties — falls
 /// through to core's exact converter. Results therefore match
 /// `@string.parse_double` on every input.
-fn scan_to_double(scan : NumberScan, text : () -> String) -> Double? {
+fn scan_to_double(scan : NumberScan, token : BytesView) -> Double? {
   if !scan.truncated {
     let fast = try_eisel_lemire64(scan.mantissa, scan.exponent, scan.negative)
     if !fast.is_nan() {
       return Some(fast)
     }
   }
-  let exact = @string.parse_double(text()) catch { _ => return None }
+  let exact = @string.parse_double(@ascii.decode_lossy(token)) catch {
+    _ => return None
+  }
   Some(exact)
 }
 
@@ -773,14 +782,55 @@ fn scan_to_double(scan : NumberScan, text : () -> String) -> Double? {
 /// Scans the number at the cursor, advancing past it.
 fn JsonDeserializer::take_number(
   self : JsonDeserializer,
-) -> (NumberScan, Int32, Int32) raise @serde.DeError {
+) -> NumberScan raise @serde.DeError {
   self.skip_ws()
-  let start = self.pos
-  guard scan_number(self.input[start:]) is Some((scan, used)) else {
-    self.mismatch("a number")
+  let scan = scan_number(self.input[self.pos:])
+  guard scan.used > 0 else { self.mismatch("a number") }
+  self.pos = self.pos + scan.used
+  scan
+}
+
+///|
+/// The bytes of the token `take_number` just consumed.
+fn JsonDeserializer::scanned_token(
+  self : JsonDeserializer,
+  scan : NumberScan,
+) -> BytesView {
+  self.input[self.pos - scan.used:self.pos]
+}
+
+///|
+/// The value of the integral token `take_number` just consumed.
+///
+/// An untruncated mantissa already holds the exact magnitude: at most 19
+/// significant digits always fit a `UInt64`. Everything else, including every
+/// out-of-range token, goes back to the digits, which is also where the errors
+/// are raised.
+fn JsonDeserializer::scanned_int64(
+  self : JsonDeserializer,
+  scan : NumberScan,
+) -> Int64 raise @serde.DeError {
+  if scan.truncated || scan.mantissa > 9223372036854775807UL {
+    return self.int64_in_span(self.pos - scan.used, self.pos)
   }
-  self.pos = start + used
-  (scan, start, self.pos)
+  let magnitude = scan.mantissa.reinterpret_as_int64()
+  if scan.negative {
+    -magnitude
+  } else {
+    magnitude
+  }
+}
+
+///|
+/// The unsigned counterpart, which leaves any minus sign to be refused.
+fn JsonDeserializer::scanned_uint64(
+  self : JsonDeserializer,
+  scan : NumberScan,
+) -> UInt64 raise @serde.DeError {
+  if scan.truncated || scan.negative {
+    return self.uint64_in_span(self.pos - scan.used, self.pos)
+  }
+  scan.mantissa
 }
 
 ///|
@@ -888,11 +938,14 @@ fn JsonDeserializer::read_int64(
       _ => raise self.invalid_value_error("an integer", text)
     }
   }
-  let (scan, start, end) = self.take_number()
+  let scan = self.take_number()
   guard scan.integral else {
-    raise self.invalid_value_error("an integer", self.token_text(start, end))
+    raise self.invalid_value_error(
+      "an integer",
+      @ascii.decode_lossy(self.scanned_token(scan)),
+    )
   }
-  self.int64_in_span(start, end)
+  self.scanned_int64(scan)
 }
 
 ///|
@@ -905,11 +958,12 @@ fn JsonDeserializer::read_double(
       _ => raise self.invalid_value_error("a number", text)
     }
   }
-  let (scan, start, end) = self.take_number()
-  match scan_to_double(scan, () => self.token_text(start, end)) {
+  let scan = self.take_number()
+  let token = self.scanned_token(scan)
+  match scan_to_double(scan, token) {
     Some(value) => value
     None =>
-      raise self.invalid_value_error("a number", self.token_text(start, end))
+      raise self.invalid_value_error("a number", @ascii.decode_lossy(token))
   }
 }
 
@@ -1037,25 +1091,33 @@ fn JsonDeserializer::parse_any(
       Null
     }
     _ => {
-      let (scan, from, to) = self.take_number()
-      let text = () => self.token_text(from, to)
+      let scan = self.take_number()
+      let token = self.scanned_token(scan)
       if scan.integral {
         // Prefer the narrowest representation that holds the digits, then fall
         // back to a float the way most JSON readers do.
-        @serde.Int(self.int64_in_span(from, to)) catch {
+        @serde.Int(self.scanned_int64(scan)) catch {
           _ =>
-            @serde.UInt(self.uint64_in_span(from, to)) catch {
+            @serde.UInt(self.scanned_uint64(scan)) catch {
               _ =>
-                match scan_to_double(scan, text) {
+                match scan_to_double(scan, token) {
                   Some(value) => @serde.Double(value)
-                  None => raise self.invalid_value_error("a number", text())
+                  None =>
+                    raise self.invalid_value_error(
+                      "a number",
+                      @ascii.decode_lossy(token),
+                    )
                 }
             }
         }
       } else {
-        match scan_to_double(scan, text) {
+        match scan_to_double(scan, token) {
           Some(value) => @serde.Double(value)
-          None => raise self.invalid_value_error("a number", text())
+          None =>
+            raise self.invalid_value_error(
+              "a number",
+              @ascii.decode_lossy(token),
+            )
         }
       }
     }
@@ -1139,14 +1201,14 @@ pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_uint64(
       _ => raise self.invalid_value_error("an unsigned integer", text)
     }
   }
-  let (scan, start, end) = self.take_number()
+  let scan = self.take_number()
   guard scan.integral else {
     raise self.invalid_value_error(
       "an unsigned integer",
-      self.token_text(start, end),
+      @ascii.decode_lossy(self.scanned_token(scan)),
     )
   }
-  self.uint64_in_span(start, end)
+  self.scanned_uint64(scan)
 }
 
 ///|

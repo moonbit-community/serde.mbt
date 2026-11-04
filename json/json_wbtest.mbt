@@ -152,14 +152,11 @@ fn same_bits(text : String) -> Bool {
   // exercises exactly the pair `read_double` uses and the library exports
   // nothing extra to make itself testable.
   let input = @utf8.encode(text)[:]
-  let mine = match scan_number(input) {
-    Some((scan, used)) =>
-      if used == input.length() {
-        scan_to_double(scan, () => @ascii.decode_lossy(input))
-      } else {
-        None
-      }
-    None => None
+  let scan = scan_number(input)
+  let mine = if scan.used > 0 && scan.used == input.length() {
+    scan_to_double(scan, input)
+  } else {
+    None
   }
   let theirs : Double? = Some(@string.parse_double(text)) catch { _ => None }
   match (mine, theirs) {
