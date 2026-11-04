@@ -2,29 +2,38 @@
 /// Mutable path state used by the streaming reader.
 ///
 /// At each depth, a non-negative value in `indices` is a sequence index;
-/// `-1` means the corresponding entry in `keys` is a struct field or map key.
+/// `FIELD_NAME` means the corresponding entry in `keys` is a struct field, and
+/// `RAW_KEY` means the entry in `raw_keys` is a map key, still as bytes because
+/// only an error ever needs its text.
 /// Slots are reused and `depth` selects the active prefix, so advancing through
 /// successful input does not allocate or resize once the maximum nesting depth
 /// seen so far has been reached.
 priv struct PathTracker {
   indices : Array[Int32]
   keys : Array[String]
+  raw_keys : Array[BytesView]
   mut depth : Int32
 }
 
 ///|
+const FIELD_NAME : Int32 = -1
+
+///|
+const RAW_KEY : Int32 = -2
+
+///|
 fn PathTracker::new() -> PathTracker {
-  { indices: [], keys: [], depth: 0, }
+  { indices: [], keys: [], raw_keys: [], depth: 0, }
 }
 
 ///|
 fn PathTracker::materialize(self : PathTracker) -> @serde.Path {
   for i in 0..<self.depth; current = @serde.Root {
     let index = self.indices[i]
-    continue if index < 0 {
-        current.key(self.keys[i])
-      } else {
-        current.index(index)
+    continue match index {
+        FIELD_NAME => current.key(self.keys[i])
+        RAW_KEY => current.key(@ascii.decode_lossy(self.raw_keys[i]))
+        _ => current.index(index)
       }
   } nobreak {
     current
@@ -38,11 +47,29 @@ fn PathTracker::set_key(
   name : String,
 ) -> Unit {
   if base_depth < self.indices.length() {
-    self.indices[base_depth] = -1
+    self.indices[base_depth] = FIELD_NAME
     self.keys[base_depth] = name
   } else {
-    self.indices.push(-1)
+    self.indices.push(FIELD_NAME)
     self.keys.push(name)
+    self.raw_keys.push(b""[:])
+  }
+  self.depth = base_depth + 1
+}
+
+///|
+fn PathTracker::set_raw_key(
+  self : PathTracker,
+  base_depth : Int32,
+  key : BytesView,
+) -> Unit {
+  if base_depth < self.indices.length() {
+    self.indices[base_depth] = RAW_KEY
+    self.raw_keys[base_depth] = key
+  } else {
+    self.indices.push(RAW_KEY)
+    self.keys.push("")
+    self.raw_keys.push(key)
   }
   self.depth = base_depth + 1
 }
@@ -58,6 +85,7 @@ fn PathTracker::set_index(
   } else {
     self.indices.push(index)
     self.keys.push("")
+    self.raw_keys.push(b""[:])
   }
   self.depth = base_depth + 1
 }
@@ -202,8 +230,10 @@ fn JsonDeserializer::key_reader(
     // cannot advance a container, so sharing the tracker is an immutable
     // snapshot for the duration of this call.
     path: self.path,
-    scopes: [],
-    enums: [],
+    // Sharing these saves two arrays per key. The reader's input is empty, so
+    // anything that would open a container fails before it pushes.
+    scopes: self.scopes,
+    enums: self.enums,
     bare: Some(text),
   }
 }
@@ -447,9 +477,20 @@ fn JsonDeserializer::decode_escape(
 /// uses — a JSON string ends, escapes, or is malformed on exactly the classes
 /// it identifies — with a scalar tail for the last partial chunk, since the
 /// input belongs to the caller and may not be padded.
+/// Where a string's contents lie, and whether they stop at the closing quote
+/// (`clean`) rather than at an escape. A value type: this runs for every string
+/// and key in the document.
+#valtype
+priv struct StringExtent {
+  start : Int32
+  end : Int32
+  clean : Bool
+}
+
+///|
 fn JsonDeserializer::string_extent(
   self : JsonDeserializer,
-) -> (Int32, Int32, Bool) raise @serde.DeError {
+) -> StringExtent raise @serde.DeError {
   guard self.peek() == 0x22 else { self.mismatch("string") }
   let start = self.pos + 1
   let limit = self.input.length()
@@ -481,10 +522,10 @@ fn JsonDeserializer::classify_stop(
   self : JsonDeserializer,
   start : Int32,
   at : Int32,
-) -> (Int32, Int32, Bool) raise @serde.DeError {
+) -> StringExtent raise @serde.DeError {
   match self.code(at) {
-    0x22 => (start, at, true)
-    0x5C => (start, at, false)
+    0x22 => { start, end: at, clean: true, }
+    0x5C => { start, end: at, clean: false, }
     _ => raise self.custom_error("unescaped control character in string")
   }
 }
@@ -499,7 +540,7 @@ fn JsonDeserializer::classify_stop(
 fn JsonDeserializer::parse_string_bytes(
   self : JsonDeserializer,
 ) -> BytesView raise @serde.DeError {
-  let (start, end, clean) = self.string_extent()
+  let { start, end, clean, } = self.string_extent()
   if clean {
     self.pos = end + 1
     return self.input[start:end]
@@ -575,7 +616,7 @@ fn JsonDeserializer::variant_index(
   self : JsonDeserializer,
   variants : ArrayView[String],
 ) -> Int32 raise @serde.DeError {
-  let (start, end, clean) = self.string_extent()
+  let { start, end, clean, } = self.string_extent()
   if clean {
     for i, name in variants {
       if self.spells(start, end, name) {
@@ -606,7 +647,7 @@ fn JsonDeserializer::identifier(
   self : JsonDeserializer,
   expected : ArrayView[String],
 ) -> String raise @serde.DeError {
-  let (start, end, clean) = self.string_extent()
+  let { start, end, clean, } = self.string_extent()
   if clean {
     for name in expected {
       if self.spells(start, end, name) {
@@ -664,9 +705,9 @@ const EXPONENT_CLAMP : Int32 = 100000
 ///|
 /// Scans a JSON number at the start of `input`. This runs once per number in
 /// the document, so the result is a value type rather than anything on the heap.
-fn scan_number(input : BytesView) -> NumberScan {
+fn scan_number(input : Bytes, start : Int32) -> NumberScan {
   let len = input.length()
-  let mut i = 0
+  let mut i = start
   let negative = i < len && input[i].to_int() == 0x2D
   if negative || (i < len && input[i].to_int() == 0x2B) {
     i = i + 1
@@ -749,7 +790,7 @@ fn scan_number(input : BytesView) -> NumberScan {
     }
   }
   {
-    used: i,
+    used: i - start,
     integral,
     negative,
     mantissa,
@@ -765,17 +806,20 @@ fn scan_number(input : BytesView) -> NumberScan {
 /// it declines — truncated mantissas, subnormals, overflow, exact ties — falls
 /// through to core's exact converter. Results therefore match
 /// `@string.parse_double` on every input.
-fn scan_to_double(scan : NumberScan, token : BytesView) -> Double? {
+///
+/// NaN means the token has no `Double` value. A number token can never spell
+/// NaN, so this cannot be mistaken for a result, and unlike `Double?` it does
+/// not allocate per number.
+fn scan_to_double(scan : NumberScan, token : BytesView) -> Double {
   if !scan.truncated {
     let fast = try_eisel_lemire64(scan.mantissa, scan.exponent, scan.negative)
     if !fast.is_nan() {
-      return Some(fast)
+      return fast
     }
   }
-  let exact = @string.parse_double(@ascii.decode_lossy(token)) catch {
-    _ => return None
+  @string.parse_double(@ascii.decode_lossy(token)) catch {
+    _ => @double.not_a_number
   }
-  Some(exact)
 }
 
 ///|
@@ -784,7 +828,7 @@ fn JsonDeserializer::take_number(
   self : JsonDeserializer,
 ) -> NumberScan raise @serde.DeError {
   self.skip_ws()
-  let scan = scan_number(self.input[self.pos:])
+  let scan = scan_number(self.input, self.pos)
   guard scan.used > 0 else { self.mismatch("a number") }
   self.pos = self.pos + scan.used
   scan
@@ -929,6 +973,41 @@ fn JsonDeserializer::uint64_in_span(
 }
 
 ///|
+/// The value of the plain run of digits at `from`, consumed, for the common
+/// case that needs none of `scan_number`'s float bookkeeping: 18 digits cannot
+/// overflow. Returns -1 and consumes nothing when the token needs the full
+/// scan: no digits, too many, or digits that turn out to begin a float.
+fn JsonDeserializer::take_short_digits(
+  self : JsonDeserializer,
+  from : Int32,
+) -> Int64 {
+  let len = self.input.length()
+  let limit = if len - from > 19 { from + 19 } else { len }
+  let mut i = from
+  let mut value = 0L
+  while i < limit {
+    let digit = self.code(i) - 0x30
+    if digit < 0 || digit > 9 {
+      break
+    }
+    value = value * 10L + digit.to_int64()
+    i = i + 1
+  }
+  let digits = i - from
+  if digits == 0 || digits > 18 {
+    return -1L
+  }
+  if i < len {
+    let stop = self.code(i)
+    if stop == 0x2E || stop == 0x65 || stop == 0x45 {
+      return -1L
+    }
+  }
+  self.pos = i
+  value
+}
+
+///|
 fn JsonDeserializer::read_int64(
   self : JsonDeserializer,
 ) -> Int64 raise @serde.DeError {
@@ -937,6 +1016,17 @@ fn JsonDeserializer::read_int64(
     return @string.parse_int64(text) catch {
       _ => raise self.invalid_value_error("an integer", text)
     }
+  }
+  let negative = self.peek_or_end() == 0x2D
+  let short = self.take_short_digits(
+    if negative {
+      self.pos + 1
+    } else {
+      self.pos
+    },
+  )
+  if short >= 0L {
+    return if negative { -short } else { short }
   }
   let scan = self.take_number()
   guard scan.integral else {
@@ -960,11 +1050,11 @@ fn JsonDeserializer::read_double(
   }
   let scan = self.take_number()
   let token = self.scanned_token(scan)
-  match scan_to_double(scan, token) {
-    Some(value) => value
-    None =>
-      raise self.invalid_value_error("a number", @ascii.decode_lossy(token))
+  let value = scan_to_double(scan, token)
+  if value.is_nan() {
+    raise self.invalid_value_error("a number", @ascii.decode_lossy(token))
   }
+  value
 }
 
 ///|
@@ -1025,13 +1115,18 @@ fn JsonDeserializer::next_item(
   closing : Int32,
 ) -> Bool raise @serde.DeError {
   let scope = self.top_scope()
-  if self.peek() == closing {
+  let token = self.peek()
+  if token == closing {
     self.pos = self.pos + 1
     self.pop_scope()
     return false
   }
   if scope.count > 0 {
-    self.expect(',')
+    if token == 0x2C {
+      self.pos = self.pos + 1
+    } else {
+      self.expect(',')
+    }
   }
   true
 }
@@ -1099,26 +1194,24 @@ fn JsonDeserializer::parse_any(
         @serde.Int(self.scanned_int64(scan)) catch {
           _ =>
             @serde.UInt(self.scanned_uint64(scan)) catch {
-              _ =>
-                match scan_to_double(scan, token) {
-                  Some(value) => @serde.Double(value)
-                  None =>
-                    raise self.invalid_value_error(
-                      "a number",
-                      @ascii.decode_lossy(token),
-                    )
+              _ => {
+                let value = scan_to_double(scan, token)
+                if value.is_nan() {
+                  raise self.invalid_value_error(
+                    "a number",
+                    @ascii.decode_lossy(token),
+                  )
                 }
+                @serde.Double(value)
+              }
             }
         }
       } else {
-        match scan_to_double(scan, token) {
-          Some(value) => @serde.Double(value)
-          None =>
-            raise self.invalid_value_error(
-              "a number",
-              @ascii.decode_lossy(token),
-            )
+        let value = scan_to_double(scan, token)
+        if value.is_nan() {
+          raise self.invalid_value_error("a number", @ascii.decode_lossy(token))
         }
+        @serde.Double(value)
       }
     }
   }
@@ -1200,6 +1293,11 @@ pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_uint64(
     return @string.parse_uint64(text) catch {
       _ => raise self.invalid_value_error("an unsigned integer", text)
     }
+  }
+  self.skip_ws()
+  let short = self.take_short_digits(self.pos)
+  if short >= 0L {
+    return short.reinterpret_as_uint64()
   }
   let scan = self.take_number()
   guard scan.integral else {
@@ -1328,7 +1426,7 @@ pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_map_next_k
   let scope = self.top_scope()
   let key = self.parse_string_bytes()
   self.expect(':')
-  self.set_key(scope.base_depth, @ascii.decode_lossy(key))
+  self.path.set_raw_key(scope.base_depth, key)
   scope.count = scope.count + 1
   Some(@serde.Deserialize::deserialize(self.key_reader(key)))
 }
@@ -1369,7 +1467,7 @@ pub impl @serde.Deserializer for JsonDeserializer with fn deserialize_field(
 ) {
   guard self.next_item(0x7D) else { return None }
   let scope = self.top_scope()
-  let (start, end, clean) = self.string_extent()
+  let { start, end, clean, } = self.string_extent()
   if clean {
     let key = self.input[start:end]
     let field = @serde.FieldIdentifier::from_bytes(key, scope.count)

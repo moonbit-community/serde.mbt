@@ -151,10 +151,15 @@ fn same_bits(text : String) -> Bool {
   // Composed here rather than behind a helper in the parser, so the test
   // exercises exactly the pair `read_double` uses and the library exports
   // nothing extra to make itself testable.
-  let input = @utf8.encode(text)[:]
-  let scan = scan_number(input)
+  let input = @utf8.encode(text)
+  let scan = scan_number(input, 0)
   let mine = if scan.used > 0 && scan.used == input.length() {
-    scan_to_double(scan, input)
+    let value = scan_to_double(scan, input[:])
+    if value.is_nan() {
+      None
+    } else {
+      Some(value)
+    }
   } else {
     None
   }

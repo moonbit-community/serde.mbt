@@ -1411,3 +1411,280 @@ test "untyped numbers take the narrowest representation that holds them" {
     ),
   )
 }
+
+///|
+test "integers: the edges of the short and long digit paths" {
+  // 18 digits never overflow; 19 may, and take the checked path.
+  inspect(
+    int64_outcome("999999999999999999"),
+    content=(
+      #|999999999999999999
+    ),
+  )
+  inspect(
+    int64_outcome("-999999999999999999"),
+    content=(
+      #|-999999999999999999
+    ),
+  )
+  inspect(
+    int64_outcome("1000000000000000000"),
+    content=(
+      #|1000000000000000000
+    ),
+  )
+  inspect(
+    int64_outcome("-1000000000000000000"),
+    content=(
+      #|-1000000000000000000
+    ),
+  )
+  inspect(
+    uint64_outcome("999999999999999999"),
+    content=(
+      #|999999999999999999
+    ),
+  )
+  inspect(
+    uint64_outcome("1000000000000000000"),
+    content=(
+      #|1000000000000000000
+    ),
+  )
+  // Where the digits stop decides what the token was.
+  inspect(
+    int64_outcome("1E2"),
+    content=(
+      #|$: invalid value: expected an integer, found 1E2
+    ),
+  )
+  inspect(
+    int64_outcome("01.5"),
+    content=(
+      #|$: invalid value: expected an integer, found 01.5
+    ),
+  )
+  inspect(
+    int64_outcome("1-"),
+    content=(
+      #|$: trailing input after value
+    ),
+  )
+  inspect(
+    int64_outcome("--1"),
+    content=(
+      #|$: invalid type: expected a number, found a number
+    ),
+  )
+  inspect(
+    int64_outcome("-+1"),
+    content=(
+      #|$: invalid type: expected a number, found a number
+    ),
+  )
+  inspect(
+    int64_outcome("- 1"),
+    content=(
+      #|$: invalid type: expected a number, found a number
+    ),
+  )
+  inspect(
+    uint64_outcome("1E2"),
+    content=(
+      #|$: invalid value: expected an unsigned integer, found 1E2
+    ),
+  )
+  inspect(
+    uint64_outcome("+-1"),
+    content=(
+      #|$: invalid type: expected a number, found a number
+    ),
+  )
+  // Long runs of leading zeros are still small numbers.
+  inspect(
+    uint64_outcome("0000000000000000000000012"),
+    content=(
+      #|12
+    ),
+  )
+  // The token ends where the array says it does.
+  assert_eq((@json.from_string("[1,-2 , 3\n]") : Array[Int64]), [1, -2, 3])
+  assert_eq((@json.from_string("[1,2 , 3\n]") : Array[UInt64]), [1, 2, 3])
+}
+
+///|
+test "doubles a token cannot convert to are refused, not returned as NaN" {
+  try (@json.from_string("[1.5,1e400]") : Array[Double]) catch {
+    e =>
+      inspect(
+        e,
+        content=(
+          #|$[1]: invalid value: expected a number, found 1e400
+        ),
+      )
+  } noraise {
+    _ => fail("expected a value error")
+  }
+  assert_eq((@json.from_string("[1.5, -2e3, 0.1]") : Array[Double]), [
+    1.5, -2000.0, 0.1,
+  ])
+}
+
+///|
+/// The error a read raises, or `ok`. The witness only selects the type.
+fn[T : @serde.Deserialize] read_error(text : String, _witness : T?) -> String {
+  try (@json.from_string(text) : T) catch {
+    e => "\{e}"
+  } noraise {
+    _ => "ok"
+  }
+}
+
+///|
+test "map keys appear in error paths, decoded only when needed" {
+  let flat : Map[String, Int32]? = None
+  inspect(
+    read_error("{\"a\":1,\"b\":\"x\"}", flat),
+    content=(
+      #|$.b: invalid type: expected a number, found string
+    ),
+  )
+  inspect(
+    read_error("{\"a\\u0062\":\"x\"}", flat),
+    content=(
+      #|$.ab: invalid type: expected a number, found string
+    ),
+  )
+  inspect(
+    read_error("{\"a\\nb\":\"x\"}", flat),
+    content=(
+      #|$.a
+      #|b: invalid type: expected a number, found string
+    ),
+  )
+  inspect(
+    read_error("{\"\":\"x\"}", flat),
+    content=(
+      #|$.: invalid type: expected a number, found string
+    ),
+  )
+  let nested : Map[String, Map[String, Int32]]? = None
+  inspect(
+    read_error("{\"a\":{\"b\":1},\"c\":{\"d\":\"x\"}}", nested),
+    content=(
+      #|$.c.d: invalid type: expected a number, found string
+    ),
+  )
+  let lists : Map[String, Array[Int32]]? = None
+  inspect(
+    read_error("{\"a\":[1,\"x\"]}", lists),
+    content=(
+      #|$.a[1]: invalid type: expected a number, found string
+    ),
+  )
+  let rows : Array[Map[String, Int32]]? = None
+  inspect(
+    read_error("[{\"a\":1},\"x\"]", rows),
+    content=(
+      #|$[1]: expected `{`, found `"`
+    ),
+  )
+  inspect(
+    read_error("[{\"a\":1},{\"b\":\"x\"}]", rows),
+    content=(
+      #|$[1].b: invalid type: expected a number, found string
+    ),
+  )
+  let points : Map[String, Point]? = None
+  inspect(
+    read_error("{\"a\":{\"x\":1,\"y\":2},\"b\":{\"x\":\"q\"}}", points),
+    content=(
+      #|$.b.x: invalid type: expected a number, found string
+    ),
+  )
+}
+
+///|
+test "a path slot can hold a map key after a field and a field after a map key" {
+  let map_then_struct : (Map[String, Int32], Point)? = None
+  inspect(
+    read_error("[{\"a\":1},{\"x\":\"q\"}]", map_then_struct),
+    content=(
+      #|$[1].x: invalid type: expected a number, found string
+    ),
+  )
+  let struct_then_map : (Point, Map[String, Int32])? = None
+  inspect(
+    read_error("[{\"x\":1,\"y\":2},{\"k\":\"q\"}]", struct_then_map),
+    content=(
+      #|$[1].k: invalid type: expected a number, found string
+    ),
+  )
+}
+
+///|
+test "map keys survive unescaping and repeats" {
+  let m : Map[String, Int32] = @json.from_string(
+    "{\"a\\nb\":1,\"\\u00e9\":2,\"a\\nb\":3}",
+  )
+  assert_eq(m.length(), 2)
+  assert_eq(m.get("a\nb"), Some(3))
+  assert_eq(m.get("é"), Some(2))
+}
+
+///|
+test "a map key is read through its own type" {
+  let keyed : Map[Int32, Int32] = @json.from_string("{\"1\":2,\"-3\":4}")
+  assert_eq(keyed.get(-3), Some(4))
+  inspect(
+    read_error("{\"x\":2}", (None : Map[Int32, Int32]?)),
+    content=(
+      #|$.x: invalid value: expected an integer, found x
+    ),
+  )
+}
+
+///|
+/// A key type that tries to read a container of every kind before settling for
+/// the string it is. None of those can start on a bare key, so none of them
+/// may disturb the document the key sits in.
+#derive(Hash, Eq)
+priv struct ProbingKey(String)
+
+///|
+impl @serde.Deserialize for ProbingKey with fn deserialize(d) {
+  let refused = []
+  ignore(d.deserialize_seq_begin()) catch {
+    e => refused.push("\{e}")
+  }
+  ignore(d.deserialize_map_begin()) catch {
+    e => refused.push("\{e}")
+  }
+  d.deserialize_struct_begin("K", []) catch {
+    e => refused.push("\{e}")
+  }
+  d.deserialize_tuple_begin(1) catch {
+    e => refused.push("\{e}")
+  }
+  ignore(d.deserialize_enum_begin("K", ["k"])) catch {
+    e => refused.push("\{e}")
+  }
+  guard refused.length() == 5 else { abort("a bare key opened a container") }
+  ProbingKey(d.deserialize_string())
+}
+
+///|
+test "reading a map key leaves the surrounding containers intact" {
+  let doc = "{\"a\":{\"b\":[1,2]},\"c\":{\"d\":[3]}}"
+  let read : Map[ProbingKey, Map[ProbingKey, Array[Int32]]] = @json.from_string(
+    doc,
+  )
+  assert_eq(read.length(), 2)
+  guard read.get(ProbingKey("c")) is Some(inner) else { fail("missing key c") }
+  assert_eq(inner.get(ProbingKey("d")), Some([3]))
+  // Enum values still open and close properly beside keys that probed for one.
+  let shapes : Map[ProbingKey, Shape] = @json.from_string(
+    "{\"a\":{\"Rect\":[1.0,2.0]},\"b\":{\"Rect\":[3.0,4.0]}}",
+  )
+  assert_eq(shapes.get(ProbingKey("b")), Some(Rect(3.0, 4.0)))
+}
