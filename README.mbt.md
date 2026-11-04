@@ -262,7 +262,7 @@ the package — one `dev_build` per source file holding derived types, with path
 relative to the package:
 
 ```
-rule(name: "serde-derive", command: "moonx moonbit-community/serde.mbt@0.3.0/derive $input")
+rule(name: "serde-derive", command: "moonx moonbit-community/serde.mbt@0.3.1/derive $input")
 
 dev_build(rule: "serde-derive", input: "types.mbt", output: "types_derive.mbt")
 ```
