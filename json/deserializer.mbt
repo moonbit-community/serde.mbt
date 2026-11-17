@@ -545,7 +545,7 @@ fn JsonDeserializer::parse_string_bytes(
     self.pos = end + 1
     return self.input[start:end]
   }
-  let out = Buffer(size_hint=(end - start) * 2 + 16)
+  let out = Buffer(capacity=(end - start) * 2 + 16)
   out.write_bytes(self.input[start:end])
   self.pos = end
   let mut chunk = end

@@ -39,7 +39,7 @@ struct CborSerializer {
 
 ///|
 pub fn CborSerializer::new() -> CborSerializer {
-  { out: Buffer(size_hint=256), breaks: [], }
+  { out: Buffer(capacity=256), breaks: [], }
 }
 
 ///|

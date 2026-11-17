@@ -26,7 +26,7 @@ struct JsonSerializer {
 
 ///|
 pub fn JsonSerializer::new() -> JsonSerializer {
-  { out: Buffer(size_hint=256), stack: [], in_key: false, }
+  { out: Buffer(capacity=256), stack: [], in_key: false, }
 }
 
 ///|

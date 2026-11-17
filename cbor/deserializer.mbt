@@ -342,7 +342,7 @@ fn CborDeserializer::blob(
   if !h.indefinite {
     return self.take(h.arg)
   }
-  let parts = Buffer(size_hint=32)
+  let parts = Buffer(capacity=32)
   while !self.at_break() {
     let chunk = self.expect_head(major, what)
     guard !chunk.indefinite else {

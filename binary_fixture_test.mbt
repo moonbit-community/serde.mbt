@@ -52,7 +52,7 @@ struct BinSerializer {
 
 ///|
 fn BinSerializer::new() -> BinSerializer {
-  { out: Buffer(size_hint=256), }
+  { out: Buffer(capacity=256), }
 }
 
 ///|

@@ -14,7 +14,7 @@ struct MsgpackSerializer {
 
 ///|
 pub fn MsgpackSerializer::new() -> MsgpackSerializer {
-  { out: Buffer(size_hint=256), }
+  { out: Buffer(capacity=256), }
 }
 
 ///|

@@ -21,7 +21,7 @@ fn render(root : @serde.Value) -> Bytes raise @serde.SerError {
         kind="a top-level \{other.type_name()}; a TOML document is a table",
       )
   }
-  let out = Buffer(size_hint=256)
+  let out = Buffer(capacity=256)
   render_table(out, [], entries)
   out.to_bytes()
 }

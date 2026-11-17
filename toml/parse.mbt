@@ -370,7 +370,7 @@ fn Parser::quoted(self : Parser) -> BytesView raise @serde.DeError {
     self.pos = i + 1
     return view
   }
-  let out = Buffer(size_hint=16)
+  let out = Buffer(capacity=16)
   self.pos = start
   for ;; {
     guard !self.done() else {
