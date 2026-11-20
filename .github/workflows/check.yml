@@ -7,6 +7,9 @@ on:
   pull_request:
   merge_group:
 
+env:
+  MOON_SEPARATE_COMPILATION: "1"
+
 jobs:
   # The library is pure MoonBit, so it is worth proving on every backend and
   # every runner OS.
